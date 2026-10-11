@@ -59,7 +59,7 @@ public:
 	{
 		if (auto game_state = get_current_game_state())
 		{
-			game_state->handle_input_result(result);
+			game_state->handle_input_result(std::move(result));
 		}
 
 		switch (result.type)

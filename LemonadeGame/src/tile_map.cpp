@@ -3,6 +3,8 @@
 #include "fov.h"
 #include <variant>
 
+#include "raw_master.h"
+
 TileMap::TileMap(World* world, const Length& width, const Length& height, const Length& depth) :
 	m_world(world), m_width(width), m_height(height), m_depth(depth)
 {
@@ -10,10 +12,15 @@ TileMap::TileMap(World* world, const Length& width, const Length& height, const 
 
 	for (Coord x = 0; (Length)x < width; ++x) for (Coord y = 0; (Length)y < height; ++y) for (Coord z = 0; (Length)z < depth; ++z)
 	{
-		m_tiles.push_back(Tile(&tile_types::AIR, x * y * z));
+		m_tiles.push_back(Tile(RawMaster::get_tile_type("TILE_AIR"), x * y * z));
 	}
 
 	update_all_tiles();
+}
+
+TileMap::~TileMap()
+{
+	COUT("TileMap killed in action");
 }
 
 void TileMap::set_tile(const Coord& x, const Coord& y, const Coord& z, TileType* type)
@@ -31,7 +38,6 @@ void TileMap::set_tile(const Coord& x, const Coord& y, const Coord& z, TileType*
 	update_tile_at(x - 1, y, z);
 	update_tile_at(x, y + 1, z);
 	update_tile_at(x, y - 1, z);
-
 	update_tile_at(x + 1, y + 1, z);
 	update_tile_at(x + 1, y - 1, z);
 	update_tile_at(x - 1, y + 1, z);
@@ -57,22 +63,22 @@ void TileMap::update_tile_at(const Coord& x, const Coord& y, const Coord& z)
 		auto tile_left = get_tile(x - 1, y, z);
 		auto tile_right = get_tile(x + 1, y, z);
 
-		if (tile_above && tile->can_connect_with(tile_above))
+		if (tile_above && (tile->can_connect_with(tile_above) || tile_above->can_connect_with(tile)))
 		{
 			mask_value += 1;
 		}
 
-		if (tile_below && tile->can_connect_with(tile_below))
+		if (tile_below && (tile->can_connect_with(tile_below) || tile_below->can_connect_with(tile)))
 		{
 			mask_value += 2;
 		}
 
-		if (tile_left && tile->can_connect_with(tile_left))
+		if (tile_left && (tile->can_connect_with(tile_left) || tile_left->can_connect_with(tile)))
 		{
 			mask_value += 4;
 		}
 
-		if (tile_right && tile->can_connect_with(tile_right))
+		if (tile_right && (tile->can_connect_with(tile_right) || tile_right->can_connect_with(tile)))
 		{
 			mask_value += 8;
 		}
@@ -165,84 +171,3 @@ void TileMap::step(TimeUnit time_delta)
 void TileMap::update()
 {
 }
-
-//
-//void TileMap::render(RenderParams params) const
-//{
-//	int draw_x{ 0 }, draw_y{ 0 }, draw_z{ 0 };
-//	auto& camera = params.camera;
-//
-//	int layer = 0;
-//
-//	int view_left = 0;
-//	int view_right = get_width();
-//
-//	int view_top = 0;
-//	int view_bottom = get_height();
-//
-//	if (camera)
-//	{
-//		layer = camera->get_posz();
-//
-//		view_left = std::max(view_left, camera->get_x1());
-//		view_right = std::min(view_right, camera->get_x2());
-//
-//		view_top = std::max(view_top, camera->get_y1());
-//		view_bottom = std::min(view_bottom, camera->get_y2());
-//	}
-//
-//	const Tile* draw_tile{};
-//
-//	glyph_t draw_glyph{};
-//	color_t draw_fg{};
-//	color_t draw_bg{};
-//
-//	for (int x = view_left; x < view_right; ++x) for (int y = view_top; y < view_bottom; ++y)
-//	{
-//		draw_tile = get_tile(x, y, layer);
-//
-//		draw_glyph = draw_tile->glyph();
-//		draw_fg = draw_tile->fg();
-//		draw_bg = draw_tile->bg();
-//
-//		if (camera)
-//		{
-//			if (!camera->in_view(x, y, layer))
-//				continue;
-//
-//			std::tie(draw_x, draw_y, draw_z) = camera->get_screen(x, y, layer).as_tuple();
-//		}
-//
-//		if (draw_tile->is_air())
-//		{
-//			auto tile_below = get_tile(x, y, layer - 1);
-//
-//			if (tile_below->is_air())
-//			{
-//				draw_glyph = 177;
-//				draw_fg = color::get("light_cyan");
-//				draw_bg = color::get("black");
-//			}
-//			else
-//			{
-//				draw_glyph = DISTANT_DOT;
-//				draw_fg = tile_below->fg();
-//				draw_bg = tile_below->bg();
-//			}
-//		}
-//
-//		if (params.use_fov && !is_visible(x, y, layer))
-//		{
-//			if (params.show_explored_tiles && is_explored(x, y, layer))
-//			{
-//				draw_fg = color::get("explored");
-//			}
-//			else
-//			{
-//				draw_fg = color::get("unexplored");
-//			}
-//		}
-//
-//		output::put_rgb(draw_x, draw_y, draw_glyph, draw_fg, draw_bg);
-//	}
-//}

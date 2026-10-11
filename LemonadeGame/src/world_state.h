@@ -10,14 +10,14 @@
 
 #include "ai_handler.h"
 
-namespace runspeed_flag
+enum class TickSpeed : uint32_t
 {
-	constexpr int TURN_BASED = 0;
-	constexpr int REAL_TIME = 1;
-	constexpr int REAL_TIME_2X = 2;
-	constexpr int REAL_TIME_4X = 4;
-	constexpr int REAL_TIME_8X = 8;
-}
+	TURN_BASED,
+	REAL_TIME,
+	REAL_TIME_2X,
+	REAL_TIME_4X,
+	REAL_TIME_8X,
+};
 
 /* The main game state. Simulates the world of the game. */
 class WorldGameState : public GameState
@@ -30,7 +30,7 @@ private:
 	Entity* m_player;
 	Position m_camera_focus;
 
-	int m_run_speed = runspeed_flag::TURN_BASED;
+	TickSpeed m_tick_speed = TickSpeed::TURN_BASED;
 
 	std::string m_last_msg;
 
@@ -44,8 +44,8 @@ public:
 	Camera* get_camera() const { return m_camera.get(); }
 	AIManager* get_ai_manager() const { return m_ai_manager.get(); }
 
-	constexpr int get_run_speed() const { return m_run_speed; }
-	void set_run_speed(int run_speed) { m_run_speed = run_speed; }
+	constexpr TickSpeed get_tick_speed() const { return m_tick_speed; }
+	void set_tick_speed(TickSpeed tick_speed) { m_tick_speed = tick_speed; }
 
 	// -- Checks -- //
 
@@ -66,7 +66,7 @@ public:
 
 	virtual void handle_action(std::unique_ptr<Action> action) override;
 
-	virtual void handle_input_result(const InputResult& result) override;
+	virtual void handle_input_result(InputResult result) override;
 
 	void game_message(std::string msg);
 };

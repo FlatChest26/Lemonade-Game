@@ -6,11 +6,15 @@
 #include "thing.h"
 #include "tile_type.h"
 
+#include "snowy_rng.h"
+#include <random>
+#include <string>
+
+#include <cassert>
+
 class Tile
 {
 protected:
-	ThingID m_ID{ "" };
-
 	const TileType* m_type{ nullptr };
 	size_t m_texture_idx{ 0 };
 
@@ -19,31 +23,20 @@ protected:
 
 public:
 
-	Tile(const TileType* type, size_t idx = 0) :
-		m_ID(std::string(type->ID()) + "_" + std::to_string(idx)), m_type(type)
-	{
-		if (get_type()->has_random_texture())
-		{
-			m_texture_idx = (rand() + idx) % type->get_texture().size();
-		}
-		else
-		{
-			m_texture_idx = 0;
-		}
-	}
+	Tile(const TileType* type, size_t idx = 0);
 
-	constexpr const	TileType* get_type() const { ASSERT(m_type, "tile doesn't exist"); return m_type; }
+	constexpr const	TileType* get_type() const { return m_type; }
 
 	// -- Thing -- //
 
-	virtual ThingID ID() const { return get_type()->ID(); }
-	virtual std::string description() const { return get_type()->description(); }
+	virtual ThingID ID() const { return m_type->ID(); }
+	virtual std::string description() const { return m_type->description(); }
 
-	virtual constexpr Noun get_noun() const { return get_type()->get_noun(); }
-	virtual constexpr Name get_name() const { return get_type()->get_name(); }
-	virtual constexpr Pronouns get_pronouns() const { return get_type()->get_pronouns(); }
+	virtual constexpr Noun get_noun() const { return m_type->get_noun(); }
+	virtual constexpr Name get_name() const { return m_type->get_name(); }
+	virtual constexpr Pronouns get_pronouns() const { return m_type->get_pronouns(); }
 
-	virtual Renderable get_renderable() const { return get_type()->get_texture()[m_texture_idx]; }
+	virtual Renderable get_renderable() const { return m_type->get_texture()[m_texture_idx]; }
 	virtual glyph_t glyph() const { return get_renderable().glyph; }
 	virtual color_t fg() const { return get_renderable().fg; }
 	virtual color_t bg() const { return get_renderable().bg; }
@@ -71,37 +64,42 @@ public:
 	constexpr std::string theirs() const { return get_pronouns().independent_possessive; }
 	constexpr std::string themselves() const { return get_pronouns().reflexive; }
 
-	virtual constexpr bool is_plural() const { return get_type()->is_plural(); }
-	virtual constexpr bool is_pronouns_plural() const { return get_type()->is_pronouns_plural(); }
+	virtual constexpr bool is_plural() const { return m_type->is_plural(); }
+	virtual constexpr bool is_pronouns_plural() const { return m_type->is_pronouns_plural(); }
 
-	virtual constexpr std::string prefix() const { return get_type()->prefix(); }
-	virtual constexpr std::string suffix() const { return get_type()->suffix(); }
+	virtual constexpr std::string prefix() const { return m_type->prefix(); }
+	virtual constexpr std::string suffix() const { return m_type->suffix(); }
 
 	// Misc //
 
-	std::string get_display_name() const { return get_type()->full_name() + " " + char(glyph()); }
-	operator std::string() const { return get_type()->get_display_name(); }
+	std::string get_display_name() const { return full_name(); }
+	operator std::string() const { return get_display_name(); }
 
-	// Flags
+	// Flag Checks //
 
-	constexpr bool is_walkable() const { return get_type()->tile_flags() & TileFlag::IS_WALKABLE; }
-	constexpr bool is_blocked() const { return !(get_type()->tile_flags() & TileFlag::IS_WALKABLE); }
+	bool is_walkable() const { return m_type->tile_flags() & TileType::Flag::IS_WALKABLE; }
+	bool is_blocked() const { return !is_walkable(); }
 
-	constexpr bool has_floor() const { return get_type()->tile_flags() & TileFlag::HAS_FLOOR; }
-	constexpr bool has_ceiling() const { return get_type()->tile_flags() & TileFlag::HAS_CEILING; }
+	bool is_transparent() const { return m_type->tile_flags() & TileType::Flag::IS_TRANSPARENT; }
+	bool is_opaque() const { return !is_transparent(); }
 
-	constexpr bool is_transparent() const { return get_type()->tile_flags() & TileFlag::IS_TRANSPARENT; }
-	constexpr bool is_opaque() const { return !(get_type()->tile_flags() & TileFlag::IS_TRANSPARENT); }
+	bool has_floor() const { return m_type->tile_flags() & TileType::Flag::HAS_FLOOR; }
+	bool has_ceiling() const { return m_type->tile_flags() & TileType::Flag::HAS_CEILING; }
 
-	constexpr bool can_ascend() const { return get_type()->tile_flags() & TileFlag::CAN_ASCEND; }
-	constexpr bool can_descend() const { return get_type()->tile_flags() & TileFlag::CAN_DESCEND; }
+	bool can_ascend() const { return m_type->tile_flags() & TileType::Flag::CAN_ASCEND; }
+	bool can_descend() const { return m_type->tile_flags() & TileType::Flag::CAN_DESCEND; }
 
-	constexpr bool can_open() const { return get_type()->tile_flags() & TileFlag::CAN_OPEN; }
-	constexpr bool can_close() const { return get_type()->tile_flags() & TileFlag::CAN_CLOSE; }
+	bool can_open() const { return m_type->tile_flags() & TileType::Flag::CAN_OPEN; }
+	bool can_close() const { return m_type->tile_flags() & TileType::Flag::CAN_CLOSE; }
 
-	constexpr bool is_air() const { return get_type()->tile_flags() & TileFlag::IS_AIR; }
+	bool is_air() const { return m_type->tile_flags() & TileType::Flag::IS_AIR; }
 
-	// Setters & Getters
+	bool opens_neighbors() const { return m_type->tile_flags() & TileType::Flag::OPENS_NEIGHBORS; }
+	bool closes_neighbors() const { return m_type->tile_flags() & TileType::Flag::CLOSES_NEIGHBORS; }
+
+	bool is_half_tile() const { return m_type->tile_flags() & TileType::Flag::IS_HALF_TILE; }
+
+	// -- Setters & Getters -- //
 
 	bool is_visible() const { return m_visible; }
 	bool is_explored() const { return m_explored; }
@@ -112,15 +110,19 @@ public:
 	void set_texture_idx(size_t idx)
 	{
 		if (get_texture().size() > 0)
+		{
 			m_texture_idx = idx % get_texture().size();
+		}
 		else
-			m_texture_idx = idx;
+		{
+			m_texture_idx = 0;
+		}
 	}
 
-	constexpr const std::vector<Renderable> get_texture() const { return get_type()->get_texture(); }
+	constexpr const TileTexture& get_texture() const { return m_type->get_texture(); }
 
-	constexpr bool is_random_texture() const { return get_type()->has_random_texture(); }
-	constexpr bool is_wall_texture() const { return get_type()->has_wall_texture(); }
+	constexpr bool is_random_texture() const { return m_type->has_random_texture(); }
+	constexpr bool is_wall_texture() const { return m_type->has_wall_texture(); }
 
 	constexpr bool can_connect_with(Tile* other) const
 	{
@@ -129,9 +131,9 @@ public:
 			return false;
 		}
 
-		for (const auto& connect_id : get_type()->get_connect_with())
+		for (const auto& connect_id : m_type->get_connect_with())
 		{
-			for (const auto& other_connect_id : other->get_type()->get_connect_flags())
+			for (const auto& other_connect_id : other->get_type()->get_tags())
 			{
 				if (connect_id == other_connect_id)
 				{
@@ -141,6 +143,26 @@ public:
 		}
 
 		return false;
+	}
+
+	constexpr bool operator==(TileType* other)
+	{
+		return m_type == other;
+	}
+
+	constexpr bool operator==(Tile* other)
+	{
+		return m_type == other->get_type();
+	}
+
+	constexpr bool operator!=(TileType* other)
+	{
+		return m_type != other;
+	}
+
+	constexpr bool operator!=(Tile* other)
+	{
+		return m_type != other->get_type();
 	}
 };
 

@@ -4,12 +4,22 @@
 #include "game.h"
 #include "world_state.h"
 
-GameState* InputHandler::get_game_state()
+Game* InputHandler::get_game() const
+{
+	if (auto game_state = get_game_state())
+	{
+		return game_state->get_game();
+	}
+
+	return {};
+}
+
+GameState* InputHandler::get_game_state() const
 {
 	return m_game_state;
 }
 
-WorldGameState* InputHandler::get_world_state()
+WorldGameState* InputHandler::get_world_state() const
 {
 	if (auto game_state = get_game_state())
 	{
@@ -22,7 +32,7 @@ WorldGameState* InputHandler::get_world_state()
 	return {};
 }
 
-Entity* InputHandler::get_player()
+Entity* InputHandler::get_player() const
 {
 	if (auto world_state = get_world_state())
 	{
@@ -32,7 +42,7 @@ Entity* InputHandler::get_player()
 	return nullptr;
 }
 
-World* InputHandler::get_world()
+World* InputHandler::get_world() const
 {
 	if (auto world_state = get_world_state())
 	{
@@ -42,7 +52,7 @@ World* InputHandler::get_world()
 	return nullptr;
 }
 
-Camera* InputHandler::get_camera()
+Camera* InputHandler::get_camera() const
 {
 	if (auto world_state = get_world_state())
 	{
@@ -52,17 +62,17 @@ Camera* InputHandler::get_camera()
 	return nullptr;
 }
 
-InputHandler::InputHandler(GameState* game_state) :
-	m_game_state(game_state)
+void InputHandler::set_game_state(GameState* game_state)
 {
+	m_game_state = game_state;
 }
 
-Game* InputHandler::get_game()
+bool InputHandler::is_top_level() const
 {
-	if (auto game_state = get_game_state())
+	if (m_game_state)
 	{
-		return game_state->get_game();
+		return m_game_state->get_current_input_handler() == this;
 	}
 
-	return {};
+	return false;
 }

@@ -6,8 +6,12 @@
 #include "snowy_units.h"
 #include "snowy_grammar.h"
 #include "enum_traits.h"
+#include "snowy_database.h"
 
 #include "body_part_components.h"
+
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
 
 using namespace units::literals;
 
@@ -18,7 +22,7 @@ using BodyPartID = std::string;
 
 struct BodyPartType
 {
-	enum Category
+	enum class Category
 	{
 		OTHER,
 
@@ -28,9 +32,10 @@ struct BodyPartType
 		LOWER_BODY,
 		UPPER_ARM,
 		LOWER_ARM,
+		HAND,
+		GROIN,
 		UPPER_LEG,
 		LOWER_LEG,
-		HAND,
 		FOOT,
 
 		ANUS,
@@ -45,12 +50,9 @@ struct BodyPartType
 		EARS,
 		NOSE,
 		TONGUE,
-
-		TAIL,
-		HORN,
 	};
 
-	enum Flag : uint64_t
+	enum class Flag : uint64_t
 	{
 		NONE = 0,
 
@@ -87,22 +89,49 @@ struct BodyPartType
 
 	double default_rel_size{ 25.0f }; // Percentage size in comparison to the rest of the body
 
-	BodyPartType::Category category{ Category::OTHER };
-	BodyPartType::Flag flags{ Flag::NONE };
+	BodyPartType::Category category{ BodyPartType::Category::OTHER };
+	BodyPartType::Flag flags{ BodyPartType::Flag::NONE };
 
 	bool plural = false;
 
 	AllureType base_allure;
+
+	static BodyPartType from_json(const json& j);
 };
 
-template<>
-struct enum_traits<BodyPartType::Flag>
+IS_FLAG_ENUM(BodyPartType::Flag);
+
+inline std::map<std::string, BodyPartType::Category> AllBodyPartCategories
 {
-	static constexpr bool is_flag_enum = true;
+	{ "OTHER",		BodyPartType::Category::OTHER		},
+	{ "HEAD",		BodyPartType::Category::HEAD		},
+	{ "NECK",		BodyPartType::Category::NECK		},
+	{ "UPPER_BODY", BodyPartType::Category::UPPER_BODY	},
+	{ "LOWER_BODY", BodyPartType::Category::LOWER_BODY	},
+	{ "UPPER_ARM",	BodyPartType::Category::UPPER_ARM	},
+	{ "LOWER_ARM",	BodyPartType::Category::LOWER_ARM	},
+	{ "HAND	",		BodyPartType::Category::HAND		},
+	{ "GROIN",		BodyPartType::Category::GROIN		},
+	{ "UPPER_LEG",	BodyPartType::Category::UPPER_LEG	},
+	{ "LOWER_LEG",	BodyPartType::Category::LOWER_LEG	},
+	{ "FOOT",		BodyPartType::Category::FOOT		},
+	{ "ANUS",		BodyPartType::Category::ANUS		},
+	{ "BUTT",		BodyPartType::Category::BUTT		},
+	{ "PENIS",		BodyPartType::Category::PENIS		},
+	{ "TESTICLES",	BodyPartType::Category::TESTICLES	},
+	{ "VAGINA",		BodyPartType::Category::VAGINA		},
+	{ "BREASTS",	BodyPartType::Category::BREASTS		},
+	{ "EYES",		BodyPartType::Category::EYES		},
+	{ "MOUTH",		BodyPartType::Category::MOUTH		},
+	{ "EARS",		BodyPartType::Category::EARS		},
+	{ "NOSE",		BodyPartType::Category::NOSE		},
+	{ "TONGUE",		BodyPartType::Category::TONGUE		},
 };
 
 namespace body_part
 {
+	using BodyPartTypeDB = snowy::SingletonDatabase<BodyPartType>;
+
 	inline BodyPartType Head
 	{
 		.ID = "BP_HEAD",
@@ -118,7 +147,7 @@ namespace body_part
 		.ID = "BP_NECK",
 		.noun = {"neck", "necks"},
 		.default_rel_size = 2.0,
-		.category = BodyPartType::NECK,
+		.category = BodyPartType::Category::NECK,
 		.flags = BodyPartType::Flag::HANDLE | BodyPartType::Flag::CHOKABLE,
 	};
 
@@ -127,12 +156,12 @@ namespace body_part
 		.ID = "BP_UPPERBODY",
 		.noun = {"upper body", "upper bodies"},
 		.default_rel_size = 22.0,
-		.category = BodyPartType::UPPER_BODY,
+		.category = BodyPartType::Category::UPPER_BODY,
 		.flags = BodyPartType::Flag::CIRCULATION | BodyPartType::Flag::SUGGESTIVE | BodyPartType::Flag::PRETTY,
-		.base_allure { 
-			.suggestiveness = 4.0f, .beauty = 2.0f, 
-			.suggestive_names { {"chest", "chests"} }, 
-			.beauty_names { {"abs", "abs", true} }, 
+		.base_allure {
+			.suggestiveness = 4.0f, .beauty = 2.0f,
+			.suggestive_names { {"chest", "chests"} },
+			.beauty_names { {"abs", "abs", true} },
 		},
 	};
 
@@ -140,10 +169,10 @@ namespace body_part
 	{
 		.ID = "BP_LOWERBODY",
 		.noun = {"lower body", "lower bodies"},
-		.default_rel_size = 180,
-		.category = BodyPartType::LOWER_BODY,
+		.default_rel_size = 16.0,
+		.category = BodyPartType::Category::LOWER_BODY,
 		.flags = BodyPartType::Flag::DIGESTION | BodyPartType::Flag::SUGGESTIVE | BodyPartType::Flag::PRETTY,
-		.base_allure { 
+		.base_allure {
 			.suggestiveness = 2.0f, .beauty = 4.0f,
 			.beauty_names { {"tummy", "tummies"}, {"belly", "bellies"}, {"mid-section", "mid-sections"} },
 		},
@@ -154,7 +183,7 @@ namespace body_part
 		.ID = "BP_UPPER_ARM",
 		.noun = {"upper arm", "lower arm"},
 		.default_rel_size = 6.0,
-		.category = BodyPartType::UPPER_ARM,
+		.category = BodyPartType::Category::UPPER_ARM,
 		.flags = BodyPartType::Flag::LIMB | BodyPartType::Flag::KINKY,
 		.base_allure {
 			.kinkiness = 4.0f,
@@ -167,7 +196,7 @@ namespace body_part
 		.ID = "BP_LOWER_ARM",
 		.noun = {"lower arm", "lower arms"},
 		.default_rel_size = 4.0,
-		.category = BodyPartType::LOWER_ARM,
+		.category = BodyPartType::Category::LOWER_ARM,
 		.flags = BodyPartType::Flag::LIMB,
 	};
 
@@ -176,7 +205,7 @@ namespace body_part
 		.ID = "BP_HAND",
 		.noun = {"hand", "hands"},
 		.default_rel_size = 1.5,
-		.category = BodyPartType::HAND,
+		.category = BodyPartType::Category::HAND,
 		.flags = BodyPartType::Flag::GRASP | BodyPartType::Flag::KINKY,
 		.base_allure {
 			.kinkiness = 2.0f,
@@ -184,12 +213,25 @@ namespace body_part
 		},
 	};
 
+	inline BodyPartType Groin
+	{
+		.ID = "BP_GROIN",
+		.noun = {"groin", "groin"},
+		.default_rel_size = 10.0,
+		.category = BodyPartType::Category::GROIN,
+		.flags = BodyPartType::Flag::LEWD,
+		.base_allure {
+			.suggestiveness = 4.0f,
+			.suggestive_names { {"crotch", "crotches"} },
+		},
+	};
+
 	inline BodyPartType UpperLeg
 	{
 		.ID = "BP_UPPER_LEG",
 		.noun = {"upper leg", "upper legs"},
-		.default_rel_size = 20.0,
-		.category = BodyPartType::UPPER_LEG,
+		.default_rel_size = 16.0,
+		.category = BodyPartType::Category::UPPER_LEG,
 		.flags = BodyPartType::Flag::STANCE | BodyPartType::Flag::SUGGESTIVE,
 		.base_allure {
 			.suggestiveness = 5.0f,
@@ -202,7 +244,7 @@ namespace body_part
 		.ID = "BP_LOWER_LEG",
 		.noun = {"lower leg", "lower legs"},
 		.default_rel_size = 9.0,
-		.category = BodyPartType::LOWER_LEG,
+		.category = BodyPartType::Category::LOWER_LEG,
 		.flags = BodyPartType::Flag::STANCE,
 	};
 
@@ -211,7 +253,7 @@ namespace body_part
 		.ID = "BP_FOOT",
 		.noun = {"foot", "feet"},
 		.default_rel_size = 3.0,
-		.category = BodyPartType::FOOT,
+		.category = BodyPartType::Category::FOOT,
 		.flags = BodyPartType::Flag::STANCE | BodyPartType::Flag::KINKY,
 		.base_allure {
 			.kinkiness = 5.0f,
@@ -224,7 +266,7 @@ namespace body_part
 		.ID = "BP_PENIS",
 		.noun = {"penis", "penises"},
 		.default_rel_size = AVERAGE_HEIGHT / 6_in,
-		.category = BodyPartType::PENIS,
+		.category = BodyPartType::Category::PENIS,
 		.flags = BodyPartType::Flag::PHALLUS | BodyPartType::Flag::LEWD,
 		.base_allure {
 			.lewdness = 10.0f,
@@ -239,7 +281,7 @@ namespace body_part
 		.ID = "BP_VAGINA",
 		.noun = {"vagina", "vaginas"},
 		.default_rel_size = AVERAGE_HEIGHT / 6_in,
-		.category = BodyPartType::VAGINA,
+		.category = BodyPartType::Category::VAGINA,
 		.flags = BodyPartType::Flag::ORIFICE | BodyPartType::Flag::FLUID_PRODUCER | BodyPartType::Flag::LEWD,
 		.base_allure {
 			.lewdness = 10.0f,
@@ -251,9 +293,9 @@ namespace body_part
 	inline BodyPartType Breasts
 	{
 		.ID = "BP_BREASTS",
-		.noun = {"breasts", "pairs of breasts"},
+		.noun = {"breasts", "pairs of breasts", true},
 		.default_rel_size = AVERAGE_HEIGHT / 4_in,
-		.category = BodyPartType::BREASTS,
+		.category = BodyPartType::Category::BREASTS,
 		.flags = BodyPartType::Flag::FLUID_PRODUCER | BodyPartType::Flag::CLEAVAGE | BodyPartType::Flag::LEWD,
 		.plural = true,
 		.base_allure {
@@ -267,9 +309,9 @@ namespace body_part
 	inline BodyPartType Testicles
 	{
 		.ID = "BP_TESTICLES",
-		.noun = {"testicles", "pairs of testicles"},
+		.noun = {"testicles", "pairs of testicles", true},
 		.default_rel_size = AVERAGE_HEIGHT / 2_in,
-		.category = BodyPartType::TESTICLES,
+		.category = BodyPartType::Category::TESTICLES,
 		.flags = BodyPartType::Flag::FLUID_PRODUCER | BodyPartType::Flag::LEWD,
 		.plural = true,
 		.base_allure {
@@ -284,7 +326,7 @@ namespace body_part
 		.ID = "BP_BUTT",
 		.noun = {"butt", "butts"},
 		.default_rel_size = AVERAGE_HEIGHT / 8_in,
-		.category = BodyPartType::BUTT,
+		.category = BodyPartType::Category::BUTT,
 		.flags = BodyPartType::Flag::CLEAVAGE | BodyPartType::Flag::SUGGESTIVE | BodyPartType::Flag::LEWD,
 		.base_allure {
 			.lewdness = 2.0f,
@@ -301,7 +343,7 @@ namespace body_part
 		.ID = "BP_ANUS",
 		.noun = {"anus", "anuses"},
 		.default_rel_size = AVERAGE_HEIGHT / 1_in,
-		.category = BodyPartType::ANUS,
+		.category = BodyPartType::Category::ANUS,
 		.flags = BodyPartType::Flag::ORIFICE | BodyPartType::Flag::LEWD,
 		.base_allure {
 			.lewdness = 18.0f,
@@ -314,9 +356,9 @@ namespace body_part
 	inline BodyPartType Eyes
 	{
 		.ID = "BP_EYES",
-		.noun = {"eyes", "pairs of eyes"},
+		.noun = {"eyes", "pairs of eyes", true},
 		.default_rel_size = 0.8,
-		.category = BodyPartType::EYES,
+		.category = BodyPartType::Category::EYES,
 		.flags = BodyPartType::Flag::SENSORY,
 	};
 
@@ -325,16 +367,16 @@ namespace body_part
 		.ID = "BP_MOUTH",
 		.noun = {"mouth", "mouths"},
 		.default_rel_size = 1.2,
-		.category = BodyPartType::MOUTH,
+		.category = BodyPartType::Category::MOUTH,
 		.flags = BodyPartType::Flag::SPEAK | BodyPartType::Flag::EAT,
 	};
 
 	inline BodyPartType Ears
 	{
 		.ID = "BP_EARS",
-		.noun = {"ears", "pairs of ears"},
+		.noun = {"ears", "pairs of ears", true},
 		.default_rel_size = 1.0,
-		.category = BodyPartType::EARS,
+		.category = BodyPartType::Category::EARS,
 		.flags = BodyPartType::Flag::SENSORY,
 	};
 
@@ -343,7 +385,7 @@ namespace body_part
 		.ID = "BP_NOSE",
 		.noun = {"nose", "noses"},
 		.default_rel_size = 0.8,
-		.category = BodyPartType::NOSE,
+		.category = BodyPartType::Category::NOSE,
 		.flags = BodyPartType::Flag::SENSORY,
 	};
 
@@ -352,29 +394,61 @@ namespace body_part
 		.ID = "BP_TONGUE",
 		.noun = {"tongue", "tongues"},
 		.default_rel_size = 0.5,
-		.category = BodyPartType::TONGUE,
+		.category = BodyPartType::Category::TONGUE,
 		.flags = BodyPartType::Flag::SENSORY | BodyPartType::Flag::SUGGESTIVE | BodyPartType::Flag::INTERNAL,
 	};
-
 
 	inline BodyPartType Tail
 	{
 		.ID = "BP_TAIL",
 		.noun = {"tail", "tails"},
 		.default_rel_size = AVERAGE_HEIGHT / 6_in,
-		.category = BodyPartType::TAIL,
+		.category = BodyPartType::Category::OTHER,
 		.flags = BodyPartType::Flag::HANDLE | BodyPartType::Flag::PRETTY,
 	};
 
 	inline BodyPartType Horns
 	{
 		.ID = "BP_HORNS",
-		.noun = {"horns", "pairs of horns"},
+		.noun = {"horns", "pairs of horns", true},
 		.default_rel_size = AVERAGE_HEIGHT / 4.5_in,
-		.category = BodyPartType::HORN,
+		.category = BodyPartType::Category::OTHER,
 		.flags = BodyPartType::Flag::HANDLE,
 		.plural = true,
 	};
+
+	inline snowy::Database<BodyPartType*> _body_parts_db
+	{
+		{ Head.ID,					&Head		},
+		{ Neck.ID,					&Neck		},
+		{ UpperBody.ID,				&UpperBody	},
+		{ LowerBody.ID,				&LowerBody	},
+		{ UpperArm.ID,				&UpperArm	},
+		{ LowerArm.ID,				&LowerArm	},
+		{ Hand.ID,					&Hand		},
+		{ Groin.ID,					&Groin		},
+		{ UpperLeg.ID,				&UpperLeg	},
+		{ LowerLeg.ID,				&LowerLeg	},
+		{ Foot.ID,					&Foot		},
+		{ Vagina.ID,				&Vagina		},
+		{ Breasts.ID,				&Breasts	},
+		{ Penis.ID,					&Penis		},
+		{ Testicles.ID,				&Testicles	},
+		{ Butt.ID,					&Butt		},
+		{ Anus.ID,					&Anus		},
+		{ Eyes.ID,					&Eyes		},
+		{ Mouth.ID,					&Mouth		},
+		{ Ears.ID,					&Ears		},
+		{ Nose.ID,					&Nose		},
+		{ Tongue.ID,				&Tongue		},
+		{ Tail.ID,					&Tail		},
+		{ Horns.ID,					&Horns		},
+	};
+
+	static inline void initialize_db()
+	{
+		BodyPartTypeDB::init();
+	}
 }
 
 #endif // !LEMONADE_GAME_SRC_BODY_PART_TYPE_H

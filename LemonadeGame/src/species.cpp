@@ -1,4 +1,5 @@
 #include "species.h"
+#include "raw_master.h"
 
 Species Species::from_json(const json& j)
 {
@@ -38,7 +39,7 @@ Species Species::from_json(const json& j)
 		}
 		else
 		{
-			s.default_body_plan = BodyPlanDB::get(j.at("default_body_plan").get<std::string>());
+			s.default_body_plan = RawMaster::get_body_plan(j.at("default_body_plan").get<std::string>());
 		}
 	}
 
@@ -59,7 +60,7 @@ Species Species::from_json(const json& j)
 					continue;
 				}
 
-				s.body_mods.push_back(BodyModDB::get(json_str.get<std::string>()));
+				s.body_mods.push_back(RawMaster::get_body_mod(json_str.get<std::string>()));
 			}
 		}
 	}

@@ -9,6 +9,8 @@
 #include <initializer_list>
 #include "snowy_macros.h"
 #include <string>
+#include <iostream>
+#include <iterator>
 
 namespace snowy
 {
@@ -322,10 +324,10 @@ namespace snowy
 		using DataType = T;
 
 		using GenericSingletonDatabaseType = GenericSingletonDatabase<K, T>;
-		using DatabaseType = GenericDatabase<KeyType, DataType>;
+		using MapType = std::unordered_map<K, T>;
 
 	private:
-		DatabaseType m_database;
+		MapType m_data;
 
 		GenericSingletonDatabase() {}
 		~GenericSingletonDatabase() {}
@@ -348,34 +350,29 @@ namespace snowy
 
 		constexpr static bool has(const KeyType& id)
 		{
-			return get().m_database.contains(id);
+			return get().m_data.contains(id);
 		}
 
-		constexpr static DataType get(const KeyType& id)
+		constexpr static DataType& get(const KeyType& id)
 		{
-			return get().m_database[id];
+			return get().m_data[id];
 		}
 
 		constexpr static void add(const KeyType& id, DataType data)
 		{
-			get().m_database.insert(id, data);
+			get().m_data.insert({ id, std::move(data) });
 		}
 
 		constexpr static void erase(const DataType& data)
 		{
-			get().m_database.erase(data);
-		}
-
-		constexpr static void remove(const KeyType& id)
-		{
-			get().m_database.remove(id);
+			get().m_data.erase(data);
 		}
 
 		constexpr static void add(const std::initializer_list<std::tuple<KeyType, DataType>>& init)
 		{
 			for (const auto& [id, data] : init)
 			{
-				get().m_database.insert(id, data);
+				get().m_data.insert({ id, std::move(data) });
 			}
 		}
 	};

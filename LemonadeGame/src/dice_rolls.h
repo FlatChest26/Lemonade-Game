@@ -4,6 +4,7 @@
 #define LEMONADE_GAME_SRC_DICE_ROLLS_H
 
 #include <random>
+#include "snowy_rng.h"
 
 struct dice_roll
 {
@@ -52,9 +53,11 @@ inline int roll(const dice_roll& dice)
 {
 	int total = 0;
 
+	std::uniform_int_distribution<int> distrib(1, dice.sides);
+
 	for (int roll_count = 0; roll_count < static_cast<int>(dice.rolls); roll_count++)
 	{
-		total += (rand() % dice.sides) + 1;
+		total += distrib(snowy::rng::generator);
 	}
 
 	total = static_cast<int>(round(total * dice.multiplier));

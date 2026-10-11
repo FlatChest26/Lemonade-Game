@@ -94,7 +94,7 @@ public:
 	// -- Virtual Variables -- //
 
 	virtual TimeUnit speed() const { return TimeUnit::from_seconds(1.0f); } // How long it takes this entity to move a single tile
-	virtual int view_range() const { return 16; } // How far this entity can see
+	virtual int view_range() const { return 32; } // How far this entity can see
 
 	virtual size_t default_inventory_slots() const { return 1; }
 	virtual size_t inventory_size() const { return 1; } // How many inventory slots this entity takes up
@@ -191,6 +191,11 @@ public:
 
 	virtual constexpr std::string prefix() const { return get_thing()->prefix(); }
 	virtual constexpr std::string suffix() const { return get_thing()->suffix(); }
+
+	// Misc //
+
+	std::string get_display_name() const { return full_name(); }
+	operator std::string() const { return get_display_name(); }
 
 public:
 

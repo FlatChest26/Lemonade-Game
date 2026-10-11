@@ -67,6 +67,7 @@ namespace color
 	{
 		if (!colors_db.contains(color))
 		{
+			CERR("Invalid color " << color);
 			return "<undefined color>";
 		}
 
@@ -112,11 +113,11 @@ namespace color
 				return get(j.get<std::string>());
 			}
 		}
-		else if (j.is_array() && j.size() == 3)
+		else if (j.is_array() && j.size() == 3 && j.at(0).is_number_integer() && j.at(1).is_number_integer() && j.at(2).is_number_integer())
 		{
-			uint8_t r = j[0].get<uint8_t>();
-			uint8_t g = j[1].get<uint8_t>();
-			uint8_t b = j[2].get<uint8_t>();
+			uint8_t r = j.at(0).get<int>();
+			uint8_t g = j.at(1).get<int>();
+			uint8_t b = j.at(2).get<int>();
 			return { r, g, b };
 		}
 

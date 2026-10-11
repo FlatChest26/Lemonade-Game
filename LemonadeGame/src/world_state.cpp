@@ -3,13 +3,19 @@
 #include "tile_type.h"
 #include "creature.h"
 #include "game.h"
-#include "body_plan.h"
+#include "transforms.h"
+#include "game_states.h"
+
+#include "raw_master.h"
 
 #include "player_input_handler.h"
 
 #include "map_builder.h"
 
-WorldGameState::WorldGameState()
+#include <utility>
+
+WorldGameState::WorldGameState() :
+	m_player(nullptr)
 {
 }
 
@@ -24,20 +30,11 @@ void WorldGameState::new_game()
 
 	// Create renderer
 
-	m_renderer = std::make_unique<Renderer>(this);
+	m_renderer = std::make_unique<WorldRenderer>(this);
 
 	// Create Creatures
 
-	auto PlayerSoul = new CreatureSoul(CreatureSoul::initializer{
-		.ID = "PLAYER",
-		.name = {"Player", "Lemonade Person"},
-		.age = 24,
-		.gender = gender::NON_SPECIFIC,
-		.sexuality = sexuality::PANSEXUAL,
-		.sexual_position = SexualPosition::VERSE_SWITCH,
-		.description = "That is you."
-	});
-
+	/*
 	auto SnowSoul = new CreatureSoul(CreatureSoul::initializer{
 		.ID = "SNOW",
 		.name = {"Snow", "Snow Oaks"},
@@ -58,16 +55,6 @@ void WorldGameState::new_game()
 		.description = "She is the most devious succubus."
 	});
 
-	const Species* human = SpeciesDB::get("HUMAN").get();
-	const Species* demon = SpeciesDB::get("DEMON").get();
-
-	auto Player = new Creature(Creature::initializer{
-		.soul = PlayerSoul,
-		.species = human,
-		.body_mods = { body_mod::GirlCock },
-		.transform = { Position(0, 0, 0), DEFAULT_SIZE, NORTH },
-	});
-
 	auto Snow = new Creature(Creature::initializer{
 		.soul = SnowSoul,
 		.species = human,
@@ -84,22 +71,131 @@ void WorldGameState::new_game()
 
 	m_world->add_entity(std::unique_ptr<Creature>(Adeline));
 	m_world->add_entity(std::unique_ptr<Creature>(Snow));
-	m_player = m_world->add_entity(std::unique_ptr<Creature>(Player));
 
-	// Create Input Handler
-	handle_input_result(InputResult{ new PlayerInputHandler(this) });
+	*/
+
+	auto PlayerSoul = new CreatureSoul(CreatureSoul::initializer{
+		.ID = "PLAYER",
+		.name = {"Player", "Lemonade Person"},
+		.age = 24,
+		.gender = gender::NON_SPECIFIC,
+		.sexuality = sexuality::PANSEXUAL,
+		.sexual_position = SexualPosition::VERSE_SWITCH,
+		.description = "That is you."
+		});
+
+	auto Player = new Creature(Creature::initializer{
+		.soul = PlayerSoul,
+		.species = RawMaster::get_species("HUMAN"),
+		.body_mods = { body_mod::GirlCock },
+		.transform = { Position(0, 0, 0), DEFAULT_SIZE, NORTH },
+		});
+
+	m_player = m_world->add_entity(std::unique_ptr<Creature>(Player));
 
 	// Create Tile Map
 	auto tile_map = std::make_unique<TileMap>(m_world.get());
 
 	// Build Map
-	MapBuilder::set_floor(tile_map.get(), &tile_types::GRASS, 0);
-	MapBuilder::make_building(tile_map.get(), Position(5, 2, 0), Size(6, 6, 1), &tile_types::PLAIN_FLOOR, &tile_types::PLAIN_WALL, &tile_types::AIR, &tile_types::PLAIN_FLOOR);
+	MapBuilder::set_floor(tile_map.get(), RawMaster::get_tile_type("TILE_GRASS"), 0);
 
-	tile_map->set_tile(5, 3, 0, &tile_types::WINDOW);
-	tile_map->set_tile(5, 5, 0, &tile_types::DOOR);
-	tile_map->set_tile(9, 3, 0, &tile_types::UPWARD_STAIRS);
-	tile_map->set_tile(9, 3, 1, &tile_types::DOWNWARD_STAIRS);
+	// Add road
+	Length road_width = 6;
+	Length sidewalk_width = 2;
+
+	MapBuilder::make_building(
+		tile_map.get(),
+		Position(0, tile_map->get_height() - (road_width + sidewalk_width), 0),
+		Size(tile_map->get_width(), road_width + sidewalk_width, 1),
+		RawMaster::get_tile_type("TILE_SIDEWALK")
+	);
+
+	MapBuilder::make_building(
+		tile_map.get(),
+		Position(0, tile_map->get_height() - (road_width), 0),
+		Size(tile_map->get_width(), road_width, 1),
+		RawMaster::get_tile_type("TILE_ROAD")
+	);
+
+	// Add house
+	MapBuilder::ASCIIMap house_layout_floor1{
+		{
+			"#######ooo/o#####",
+			"#............#<<#",
+			"#............#<<#",
+			"#............#..#",
+			"#............#..#",
+			"##..##########..#",
+			"#...............#",
+			"#...............#",
+			"#.......###+##..#",
+			"#.......#....#..#",
+			"#.......#....#..#",
+			"#.......#....#..#",
+			"#.......#######+#",
+			"#.......#.......#",
+			"##+#ooo##.......#",
+			" .......#.......#",
+			" .......#.......#",
+			"        ##=====##",
+		}
+	};
+
+	MapBuilder::ASCIIMap house_layout_floor2{
+		{
+			"VVVVVVVVVVVVV#oo#",
+			"VVVVVVVVVVVVVo>>#",
+			"##########ooo#>>#",
+			"#.......#.......#",
+			"#.......+.......#",
+			"#.......#.......o",
+			"#########.......o",
+			"#....#..........o",
+			"#....#..........#",
+			"#....#..#####+###",
+			"#....+..#.......#",
+			"##+######.......#",
+			"#..#....+.......#",
+			"#..#....#.......#",
+			"##########oo#oo##",
+			"VVVVVVVVVVVVVVVVV",
+			"VVVVVVVVVVVVVVVVV",
+			"        VVVVVVVVV",
+		}
+	};
+
+	MapBuilder::ASCIIMap house_layout_roof{
+		{
+			"             VVVV",
+			"             VVVV",
+			"VVVVVVVVVVVVVVVVV",
+			"VVVVVVVVVVVVVVVVV",
+			"VVVVVVVVVVVVVVVVV",
+			"VVVVVVVVVVVVVVVVV",
+			"VVVVVVVVVVVVVVVVV",
+			"VVVVVVVVVVVVVVVVV",
+			"VVVVVVVVVVVVVVVVV",
+			"VVVVVVVVVVVVVVVVV",
+			"VVVVVVVVVVVVVVVVV",
+			"VVVVVVVVVVVVVVVVV",
+			"VVVVVVVVVVVVVVVVV",
+			"VVVVVVVVVVVVVVVVV",
+			"VVVVVVVVVVVVVVVVV",
+			"                 ",
+			"                 ",
+			"                 ",
+		}
+	};
+
+	MapBuilder::make_from_ascii_map(
+		tile_map.get(), house_layout_floor1, true, Position(10, 5, 0)
+	);
+	MapBuilder::make_from_ascii_map(
+		tile_map.get(), house_layout_floor2, true, Position(10, 5, 1)
+	);
+	MapBuilder::make_from_ascii_map(
+		tile_map.get(), house_layout_roof, true, Position(10, 5, 2)
+	);
 
 	// Create AI Manger
 	m_ai_manager = std::make_unique<AIManager>(this);
@@ -119,79 +215,77 @@ void WorldGameState::new_game()
 
 	// Update things
 	m_camera_focus = Position(m_world->get_tile_map()->get_width() / 2, m_world->get_tile_map()->get_height() / 2, m_player->posz());
+
+	// Create Input Handler
+	handle_input_result(InputResult{ new PlayerInputHandler() });
 }
 
 void WorldGameState::update(double delta_time)
 {
-	TimeUnit base_speed = TimeUnit::from_seconds(delta_time * 6);
+	if (m_tick_speed == TickSpeed::TURN_BASED)
+		return;
 
-	switch (m_run_speed)
+	TimeUnit base_speed = TimeUnit::from_seconds(delta_time * 6);
+	int step_count = 0;
+
+	switch (m_tick_speed)
 	{
-	case runspeed_flag::REAL_TIME:
+	case TickSpeed::REAL_TIME:
 	{
-		step(base_speed);
+		step_count = 1;
 		break;
 	}
-	case runspeed_flag::REAL_TIME_2X:
+	case TickSpeed::REAL_TIME_2X:
 	{
-		step(base_speed);
-		step(base_speed);
+		step_count = 2;
 		break;
 	}
-	case runspeed_flag::REAL_TIME_4X:
+	case TickSpeed::REAL_TIME_4X:
 	{
-		step(base_speed);
-		step(base_speed);
-		step(base_speed);
-		step(base_speed);
+		step_count = 4;
 		break;
 	}
-	case runspeed_flag::REAL_TIME_8X:
+	case TickSpeed::REAL_TIME_8X:
 	{
-		step(base_speed);
-		step(base_speed);
-		step(base_speed);
-		step(base_speed);
-		step(base_speed);
-		step(base_speed);
-		step(base_speed);
-		step(base_speed);
-		step(base_speed);
+		step_count = 8;
 		break;
 	}
+	}
+
+	while (step_count > 0)
+	{
+		step(base_speed);
+		step_count--;
 	}
 }
+
+#include <ranges>
 
 void WorldGameState::render() const
 {
 	if (auto renderer = get_renderer())
 	{
-		renderer->render(RenderParams{
+		auto params = RenderParams{
 			.camera = m_camera.get(),
 			.use_fov = m_player != nullptr,
 			.show_explored_tiles = get_game_settings().show_explored_tiles,
 			.render_world = true,
 			.render_entities = true,
 			.render_tile_map = true,
-			});
+		};
+
+		renderer->render(params);
+
+		for (auto& input_handler : std::views::reverse(m_input_handlers))
+		{
+			input_handler->render(params);
+		}
 	}
 }
 
 void WorldGameState::step(TimeUnit time_delta)
 {
 	ASSERT(m_world, "WorldGameState::step() called but world is null");
-
-	if (m_player)
-	{
-		// Update FOV for player
-		if (m_player->has_field_of_view())
-		{
-			if (auto tile_map = m_world->get_tile_map())
-			{
-				tile_map->compute_fov(m_player->posx(), m_player->posy(), m_player->posz(), m_player->view_range());
-			}
-		}
-	}
 
 	m_world->step(time_delta);
 
@@ -209,6 +303,23 @@ void WorldGameState::step(TimeUnit time_delta)
 	else
 	{
 		update_camera(m_player ? m_player->pos() : m_camera_focus);
+	}
+
+	if (m_player)
+	{
+		// Update FOV for player
+		if (m_player->has_field_of_view())
+		{
+			if (auto tile_map = m_world->get_tile_map())
+			{
+				tile_map->compute_fov(m_player->posx(), m_player->posy(), m_player->posz(), m_player->view_range());
+			}
+		}
+	}
+
+	for (auto& input_handler : m_input_handlers)
+	{
+		input_handler->step(time_delta);
 	}
 
 	if (auto game = m_game)
@@ -231,8 +342,8 @@ void WorldGameState::update_camera(const Position& pos)
 	m_camera->set_size(
 		Size
 		{
-			(uint32_t)floor(output::get_console_width() * 0.8),
-			(uint32_t)floor(output::get_console_height() * 0.8),
+			(uint32_t)floor(output::get_console_width() * 0.7),
+			(uint32_t)floor(output::get_console_height() * 0.7),
 			CAMERA_VIEW_DEPTH
 		}
 	);
@@ -266,38 +377,46 @@ void WorldGameState::handle_action(std::unique_ptr<Action> action)
 		{
 			if (actor->can_queue_action())
 			{
-				actor->queue_action(std::move(action_result.get_next_action()));
-
 				if (actor == get_player())
 				{
-					handle_input_result(InputResult(InputResult::Type::Action));
+					handle_input_result(InputResult(std::move(action_result.get_next_action())));
 				}
-			}	
+				else
+				{
+					actor->queue_action(std::move(action_result.get_next_action()));
+				}
+			}
 		}
 	}
 }
 
-void WorldGameState::handle_input_result(const InputResult& result)
+void WorldGameState::handle_input_result(InputResult result)
 {
 	if (result.type == InputResult::Type::Action /*&& get_run_speed() == runspeed_flag::TURN_BASED*/)
 	{
-		auto player = get_player();
-		if (player)
+		if (result.next_action)
 		{
-			if (auto current_action = player->get_current_action())
-			{
-				step(current_action->get_action_length());
-			}
-			else if (auto next_action = player->get_next_action())
-			{
-				step(next_action->get_action_length());
-			}
+			std::unique_ptr<Action> new_action = std::move(result.next_action);
 
-			return;
+			auto actor = new_action->get_actor();
+			auto action_length = new_action->get_action_length();
+			actor->queue_action(std::move(new_action));
+
+			if (actor == m_player)
+			{
+				step(action_length);
+			}
+		}
+		else
+		{
+			step(TimeUnit::none());
 		}
 	}
-
-	GameState::handle_input_result(result);
+	else
+	{
+		GameState::handle_input_result(std::move(result));
+		step(TimeUnit::none());
+	}
 }
 
 void WorldGameState::game_message(std::string msg)

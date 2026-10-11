@@ -17,7 +17,7 @@ GameState* Renderer::get_game_state() const
 	return m_game_state;
 }
 
-WorldGameState* Renderer::get_world_game_state() const
+WorldGameState* WorldRenderer::get_world_game_state() const
 {
 	if (!m_game_state)
 	{
@@ -27,7 +27,7 @@ WorldGameState* Renderer::get_world_game_state() const
 	return m_game_state->as_world_game_state();
 }
 
-World* Renderer::get_world() const
+World* WorldRenderer::get_world() const
 {
 	if (auto world_state = get_world_game_state())
 	{
@@ -37,7 +37,7 @@ World* Renderer::get_world() const
 	return nullptr;
 }
 
-Camera* Renderer::get_camera() const
+Camera* WorldRenderer::get_camera() const
 {
 	if (auto world_state = get_world_game_state())
 	{
@@ -47,7 +47,7 @@ Camera* Renderer::get_camera() const
 	return nullptr;
 }
 
-Entity* Renderer::get_player() const
+Entity* WorldRenderer::get_player() const
 {
 	if (auto world_state = get_world_game_state())
 	{
@@ -57,7 +57,7 @@ Entity* Renderer::get_player() const
 	return nullptr;
 }
 
-TileMap* Renderer::get_tile_map() const
+TileMap* WorldRenderer::get_tile_map() const
 {
 	if (auto world = get_world())
 	{
@@ -67,7 +67,7 @@ TileMap* Renderer::get_tile_map() const
 	return nullptr;
 }
 
-void Renderer::render(RenderParams params) const
+void WorldRenderer::render(RenderParams params) const
 {
 	if (!params.render_world)
 	{
@@ -85,7 +85,7 @@ void Renderer::render(RenderParams params) const
 	}
 }
 
-void Renderer::render_entities(RenderParams params) const
+void WorldRenderer::render_entities(RenderParams params) const
 {
 	for (const auto entity : get_world()->get_entities())
 	{
@@ -93,7 +93,7 @@ void Renderer::render_entities(RenderParams params) const
 	}
 }
 
-void Renderer::render_entity(RenderParams params, const Entity* entity) const
+void WorldRenderer::render_entity(RenderParams params, const Entity* entity) const
 {
 	if (entity->is_hidden())
 		return;
@@ -184,7 +184,7 @@ void Renderer::render_entity(RenderParams params, const Entity* entity) const
 	}
 }
 
-void Renderer::render_tile_map(RenderParams params) const
+void WorldRenderer::render_tile_map(RenderParams params) const
 {
 	auto tile_map = get_tile_map();
 

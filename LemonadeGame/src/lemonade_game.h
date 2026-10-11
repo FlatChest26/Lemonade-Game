@@ -24,6 +24,7 @@
 #include <unordered_set>
 #include <vector>
 #include <functional>
+#include <cassert>
 
 #include <nlohmann/json.hpp>
 

@@ -56,18 +56,17 @@ Anatomy::Anatomy(BodyPlan bd_plan, std::vector<BodyMod> bd_mods) :
 			add_body_connection(bc);
 		}
 	}
-	
 }
 
 BodyPart* Anatomy::add_body_part(const BodyPartPlan& bp_plan)
 {
 	auto bp = std::make_unique<BodyPart>(m_owner, bp_plan.ID, bp_plan.type, bp_plan.rel_size, bp_plan.position, bp_plan.prefix);
 	m_body_parts.push_back(std::move(bp));
-	
+
 	if (!root)
 	{
 		root = m_body_parts.back().get();
-	}	
+	}
 
 	return m_body_parts.back().get();
 }
@@ -79,7 +78,7 @@ bool Anatomy::add_body_connection(const BodyConnectionPlan& bc_plan)
 
 	if (!parent || !child)
 	{
-		CERR("Anatomy::add_body_connection: One or both body parts not found: " << bc_plan.parent << ", " << bc_plan.child);
+		CERR("One or both body parts not found: " << bc_plan.parent << ", " << bc_plan.child);
 		return false;
 	}
 
@@ -95,7 +94,7 @@ bool Anatomy::add_body_relation(const BodyConnectionPlan& bc_plan)
 
 	if (!parent || !child)
 	{
-		CERR("Anatomy::add_body_relation: One or both body parts not found: " << bc_plan.parent << ", " << bc_plan.child);
+		CERR(" One or both body parts not found: " << bc_plan.parent << ", " << bc_plan.child);
 		return false;
 	}
 
@@ -103,7 +102,6 @@ bool Anatomy::add_body_relation(const BodyConnectionPlan& bc_plan)
 
 	return true;
 }
-
 
 bool Anatomy::remove_body_part(BodyPartID bp_ID)
 {

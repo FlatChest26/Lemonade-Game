@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "snowy_macros.h"
+#include "snowy_database.h"
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -69,11 +70,11 @@ constexpr std::string An(std::string noun) { return A(noun); }
 
 struct Noun
 {
-	const char* singular = "";
-	const char* plural = "";
+	std::string singular = "";
+	std::string plural = "";
 	bool always_plural = false;
 
-	constexpr operator const char* () const { return singular; }
+	constexpr operator const char* () const { return singular.c_str(); }
 	constexpr operator std::string() const { return singular; }
 
 	constexpr bool empty() const { return singular[0] == '\0' && plural[0] == '\0'; }
@@ -91,7 +92,7 @@ struct Noun
 			}
 			else
 			{
-				n.singular = (j.at("singular").get<std::string>()).c_str();
+				n.singular = j.at("singular").get<std::string>();
 			}
 		}
 
@@ -104,7 +105,7 @@ struct Noun
 			}
 			else
 			{
-				n.plural = (j.at("plural").get<std::string>()).c_str();
+				n.plural = j.at("plural").get<std::string>();
 			}
 		}
 

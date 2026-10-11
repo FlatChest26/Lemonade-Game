@@ -3,14 +3,15 @@
 #ifndef LEMONADE_GAME_SRC_GAME_STATES_H
 #define LEMONADE_GAME_SRC_GAME_STATES_H
 
-#include "lemonade_game.h"
-#include "render_params.h"
 #include "action.h"
 #include "input_handler.h"
-#include "snowy_macros.h"
+#include "lemonade_game.h"
+#include "render_params.h"
 #include "renderer.h"
+#include "snowy_macros.h"
 
 #include <memory>
+#include <utility>
 
 class WorldGameState;
 struct GameSettings;
@@ -26,7 +27,6 @@ protected:
 	std::vector<std::unique_ptr<InputHandler>> m_input_handlers;
 
 public:
-	bool is_fresh = true;
 
 	// -- Getters -- //
 
@@ -45,96 +45,32 @@ public:
 		return m_input_handlers.back().get();
 	}
 
-	virtual void update(double delta_time) {}
+	// -- Checks -- //
+
+	virtual constexpr bool is_world_game_state() const { return false; }
+	virtual constexpr WorldGameState* as_world_game_state() const { return nullptr; }
+
+	// -- Game Loop -- //
+
+	virtual void update(double delta_time);
 	virtual void render() const;
 
-public:
 	// -- Input Handling -- //
 
-	virtual InputResult handle_event(SDL_Event event)
-	{
-		if (auto input_handler = get_current_input_handler())
-		{
-			return input_handler->handle_event(event);
-		}
-
-		return InputResult();
-	}
+	virtual InputResult handle_event(SDL_Event event);
 
 	virtual void handle_action(std::unique_ptr<Action> action)
 	{
 		CERR("This game state does not handle actions.");
 	}
 
-public:
-	// -- Game State -- //
-
-	virtual void handle_input_result(const InputResult& result)
-	{
-		switch (result.type)
-		{
-		case InputResult::Type::None:
-		{
-			return;
-		}
-		case InputResult::Type::Pop_InputHandler:
-		{
-			pop_input_handler();
-
-			return;
-		}
-		case InputResult::Type::Push_InputHandler:
-		{
-			push_input_handler(result.next_input_handler);
-
-			return;
-		}
-		case InputResult::Type::Reset_InputHandler:
-		{
-			reset_input_handlers(result.next_input_handler);
-
-			return;
-		}
-		}
-	}
+	virtual void handle_input_result(InputResult result);
 
 protected:
 
-	void pop_input_handler()
-	{
-		if (m_input_handlers.empty())
-		{
-			return;
-		}
-
-		m_input_handlers.pop_back();
-	}
-
-	void push_input_handler(InputHandler* input_handler)
-	{
-		if (!input_handler)
-			return;
-
-		auto new_input_handler = std::unique_ptr<InputHandler>(input_handler);
-		m_input_handlers.emplace_back(std::move(new_input_handler));
-		m_input_handlers.back()->m_game_state = this;
-	}
-
-	void reset_input_handlers(InputHandler* input_handler)
-	{
-		m_input_handlers.clear();
-
-		if (input_handler)
-		{
-			push_input_handler(input_handler);
-		}
-	}
-
-public:
-	// -- Checks -- //
-
-	virtual constexpr bool is_world_game_state() const { return false; }
-	virtual constexpr WorldGameState* as_world_game_state() const { return nullptr; }
+	void pop_input_handler();
+	void push_input_handler(InputHandler* input_handler);
+	void reset_input_handlers(InputHandler* input_handler);
 };
 
 #endif // !LEMONADE_GAME_SRC_GAME_STATES_H

@@ -78,6 +78,15 @@
     <Filter Include="Code\Source Files\Data">
       <UniqueIdentifier>{a39e1750-726e-44d3-8d83-dd332cb845ee}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Code\Header Files\Data\Game">
+      <UniqueIdentifier>{dd315d88-5f98-41fd-8318-ba7a1dd3807c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Code\Header Files\World">
+      <UniqueIdentifier>{53aefce0-f13e-41e7-a92b-4509fa8253d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Code\Source Files\World">
+      <UniqueIdentifier>{d478e81c-5dd3-4c14-9674-b44ceb8c81f9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\lemonade_game.h">
@@ -85,12 +94,6 @@
     </ClInclude>
     <ClInclude Include="src\game.h">
       <Filter>Code\Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world.h">
-      <Filter>Code\Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world_state.h">
-      <Filter>Code\Header Files\Game States</Filter>
     </ClInclude>
     <ClInclude Include="src\render_params.h">
       <Filter>Code\Header Files\Data</Filter>
@@ -103,9 +106,6 @@
     </ClInclude>
     <ClInclude Include="src\creature_soul.h">
       <Filter>Code\Header Files\Things</Filter>
-    </ClInclude>
-    <ClInclude Include="src\species.h">
-      <Filter>Code\Header Files\Data</Filter>
     </ClInclude>
     <ClInclude Include="src\game_loop.h">
       <Filter>Code\Header Files</Filter>
@@ -140,9 +140,6 @@
     <ClInclude Include="src\map_builder.h">
       <Filter>Code\Header Files\Tile Map</Filter>
     </ClInclude>
-    <ClInclude Include="src\fov.h">
-      <Filter>Code\Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\direction_action.h">
       <Filter>Code\Header Files\Actions</Filter>
     </ClInclude>
@@ -161,20 +158,8 @@
     <ClInclude Include="src\snowy_units.h">
       <Filter>Code\Header Files\Data</Filter>
     </ClInclude>
-    <ClInclude Include="src\tile_type.h">
-      <Filter>Code\Header Files\Things</Filter>
-    </ClInclude>
-    <ClInclude Include="src\body_part_type.h">
-      <Filter>Code\Header Files\Data</Filter>
-    </ClInclude>
     <ClInclude Include="src\body_part.h">
       <Filter>Code\Header Files\Things</Filter>
-    </ClInclude>
-    <ClInclude Include="src\body_plan.h">
-      <Filter>Code\Header Files\Data</Filter>
-    </ClInclude>
-    <ClInclude Include="src\renderer.h">
-      <Filter>Code\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\raw_master.h">
       <Filter>Code\Header Files</Filter>
@@ -185,21 +170,45 @@
     <ClInclude Include="src\inventory.h">
       <Filter>Code\Header Files\Entity\Components</Filter>
     </ClInclude>
-    <ClInclude Include="src\body_part_components.h">
-      <Filter>Code\Header Files\Data</Filter>
-    </ClInclude>
     <ClInclude Include="src\stat_values.h">
       <Filter>Code\Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="src\body_part_type.h">
+      <Filter>Code\Header Files\Data\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="src\body_part_components.h">
+      <Filter>Code\Header Files\Data\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="src\body_plan.h">
+      <Filter>Code\Header Files\Data\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="src\species.h">
+      <Filter>Code\Header Files\Data\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="src\snowy_rng.h">
+      <Filter>Code\Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tile_type.h">
+      <Filter>Code\Header Files\Tile Map</Filter>
+    </ClInclude>
+    <ClInclude Include="src\renderer.h">
+      <Filter>Code\Header Files\World</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world.h">
+      <Filter>Code\Header Files\World</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world_state.h">
+      <Filter>Code\Header Files\World</Filter>
+    </ClInclude>
+    <ClInclude Include="src\npc_generator.h">
+      <Filter>Code\Header Files\World</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fov.h">
+      <Filter>Code\Header Files\Tile Map</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
-      <Filter>Code\Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world_state.cpp">
-      <Filter>Code\Source Files\Game States</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world.cpp">
       <Filter>Code\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\game_loop.cpp">
@@ -220,9 +229,6 @@
     <ClCompile Include="src\creature_soul.cpp">
       <Filter>Code\Source Files\Things</Filter>
     </ClCompile>
-    <ClCompile Include="src\fov.cpp">
-      <Filter>Code\Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\direction_action.cpp">
       <Filter>Code\Source Files\Actions</Filter>
     </ClCompile>
@@ -241,17 +247,11 @@
     <ClCompile Include="src\input_handler.cpp">
       <Filter>Code\Source Files\Input</Filter>
     </ClCompile>
-    <ClCompile Include="src\tile_type.cpp">
-      <Filter>Code\Source Files\Tile Map</Filter>
-    </ClCompile>
     <ClCompile Include="src\body_part.cpp">
       <Filter>Code\Source Files\Things</Filter>
     </ClCompile>
     <ClCompile Include="src\game_states.cpp">
       <Filter>Code\Source Files\Game States</Filter>
-    </ClCompile>
-    <ClCompile Include="src\renderer.cpp">
-      <Filter>Code\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\raw_master.cpp">
       <Filter>Code\Source Files</Filter>
@@ -264,6 +264,33 @@
     </ClCompile>
     <ClCompile Include="src\species.cpp">
       <Filter>Code\Source Files\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\body_part_type.cpp">
+      <Filter>Code\Source Files\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tile.cpp">
+      <Filter>Code\Source Files\Tile Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\map_builder.cpp">
+      <Filter>Code\Source Files\Tile Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tile_type.cpp">
+      <Filter>Code\Source Files\Tile Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fov.cpp">
+      <Filter>Code\Source Files\Tile Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world_state.cpp">
+      <Filter>Code\Source Files\World</Filter>
+    </ClCompile>
+    <ClCompile Include="src\npc_generator.cpp">
+      <Filter>Code\Source Files\World</Filter>
+    </ClCompile>
+    <ClCompile Include="src\renderer.cpp">
+      <Filter>Code\Source Files\World</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world.cpp">
+      <Filter>Code\Source Files\World</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

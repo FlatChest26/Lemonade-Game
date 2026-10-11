@@ -68,6 +68,9 @@
     <ClInclude Include="src\enum_traits.h">
       <Filter>Header Files\Data</Filter>
     </ClInclude>
+    <ClInclude Include="src\snowy_utilities.h">
+      <Filter>Header Files\Include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\output.cpp">

@@ -62,14 +62,13 @@ protected:
 
 public:
 	BodyPart(Creature* owner = nullptr, ThingID ID = "", const BodyPartType* type = nullptr, double rel_size = 25.0, BodyPart::Position position = BodyPart::Position::CENTER, std::string prefix = "");
-	
+
 	// -- Getters -- //
 
 	constexpr const BodyPartType* get_type() const { ASSERT(m_type, "Body part has no type"); return m_type; }
 
 	virtual constexpr Creature* get_owner() const;
 	virtual constexpr Anatomy* get_anatomy() const;
-
 
 	// -- Thing -- //
 
@@ -112,7 +111,7 @@ public:
 
 		return m_allure->kinkiness * get_type()->base_allure.kinkiness;
 	}
-	
+
 	StatInt_t get_beauty() const
 	{
 		if (!has_allure())
@@ -187,12 +186,7 @@ public:
 		default:
 			return RelativePosition::INSIDE;
 		}
-
 	}
-
 };
-
-
-
 
 #endif // !BODY_PART_H

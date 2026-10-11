@@ -44,7 +44,7 @@ public:
 
 	// Misc //
 
-	virtual std::string get_display_name() const { return full_name() + " " + char(glyph()); }
+	virtual std::string get_display_name() const { return full_name(); }
 	virtual operator std::string() const { return get_display_name(); }
 };
 

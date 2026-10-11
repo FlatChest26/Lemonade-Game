@@ -170,11 +170,13 @@
     <ClInclude Include="src\location_actions.h" />
     <ClInclude Include="src\map_builder.h" />
     <ClInclude Include="src\misc_actions.h" />
+    <ClInclude Include="src\npc_generator.h" />
     <ClInclude Include="src\player_input_handler.h" />
     <ClInclude Include="src\raw_master.h" />
     <ClInclude Include="src\renderer.h" />
     <ClInclude Include="src\render_params.h" />
     <ClInclude Include="src\snowy_grammar.h" />
+    <ClInclude Include="src\snowy_rng.h" />
     <ClInclude Include="src\snowy_units.h" />
     <ClInclude Include="src\species.h" />
     <ClInclude Include="src\stat_values.h" />
@@ -191,6 +193,7 @@
     <ClCompile Include="src\ai_handler.cpp" />
     <ClCompile Include="src\anatomy.cpp" />
     <ClCompile Include="src\body_part.cpp" />
+    <ClCompile Include="src\body_part_type.cpp" />
     <ClCompile Include="src\creature.cpp" />
     <ClCompile Include="src\creature_soul.cpp" />
     <ClCompile Include="src\direction_action.cpp" />
@@ -202,11 +205,14 @@
     <ClCompile Include="src\inventory.cpp" />
     <ClCompile Include="src\location_actions.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\map_builder.cpp" />
     <ClCompile Include="src\misc_actions.cpp" />
+    <ClCompile Include="src\npc_generator.cpp" />
     <ClCompile Include="src\player_input_handler.cpp" />
     <ClCompile Include="src\raw_master.cpp" />
     <ClCompile Include="src\renderer.cpp" />
     <ClCompile Include="src\species.cpp" />
+    <ClCompile Include="src\tile.cpp" />
     <ClCompile Include="src\tile_map.cpp" />
     <ClCompile Include="src\tile_type.cpp" />
     <ClCompile Include="src\world.cpp" />

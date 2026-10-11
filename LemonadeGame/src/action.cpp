@@ -7,7 +7,7 @@
 
 ActionResult Action::perform()
 {
-	CERR("invalid action performed");
+	CERR("Invalid action performed!");
 	return ActionResult{ false };
 }
 

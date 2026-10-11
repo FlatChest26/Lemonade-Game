@@ -7,7 +7,6 @@
 #include "enum_traits.h"
 #include "snowy_grammar.h"
 
-
 using AllureStat = StatValue<0, 100>;
 
 struct AllureType
@@ -23,7 +22,6 @@ struct AllureType
 	std::vector<Noun> kinky_names;
 };
 
-
 struct Allure
 {
 	AllureStat lewdness;
@@ -31,13 +29,10 @@ struct Allure
 	AllureStat kinkiness;
 	AllureStat beauty;
 
-	Allure(AllureStat lewdness = 0, AllureStat suggestiveness = 0, AllureStat kinkiness = 0, AllureStat beauty = 0):
+	Allure(AllureStat lewdness = 0, AllureStat suggestiveness = 0, AllureStat kinkiness = 0, AllureStat beauty = 0) :
 		lewdness(lewdness), suggestiveness(suggestiveness), kinkiness(kinkiness), beauty(beauty)
-	{}
+	{
+	}
 };
-
-
-
-
 
 #endif // !LEMONADE_GAME_SRC_BODY_PART_COMPONENTS_H

@@ -29,13 +29,11 @@ public:
 	constexpr bool has_min() const { return _MinValue != -1; }
 	constexpr bool has_max() const { return _MaxValue != -1; }
 
-	
 public:
 	// -- Operators -- //
 
 	constexpr operator StatInt_t() const { return m_current_value; }
 	constexpr operator float() const { return static_cast<float>(m_current_value); }
-
 
 	template<typename T>
 	constexpr bool operator==(const T& other) const
@@ -143,6 +141,5 @@ public:
 		return *this;
 	}
 };
-
 
 #endif // !LEMONADE_GAME_SRC_BODY_STAT_VALUES_H

@@ -4,17 +4,13 @@
 
 #include "snowy_macros.h"
 
+#include <random>
+#include "snowy_rng.h"
+
 void AIBrain::step(TimeUnit time_delta)
 {
 	if (!m_entity->has_any_action() && !m_entity->has_current_action())
 	{
-		int dx = (rand() % 3) - 1;
-		int dy = (rand() % 3) - 1;
-
-		if (m_entity->can_queue_action())
-		{
-			m_entity->queue_action(std::make_unique<BumpAction>(m_entity, dx, dy, 0));
-		}
 	}
 }
 

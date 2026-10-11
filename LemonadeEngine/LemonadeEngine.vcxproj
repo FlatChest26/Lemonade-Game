@@ -151,6 +151,7 @@
     <ClInclude Include="src\snowy_macros.h" />
     <ClInclude Include="src\snowy_typedefs.h" />
     <ClInclude Include="src\snowy_ui.h" />
+    <ClInclude Include="src\snowy_utilities.h" />
     <ClInclude Include="src\transforms.h" />
   </ItemGroup>
   <ItemGroup>

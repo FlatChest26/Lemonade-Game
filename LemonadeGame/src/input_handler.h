@@ -4,6 +4,10 @@
 #define LEMONADE_GAME_SRC_INPUT_HANDLER_H
 
 #include <SDL_events.h>
+#include "time_units.h"
+#include "render_params.h"
+
+#include "action.h"
 
 #define DEF_HANDLER_EVENT(x) virtual InputResult ev_##x( SDL_Event event )
 #define OVERRIDE_HANDLER_EVENT(x) virtual InputResult ev_##x( SDL_Event event ) override
@@ -34,9 +38,10 @@ struct InputResult
 
 	GameState* next_game_state{ nullptr };
 	InputHandler* next_input_handler{ nullptr };
+	std::unique_ptr<Action> next_action{ nullptr };
 
 	InputResult() :
-		type(Type::None), next_game_state(nullptr), next_input_handler(nullptr)
+		type(Type::None), next_game_state(nullptr), next_input_handler(nullptr), next_action(nullptr)
 	{
 	}
 
@@ -64,6 +69,11 @@ struct InputResult
 		type(Type::Push_InputHandler), next_input_handler(input_handler)
 	{
 	}
+
+	InputResult(std::unique_ptr<Action> action) :
+		type(Type::Action), next_action(std::move(action))
+	{
+	}
 };
 
 class InputHandler
@@ -72,7 +82,6 @@ class InputHandler
 
 protected:
 	GameState* m_game_state{ nullptr };
-	bool m_allow_input_pass_through{ false };
 
 	InputResult dispatch(SDL_Event event)
 	{
@@ -108,26 +117,33 @@ protected:
 
 public:
 
-	InputHandler(GameState* game_state = nullptr);
+	InputHandler() = default;
 
 public:
 
 	// -- Getters & Setters -- //
 
-	Game* get_game();
+	Game* get_game() const;
 
-	GameState* get_game_state();
-	WorldGameState* get_world_state();
-	Entity* get_player();
-	World* get_world();
-	Camera* get_camera();
+	GameState* get_game_state() const;
+	WorldGameState* get_world_state() const;
+	Entity* get_player() const;
+	World* get_world() const;
+	Camera* get_camera() const;
 
-	void set_allow_input_pass_through(bool allow) { m_allow_input_pass_through = allow; }
-	bool allow_input_pass_through() const { return m_allow_input_pass_through; }
+	virtual void set_game_state(GameState* game_state);
+
+	virtual constexpr bool allow_input_pass_through() const { return false; }
+	virtual bool is_top_level() const;
 
 	// -- Utilities -- //
 
 	virtual InputResult handle_event(SDL_Event event) { return dispatch(event); }
+
+	virtual void init() {}
+	virtual void update(double delta_time) {}
+	virtual void step(TimeUnit delta_time) {}
+	virtual void render(RenderParams params) const {}
 
 protected:
 	DEF_HANDLER_EVENT(quit) { return InputResult(); }

@@ -1,136 +1,145 @@
-#include "lemonade_game.h"
 #include "game_loop.h"
+#include "lemonade_game.h"
 
-#include <vector>
+#include <memory>
 #include <string>
+#include <vector>
 
 #include "game.h"
 #include "world_state.h"
 
+#include <libtcod/timer.hpp>
+
 static constexpr const char* GAME_TITLE = "Lemonade Game";
 static std::unique_ptr<Game> game;
 
-void new_game()
+namespace game_loop
 {
-	// Make new game
-	game = std::make_unique<Game>();
-
-	game->get_settings().fixed_camera = true;
-	game->get_settings().show_explored_tiles = true;
-
-	// Start new game on world state
-	WorldGameState* world_state = new WorldGameState();
-
-	// Make new world state and add it to the game
-	game->handle_input_result(InputResult{ world_state });
-
-	// Make new game
-	if (world_state)
+	void new_game()
 	{
-		world_state->new_game();
-	}
-}
+		// Make new game
+		game = std::make_unique<Game>();
 
-void render()
-{
-	if (!game->should_update_screen)
-	{
-		return;
+		game->get_settings().fixed_camera = false;
+		game->get_settings().show_explored_tiles = true;
+
+		// Start new game on world state
+		WorldGameState* world_state = new WorldGameState();
+
+		// Make new world state and add it to the game
+		game->handle_input_result(InputResult{ world_state });
+
+		// Make new game
+		if (world_state)
+		{
+			world_state->new_game();
+		}
 	}
 
-	output::clear_console();
-
-	game->render();
-	game->should_update_screen = false;
-
-	output::present();
-}
-
-void update(double delta_time)
-{
-	game->update(delta_time);
-}
-
-void handle_events()
-{
-	SDL_Event event;
-
-	while (SDL_PollEvent(&event))
+	static void render()
 	{
-		output::convert_event(event);
-
-		switch (event.type)
+		if (!game->should_update_screen)
 		{
-		case SDL_QUIT:
-		{
-			game->stop_running();
-
 			return;
 		}
-		case SDL_WINDOWEVENT:
-		{
-			if (event.window.event == SDL_WINDOWEVENT_RESIZED)
-			{
-				output::update_window();
-			}
 
-			game->request_screen_update();
-			if (game->get_current_game_state()->is_world_game_state())
-			{
-				auto world_state = game->get_current_game_state()->as_world_game_state();
-				if (world_state) world_state->update_camera();
-			}
+		output::clear_console();
 
-			break;
-		}
-		}
+		game->render();
+		game->should_update_screen = false;
 
-		game->handle_event(event);
+		output::present();
 	}
-}
 
-#include <libtcod/timer.hpp>
-
-bool run()
-{
-	auto timer = tcod::Timer();
-
-	game->is_running = true;
-
-	//handle_events();
-	//if (game->get_current_game_state()->is_world_game_state())
-	//{
-	//	auto world_state = game->get_current_game_state()->as_world_game_state();
-	//	if (world_state) world_state->step(1.0f);
-	//}
-
-	while (game->is_running)
+	static void update(double delta_time)
 	{
-		// Make sure to sync the timer to the target FPS
-		auto delta_time = timer.sync();
-
-		// Game loop
-
-		handle_events();
-		update(delta_time);
-		render();
-
-		// Update window title if needed
-		if (game->should_update_window_title)
-		{
-			if (cfg::settings::SHOW_FPS)
-			{
-				output::set_window_title((std::string)GAME_TITLE + " | FPS: " + std::to_string(timer.get_mean_fps()));
-			}
-			else
-			{
-				output::set_window_title(GAME_TITLE);
-				game->should_update_window_title = false;
-			}
-		}
-
-		game->frame++;
+		game->update(delta_time);
 	}
 
-	return false;
+	static void handle_events()
+	{
+		SDL_Event event;
+
+		while (SDL_PollEvent(&event))
+		{
+			output::convert_event(event);
+
+			switch (event.type)
+			{
+			case SDL_QUIT:
+			{
+				game->stop_running();
+				break;
+			}
+			case SDL_WINDOWEVENT:
+			{
+				switch (event.window.event)
+				{
+				case SDL_WINDOWEVENT_CLOSE:
+				{
+					game->stop_running();
+					break;
+				}
+
+				case SDL_WINDOWEVENT_RESIZED:
+				case SDL_WINDOWEVENT_SHOWN:
+				case SDL_WINDOWEVENT_EXPOSED:
+				case SDL_WINDOWEVENT_SIZE_CHANGED:
+				case SDL_WINDOWEVENT_MOVED:
+				case SDL_WINDOWEVENT_MAXIMIZED:
+				case SDL_WINDOWEVENT_RESTORED:
+				{
+					output::update_window();
+					game->request_screen_update();
+				}
+				}
+				break;
+			}
+			}
+
+			game->handle_event(event);
+		}
+	}
+
+	bool run()
+	{
+		auto timer = tcod::Timer();
+
+		game->is_running = true;
+
+		while (game->is_running)
+		{
+			// Make sure to sync the timer to the target FPS
+			auto delta_time = timer.sync(60);
+
+			// Game loop
+
+			handle_events();
+			update(delta_time);
+			render();
+
+			// Update window title if needed
+			if (game->should_update_window_title)
+			{
+				if (cfg::settings::SHOW_FPS)
+				{
+					output::set_window_title((std::string)GAME_TITLE + " | FPS: " + std::to_string(timer.get_mean_fps()));
+				}
+				else
+				{
+					output::set_window_title(GAME_TITLE);
+					game->should_update_window_title = false;
+				}
+			}
+
+			//if (cfg::settings::SHOW_FPS)
+			//{
+			//	output::console_printf(0, 0, "FPS: " + std::to_string(timer.get_mean_fps()));
+			//}
+
+			game->frame++;
+		}
+
+		return false;
+	}
 }

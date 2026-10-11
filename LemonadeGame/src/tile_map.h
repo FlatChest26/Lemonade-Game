@@ -14,7 +14,7 @@ class World;
 
 namespace tile_map
 {
-	inline constexpr size_t DEFAULT_WIDTH = 32;
+	inline constexpr size_t DEFAULT_WIDTH = 64;
 	inline constexpr size_t DEFAULT_HEIGHT = 32;
 	inline constexpr size_t DEFAULT_DEPTH = 4;
 
@@ -33,6 +33,7 @@ protected:
 
 public:
 	TileMap(World* world = {}, const Length& width = tile_map::DEFAULT_WIDTH, const Length& height = tile_map::DEFAULT_HEIGHT, const Length& depth = tile_map::DEFAULT_DEPTH);
+	~TileMap();
 
 public:
 	// -- Getters -- //

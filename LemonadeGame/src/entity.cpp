@@ -46,7 +46,7 @@ World* Entity::get_world() const
 		return holder->get_world();
 	}
 
-	CERR("ERROR: Entity " << m_thing->ID() << " has no world holder or entity holder.");
+	CERR("No world holder or entity holder found on entity " << m_thing->ID());
 
 	return nullptr;
 }
@@ -246,7 +246,7 @@ bool Entity::is_on_floor() const
 	auto world = get_world();
 	if (!world)
 	{
-		CERR("ERROR: No world found on entity " << m_thing->ID());
+		CERR("No world found on entity " << m_thing->ID());
 		return true;
 	}
 
@@ -254,7 +254,7 @@ bool Entity::is_on_floor() const
 
 	if (!tile)
 	{
-		CERR("ERROR: No tile found at entity " << m_thing->ID());
+		CERR("No tile found at entity " << m_thing->ID());
 		return false;
 	}
 

@@ -3,7 +3,7 @@
 #include "snowy_grammar.h"
 #include "renderable.h"
 #include "snowy_database.h"
-#include "anatomy.h"
+#include "body_plan.h"
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -26,10 +26,10 @@ struct Species
 	static Species from_json(const json& j);
 };
 
-using SpeciesDB = snowy::SingletonDatabase<std::shared_ptr<Species>>;
-
 namespace species
 {
+	using SpeciesDB = snowy::SingletonDatabase<Species>;
+
 	inline Species HUMAN
 	{
 		.ID = "HUMAN",
@@ -37,7 +37,12 @@ namespace species
 		.renderable = {'U', color::get("cyan"), color::get("black") }
 	};
 
-	static inline void initialize_species_db()
+	inline snowy::Database<Species*> _species_db
+	{
+		{ "HUMAN", &HUMAN }
+	};
+
+	static inline void initialize_db()
 	{
 		SpeciesDB::init();
 	}

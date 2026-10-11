@@ -41,10 +41,10 @@ struct BodyPlan
 	std::vector<BodyConnectionPlan> body_relations;
 };
 
-using BodyPlanDB = snowy::SingletonDatabase<BodyPlan>;
-
 namespace body_plan
 {
+	using BodyPlanDB = snowy::SingletonDatabase<BodyPlan>;
+
 	inline BodyPlan GenericBody
 	{
 		.ID = "GenericBody",
@@ -61,6 +61,8 @@ namespace body_plan
 			{.type = &body_part::UpperArm,	.ID = "BP_LEFT_UPPER_ARM",	.position = BodyPart::Position::LEFT, .prefix = "left "},
 			{.type = &body_part::LowerArm,	.ID = "BP_LEFT_LOWER_ARM",	.position = BodyPart::Position::LEFT, .prefix = "left "},
 			{.type = &body_part::Hand,		.ID = "BP_LEFT_HAND",		.position = BodyPart::Position::LEFT, .prefix = "left "},
+
+			{.type = &body_part::Groin,		.ID = "BP_GROIN",			.position = BodyPart::Position::CENTER },
 
 			{.type = &body_part::UpperArm,	.ID = "BP_RIGHT_UPPER_ARM",	.position = BodyPart::Position::RIGHT, .prefix = "right "},
 			{.type = &body_part::LowerArm,	.ID = "BP_RIGHT_LOWER_ARM",	.position = BodyPart::Position::RIGHT, .prefix = "right "},
@@ -89,36 +91,36 @@ namespace body_plan
 			{ "BP_UPPERBODY",		"BP_RIGHT_UPPER_ARM",	BodyPart::RelativePosition::RIGHT	},
 			{ "BP_RIGHT_UPPER_ARM", "BP_RIGHT_LOWER_ARM",	BodyPart::RelativePosition::BELOW	},
 			{ "BP_RIGHT_LOWER_ARM", "BP_RIGHT_HAND",		BodyPart::RelativePosition::BELOW	},
-			{ "BP_LOWERBODY",		"BP_LEFT_UPPER_LEG",	BodyPart::RelativePosition::BELOW	},
+			{ "BP_LOWERBODY",		"BP_GROIN",				BodyPart::RelativePosition::BELOW	},
+			{ "BP_GROIN",			"BP_LEFT_UPPER_LEG",	BodyPart::RelativePosition::BELOW	},
 			{ "BP_LEFT_UPPER_LEG",	"BP_LEFT_LOWER_LEG",	BodyPart::RelativePosition::BELOW	},
 			{ "BP_LEFT_LOWER_LEG",	"BP_LEFT_FOOT",			BodyPart::RelativePosition::BELOW	},
-			{ "BP_LOWERBODY",		"BP_RIGHT_UPPER_LEG",	BodyPart::RelativePosition::BELOW	},
+			{ "BP_GROIN",			"BP_RIGHT_UPPER_LEG",	BodyPart::RelativePosition::BELOW	},
 			{ "BP_RIGHT_UPPER_LEG", "BP_RIGHT_LOWER_LEG",	BodyPart::RelativePosition::BELOW	},
 			{ "BP_RIGHT_LOWER_LEG", "BP_RIGHT_FOOT",		BodyPart::RelativePosition::BELOW	},
-			{ "BP_LOWERBODY",		"BP_BUTT",				BodyPart::RelativePosition::BEHIND	},
+			{ "BP_GROIN",			"BP_BUTT",				BodyPart::RelativePosition::BEHIND	},
 			{ "BP_BUTT",			"BP_ANUS",				BodyPart::RelativePosition::INSIDE	},
 }
 	};
 
-	static inline void initialize_body_plan_db()
+	static inline void initialize_db()
 	{
 		BodyPlanDB::init();
 		BodyPlanDB::add({ {"GenericBody", GenericBody} });
 	}
 };
 
-
 struct BodyMod
 {
 	snowy::StringID ID;
 
-	units::Length set_height{-1};
-	units::Length add_height{0};
-	double multiply_height{1.0};
+	units::Length set_height{ -1 };
+	units::Length add_height{ 0 };
+	double multiply_height{ 1.0 };
 
-	units::Mass set_weight{-1};
-	units::Mass add_weight{0};
-	double multiply_weight{1.0};
+	units::Mass set_weight{ -1 };
+	units::Mass add_weight{ 0 };
+	double multiply_weight{ 1.0 };
 
 	std::vector<BodyPartPlan> add_parts;
 	std::vector<BodyPartID> remove_parts;
@@ -128,10 +130,10 @@ struct BodyMod
 	std::vector<BodyConnectionPlan> add_relations;
 };
 
-using BodyModDB = snowy::SingletonDatabase<BodyMod>;
-
 namespace body_mod
 {
+	using BodyModDB = snowy::SingletonDatabase<BodyMod>;
+
 	inline BodyMod DemonParts
 	{
 		.ID = "DemonParts",
@@ -153,13 +155,13 @@ namespace body_mod
 	{
 		.ID = "FemaleParts",
 
-		.add_parts 
+		.add_parts
 		{
 			{.type = &body_part::Breasts,	.ID = "BP_BREASTS",		.position = BodyPart::Position::FRONT },
 			{.type = &body_part::Vagina,	.ID = "BP_VAGINA",		.position = BodyPart::Position::BOTTOM },
 		},
 
-		.add_connections 
+		.add_connections
 		{
 			{ "BP_UPPERBODY", "BP_BREASTS", BodyPart::RelativePosition::IN_FRONT },
 			{ "BP_LOWERBODY", "BP_VAGINA",	BodyPart::RelativePosition::BELOW },
@@ -246,20 +248,18 @@ namespace body_mod
 		}
 	};
 
-
-	static inline void initialize_body_mod_db()
+	static inline void initialize_db()
 	{
 		BodyModDB::init();
-		BodyModDB::add({ 
+		BodyModDB::add({
 			{ "DemonParts",		DemonParts	},
 			{ "FemaleParts",	FemaleParts	},
 			{ "MaleParts",		MaleParts	},
 			{ "GirlCock",		GirlCock	},
 			{ "BoyPussy",		BoyPussy	},
-		});
+			{ "HeadDetails",	HeadDetails	},
+			});
 	}
-
 }
-
 
 #endif // !LEMONADE_GAME_SRC_BODY_PLAN_H

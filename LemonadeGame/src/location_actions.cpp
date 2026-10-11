@@ -1,6 +1,7 @@
 #include "location_actions.h"
 #include "tile_map.h"
 #include "world.h"
+#include "raw_master.h"
 
 using namespace std;
 
@@ -26,10 +27,12 @@ static bool transform_tile(World* world, int loc_x, int loc_y, int loc_z)
 	auto tile_map = world->get_tile_map();
 	const auto tile = tile_map->get_tile(loc_x, loc_y, loc_z);
 
-	auto transformed_tile = tile_types::get(tile->get_type()->get_transform_ID());
+	auto transformed_tile = RawMaster::get_tile_type(tile->get_type()->get_transform_ID());
 
-	if (!(transformed_tile->tile_flags() & TileFlag::IS_WALKABLE) && world->has_blocking_entities_at(loc_x, loc_y, loc_z))
+	if (world->has_blocking_entities_at(loc_x, loc_y, loc_z))
+	{
 		return false;
+	}
 
 	tile_map->set_tile(loc_x, loc_y, loc_z, transformed_tile);
 
@@ -47,13 +50,20 @@ static bool recursively_open_or_close_tiles(World* world, int loc_x, int loc_y, 
 	auto tile = tile_map->get_tile(loc_x, loc_y, loc_z);
 
 	if (!transform_tile(world, loc_x, loc_y, loc_z))
+	{
 		return false;
+	}
+
+	if (!(tile->opens_neighbors() || tile->closes_neighbors()))
+	{
+		return true;
+	}
 
 	for (auto& check_location : transforms::get_surrounding_locations(Position(loc_x, loc_y, loc_z)))
 	{
 		auto other_tile = tile_map->get_tile(check_location);
 
-		if (tile->can_connect_with(other_tile))
+		if (tile->can_connect_with(other_tile) || other_tile->can_connect_with(tile))
 		{
 			if (open && other_tile->can_open())
 			{

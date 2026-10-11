@@ -3,6 +3,8 @@
 #ifndef _LEMONADE_ENGINE_H
 #define _LEMONADE_ENGINE_H
 
+#include "snowy_utilities.h"
+
 #include "snowy_macros.h"
 #include "snowy_typedefs.h"
 

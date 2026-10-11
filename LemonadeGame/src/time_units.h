@@ -82,7 +82,6 @@ struct TimeUnit
 		std::cout << std::endl;
 	}
 
-	
 	// -- Operations -- //
 
 	constexpr TimeUnit& operator=(const TimeUnit& other)

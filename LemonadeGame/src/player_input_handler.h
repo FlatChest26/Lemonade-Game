@@ -12,13 +12,24 @@ class WorldGameState;
 
 class PlayerInputHandler : public InputHandler
 {
+protected:
+	// -- Input Handling -- //
+
+	OVERRIDE_HANDLER_EVENT(key_down);
+};
+
+class PlayerLookHandler : public InputHandler
+{
+protected:
+	Position m_look_focus{ 0, 0, 0 };
+
 public:
-	PlayerInputHandler(GameState* game_state = nullptr) :
-		InputHandler(game_state)
-	{
-	}
+	virtual void render(RenderParams params) const override;
+	virtual void init() override;
+	virtual void step(TimeUnit delta_time) override;
 
 protected:
+
 	// -- Input Handling -- //
 
 	OVERRIDE_HANDLER_EVENT(key_down);

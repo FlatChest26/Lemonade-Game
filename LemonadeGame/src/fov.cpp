@@ -1,5 +1,6 @@
 #include "fov.h"
 #include "tile_map.h"
+#include "snowy_macros.h"
 
 namespace sym_shadowcast
 {
