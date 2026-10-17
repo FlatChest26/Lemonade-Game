@@ -128,10 +128,13 @@ inline std::map<std::string, BodyPartType::Category> AllBodyPartCategories
 	{ "TONGUE",		BodyPartType::Category::TONGUE		},
 };
 
+inline std::map<std::string, BodyPartType::Flag> AllBodyPartFlags
+{
+	{ "GRASP",		BodyPartType::Flag::GRASP		},
+};
+
 namespace body_part
 {
-	using BodyPartTypeDB = snowy::SingletonDatabase<BodyPartType>;
-
 	inline BodyPartType Head
 	{
 		.ID = "BP_HEAD",
@@ -444,11 +447,6 @@ namespace body_part
 		{ Tail.ID,					&Tail		},
 		{ Horns.ID,					&Horns		},
 	};
-
-	static inline void initialize_db()
-	{
-		BodyPartTypeDB::init();
-	}
 }
 
 #endif // !LEMONADE_GAME_SRC_BODY_PART_TYPE_H

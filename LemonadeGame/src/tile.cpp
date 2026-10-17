@@ -1,13 +1,15 @@
 #include "tile.h"
 
-Tile::Tile(const TileType* type, size_t idx) :
+Tile::Tile(RawMaster::Ref<TileType> type) :
 	m_type(type)
 {
-	if (type == nullptr)
+	if (!type)
 	{
-		CERR("Tile does not have a type!");
+		CERR("Tile was not given a type!");
+		m_type = RawMaster::get<TileType>("TILE_VOID");
+		
 	}
-
+	
 	if (m_type->has_random_texture())
 	{
 		std::uniform_int_distribution<size_t> distrib(0, type->get_texture().size() - 1);
@@ -17,4 +19,9 @@ Tile::Tile(const TileType* type, size_t idx) :
 	{
 		set_texture_idx(0);
 	}
+}
+
+std::string Tile::get_display_name() const
+{
+	return snowy::grammar::a(get_noun(), false);
 }

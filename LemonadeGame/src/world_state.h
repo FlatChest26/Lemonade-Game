@@ -9,6 +9,7 @@
 #include "camera.h"
 
 #include "ai_handler.h"
+#include "npc_generator.h"
 
 enum class TickSpeed : uint32_t
 {

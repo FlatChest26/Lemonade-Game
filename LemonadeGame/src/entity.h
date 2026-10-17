@@ -14,6 +14,16 @@
 #include "snowy_macros.h"
 #include "game_states.h"
 
+#include "enum_traits.h"
+#include "anatomy.h"
+#include "species.h"
+#include "gait.h"
+#include "living.h"
+
+#include "creature_soul.h"
+
+#include "raw_master.h"
+
 #include <variant>
 #include <vector>
 #include <map>
@@ -25,205 +35,117 @@ class WorldGameState;
 
 using EntityLocation = std::variant<World*, Entity*>;
 
-using EntityFlags = uint64_t;
+enum class EntityFlag : int32_t
+{
+	NONE = 0,
 
-namespace EntityFlag {
-	constexpr EntityFlags NONE = 0;
+	CAN_FALL = 1 << 0,
+	CAN_FLY = ~CAN_FALL,
 
-	constexpr EntityFlags CAN_FALL = 1 << 0;
-	constexpr EntityFlags CAN_FLY = ~CAN_FALL;
+	IS_BLOCKING = 1 << 1,
+	NEVER_BLOCK = ~IS_BLOCKING,
 
-	constexpr EntityFlags IS_BLOCKING = 1 << 1;
-	constexpr EntityFlags NEVER_BLOCK = ~IS_BLOCKING;
+	CAN_COLLIDE = 1 << 2,
+	NEVER_COLLIDE = ~CAN_COLLIDE,
 
-	constexpr EntityFlags CAN_COLLIDE = 1 << 2;
-	constexpr EntityFlags NEVER_COLLIDE = ~CAN_COLLIDE;
+	CAN_HOLD_ITEMS = 1 << 3,
+	CANNOT_HOLD_ITEMS = ~CAN_HOLD_ITEMS,
 
-	constexpr EntityFlags CAN_HOLD_ITEMS = 1 << 3;
-	constexpr EntityFlags CANNOT_HOLD_ITEMS = ~CAN_HOLD_ITEMS;
+	CAN_BE_HELD = 1 << 4,
+	CANNOT_BE_HELD = ~CAN_BE_HELD,
 
-	constexpr EntityFlags CAN_BE_HELD = 1 << 4;
-	constexpr EntityFlags CANNOT_BE_HELD = ~CAN_BE_HELD;
+	NOT_MAP_BOUND = 1 << 5,
+	IS_MAP_BOUND = ~NOT_MAP_BOUND,
 
-	constexpr EntityFlags IS_MAP_BOUND = 1 << 5;
+	ANIMATE = 1 << 6,
+	INANIMATE = ~ANIMATE,
 
-	constexpr EntityFlags ANIMATE = 1 << 6;
-	constexpr EntityFlags INANIMATE = ~ANIMATE;
+	HAS_FOV = 1 << 7,
 
-	constexpr EntityFlags HAS_FOV = 1 << 7;
+	FREE_TO_MOVE = 1 << 8,
+	FIXED_IN_PLACE = ~FREE_TO_MOVE,
 
-	constexpr EntityFlags FIXED_IN_PLACE = 1 << 8;
-	constexpr EntityFlags FREE_TO_MOVE = ~FIXED_IN_PLACE;
+	IS_OPAQUE = 1 << 9,
+	IS_TRANSPARENT = ~IS_OPAQUE,
 
-	constexpr EntityFlags IS_TRANSPARENT = 1 << 9;
-	constexpr EntityFlags IS_OPAQUE = ~IS_TRANSPARENT;
-}
+	IS_ALIVE = 1 << 10,
+	IS_DEAD = ~IS_ALIVE,
 
-class Creature;
+	IS_HIDDEN = 1 << 11,
+	IS_FLASHING = 1 << 12,
+
+	IS_CREATURE = 1 << 13,
+	IS_ITEM = 1 << 14,
+	IS_FURNITURE = 1 << 15,
+};
+
+IS_FLAG_ENUM(EntityFlag);
 
 /* An entity represents any "thing" which has a position in the world. */
-class Entity : public std::enable_shared_from_this<Entity>, public Movable
+class Entity : public std::enable_shared_from_this<Entity>
 {
 protected:
-	TimeUnit m_fall_timer = TimeUnit::none(); // Used to simulate falling over discrete time steps.
+	EntityFlag m_flags;
+	EntityLocation m_location; // What stores the entity. Usually the world but can also be another entity.
 
-	size_t m_priority = 0;
-
-	bool m_hidden = false;
-	bool m_is_flashing = false;
-
-	// What stores the entity. Usually the world but can also be another entity.
-	EntityLocation m_location;
-
-	std::unique_ptr<Thing> m_thing;
-	std::unique_ptr<Inventory> m_inventory;
-
-	// A queue of actions this entity wants to take.
+	// Actions //
 	ActionQueue m_action_queue;
 
 	std::unique_ptr<Action> m_current_action{ nullptr };
 	TimeUnit m_time_spent_on_current_action{ TimeUnit::none() };
 
-	// Flags for this entity
-	EntityFlags m_entity_flags;
+	// Components //
 
-	Position m_last_seen_location;
-	bool m_seen_by_player;
+	std::unique_ptr<Thing> m_thing{ nullptr };
+	std::unique_ptr<TileMovable> m_movable{ nullptr };
+	std::unique_ptr<Inventory> m_inventory{ nullptr };
+	std::unique_ptr<Anatomy> m_anatomy{ nullptr };
+	std::unique_ptr<Gait> m_gait{ nullptr };
+	std::unique_ptr<Living> m_living{ nullptr };
+
+	RawMaster::Ref<Species> m_species{ nullptr };
+
+	// Misc //
+	std::unique_ptr<Position> m_last_seen_location{ nullptr }; // Will be nullptr if the entity hasn't been seen
+
+	TimeUnit m_fall_timer = TimeUnit::none(); // Used to simulate falling over discrete time steps.
+	
+	bool m_known_name{ false };
+	bool m_should_remove{ false };
 
 public:
 	// -- Virtual Variables -- //
 
-	virtual TimeUnit speed() const { return TimeUnit::from_seconds(1.0f); } // How long it takes this entity to move a single tile
-	virtual int view_range() const { return 32; } // How far this entity can see
+	virtual TimeUnit speed() const; // How long it takes this entity to move a single tile
+	virtual int view_range() const; // How far this entity can see
 
-	virtual size_t default_inventory_slots() const { return 1; }
-	virtual size_t inventory_size() const { return 1; } // How many inventory slots this entity takes up
+	virtual size_t default_inventory_slots() const;
+	virtual size_t inventory_size() const; // How many inventory slots this entity takes up
 
 	virtual size_t get_max_actions_queued() const { return 5; }
 
 public:
-	Entity(Thing* thing, Transform transform = { DEFAULT_POSITION, DEFAULT_SIZE, NORTH }, World* world = nullptr, EntityFlags entity_flags = 0);
+	Entity(Thing* thing = nullptr, EntityFlag entity_flags = EntityFlag::NONE);
 	~Entity();
 
 public:
 
-	virtual constexpr bool is_creature() const { return false; }
-	virtual constexpr Creature* as_creature() { return nullptr; }
+	// -- Getters & Setters -- //
 
-	// -- Getters -- //
-
-	// Return variant of this entity's location. Can be either a weak pointer to the world or a weak pointer to another entity.
-	EntityLocation get_location() const { return m_location; }
-	Inventory* get_inventory() const { return m_inventory.get(); }
-	Inventory* get_holder_inventory() const;
-
-	// Returns a weak pointer to the world holding this entity.
-	World* get_world() const;
-
-	// Returns a weak pointer to the entity carrying this entity, if one exists.
-	Entity* get_entity_holder() const;
-	World* get_world_holder() const;
-
-	// Returns a weak pointer to the world game state
 	GameState* get_game_state() const;
 	WorldGameState* get_world_game_state() const;
-
-	// Returns a weak pointer to the game.
 	Game* get_game() const;
-
-	// Returns a pointer to the player entity.
 	Entity* get_player() const;
-
-	// Return a pointer to the tile map this entity is on.
 	TileMap* get_tile_map() const;
+	World* get_world() const;
 
-	Position get_last_seen_location() const
-	{
-		return m_last_seen_location;
-	}
+	EntityLocation get_location() const { return m_location; } // Return variant of this entity's location. Can be either a pointer to the world or a another entity.
+	Inventory* get_holder_inventory() const;
+	
+	Entity* get_entity_holder() const; // Returns a pointer to the entity holding this entity (if it exists)
+	World* get_world_holder() const; // Returns a pointer to the world holding this entity (if it exists)
 
-	bool has_been_seen_by_player() const
-	{
-		return m_seen_by_player;
-	}
-
-	// Thing //
-
-	virtual Thing* get_thing() const { ASSERT(m_thing, "entity doesn't exist");  return m_thing.get(); }
-
-	virtual ThingID ID() const { return get_thing()->ID(); }
-	virtual std::string description() const { return get_thing()->description(); }
-
-	virtual constexpr Renderable get_renderable() const { return get_thing()->get_renderable(); }
-	virtual glyph_t glyph() const { return get_renderable().glyph; }
-	virtual color_t fg() const { return get_renderable().fg; }
-	virtual color_t bg() const { return get_renderable().bg; }
-
-	virtual constexpr Noun get_noun() const { return get_thing()->get_noun(); }
-	virtual constexpr Name get_name() const { return get_thing()->get_name(); }
-	virtual constexpr Pronouns get_pronouns() const { return get_thing()->get_pronouns(); }
-
-	constexpr std::string singular_noun() const { return get_noun().singular; }
-	constexpr std::string plural_noun() const { return get_noun().plural; }
-
-	constexpr bool is_named() const { return !get_name().empty(); }
-
-	constexpr std::string nickname() const
-	{
-		if (is_named()) return prefix() + get_name().nickname + suffix();
-		return prefix() + singular_noun() + suffix();
-	}
-
-	constexpr std::string full_name() const
-	{
-		if (is_named()) return prefix() + get_name().full_name + suffix();
-		return prefix() + singular_noun() + suffix();
-	}
-
-	constexpr std::string they() const { return get_pronouns().subjective; }
-	constexpr std::string them() const { return get_pronouns().objective; }
-	constexpr std::string their() const { return get_pronouns().determiner; }
-	constexpr std::string theirs() const { return get_pronouns().independent_possessive; }
-	constexpr std::string themselves() const { return get_pronouns().reflexive; }
-
-	virtual constexpr bool is_plural() const { return get_thing()->is_plural(); }
-	virtual constexpr bool is_pronouns_plural() const { return get_thing()->is_pronouns_plural(); }
-
-	virtual constexpr std::string prefix() const { return get_thing()->prefix(); }
-	virtual constexpr std::string suffix() const { return get_thing()->suffix(); }
-
-	// Misc //
-
-	std::string get_display_name() const { return full_name(); }
-	operator std::string() const { return get_display_name(); }
-
-public:
-
-	// -- Checks -- //
-
-	bool operator==(Entity other);
-	virtual bool is_player() const;
-
-	virtual bool can_be_held() const;
-	virtual bool can_hold_items() const;
-
-	virtual bool is_map_bound() const;
-	virtual bool can_collide() const;
-
-	virtual bool is_blocking() const;
-
-	virtual bool can_fall() const;
-
-	virtual bool is_visible() const;
-	virtual bool is_hidden() const;
-
-	virtual bool has_field_of_view() const;
-	virtual bool is_animate() const;
-
-	virtual bool fixed_in_place() const;
-
-	virtual bool is_transparent() const;
-	virtual bool is_opaque() const;
+	// Actions // 
 
 	virtual bool can_queue_action() const { return get_max_actions_queued() >= m_action_queue.size(); }
 
@@ -233,15 +155,237 @@ public:
 
 	virtual Action* get_current_action() const { return m_current_action.get(); }
 
-	// -- Setters -- //
+	// Components //
 
-	bool set_location(World* world);
 	bool set_location(Entity* entity);
+	bool set_location(World* world);
 
-	void set_priority(const size_t& p) { m_priority = p; }
+	virtual TileMovable* movable()
+	{
+		if (has_movable())
+			return get_movable();
 
-protected:
-	void update_last_seen();
+		set_movable({});
+		
+		return get_movable();
+	}
+
+	virtual TileMovable* get_movable() const { return m_movable.get(); }
+	virtual bool has_movable() const { return m_movable != nullptr; }
+	virtual void set_movable(const TileTransform& transform)
+	{
+		m_movable = std::make_unique<TileMovable>(transform);
+	}
+
+	virtual Inventory* get_inventory() const { return m_inventory.get(); }
+
+	virtual Position get_last_seen_location() const
+	{
+		if (m_last_seen_location) return *m_last_seen_location;
+		return {};
+	}
+
+	virtual bool has_been_seen_by_player() const { return m_last_seen_location != nullptr; }
+
+	virtual bool has_species() const { return m_species != nullptr; }
+	virtual const Species* get_species() const { return m_species.get(); }
+	
+	void set_species(const Species* species) { m_species.reset(species); }
+	void set_species(RawMaster::Ref<Species> species) { m_species = species; }
+
+	virtual Noun species_noun() const { if (m_species) return m_species->noun; return {}; }
+
+	virtual Anatomy* get_anatomy() const { return m_anatomy.get(); }
+	void set_anatomy(Anatomy* anatomy) { m_anatomy.reset(anatomy); m_anatomy->set_owner(this); }
+
+	bool is_name_known() const { return m_known_name; }
+	void learn_name() { m_known_name = true; }
+	void forget_name() { m_known_name = false; }
+
+	Gait* get_gait() const { return m_gait.get(); }
+	void set_gait(Gait* gait) { m_gait.reset(gait); }
+
+	void change_gait_type(std::string gait_id)
+	{
+		if (m_gait)
+		{
+			m_gait->set_current_gait(gait_id);
+		}
+	}
+
+	bool has_living() const { return m_living != nullptr; }
+	Living* get_living() const { return m_living.get(); }
+	void set_living(Living* living) { m_living.reset(living); m_living->set_owner(this); }
+
+	// Thing //
+
+	virtual Thing* get_thing() const { return m_thing.get(); }
+
+	virtual void add_soul(CreatureSoul* soul);
+
+	virtual bool has_soul() const { return m_thing != nullptr && m_thing->is_creature_soul(); }
+	virtual CreatureSoul* get_soul() const
+	{
+		if (has_soul())
+		{
+			return m_thing->as_creature_soul();
+		}
+
+		return nullptr;
+	}
+
+
+	virtual ThingID ID() const { return m_thing->ID(); }
+	virtual std::string description() const { return m_thing->description(); }
+
+	virtual constexpr Renderable get_renderable() const;
+	virtual glyph_t glyph() const { return get_renderable().glyph; }
+	virtual color_t fg() const { return get_renderable().fg; }
+	virtual color_t bg() const { return get_renderable().bg; }
+
+	virtual constexpr Noun get_noun() const { return m_thing->get_noun(); }
+	virtual constexpr Name get_name() const { return m_thing->get_name(); }
+	virtual constexpr Pronouns get_pronouns() const { return m_thing->get_pronouns(); }
+
+	constexpr std::string singular_noun() const { return get_noun().singular; }
+	constexpr std::string plural_noun() const { return get_noun().plural; }
+
+	constexpr bool is_named() const { return !get_name().empty(); }
+
+	constexpr std::string nickname() const
+	{
+		if (is_named())
+		{
+			return prefix() + get_name().nickname + suffix();
+		}
+
+		return prefix() + singular_noun() + suffix();
+	}
+
+	constexpr std::string full_name() const
+	{
+		if (is_named())
+		{
+			return prefix() + get_name().full_name + suffix();
+		}
+
+		return prefix() + singular_noun() + suffix();
+	}
+
+	constexpr std::string they() const { return get_pronouns().subjective; }
+	constexpr std::string them() const { return get_pronouns().objective; }
+	constexpr std::string their() const { return get_pronouns().determiner; }
+	constexpr std::string theirs() const { return get_pronouns().independent_possessive; }
+	constexpr std::string themselves() const { return get_pronouns().reflexive; }
+
+	virtual constexpr bool is_plural() const { return m_thing->is_plural(); }
+	virtual constexpr bool is_pronouns_plural() const { return m_thing->is_pronouns_plural(); }
+
+	virtual constexpr std::string prefix() const { return m_thing->prefix(); }
+	virtual constexpr std::string suffix() const { return m_thing->suffix(); }
+
+	// Misc //
+
+	virtual std::string get_display_name() const;
+	operator std::string() const { return get_display_name(); }
+
+	void queue_remove() { m_should_remove = true; }
+	bool should_remove() const { return m_should_remove; }
+
+public:
+
+	// -- Checks -- //
+
+	bool operator==(Entity other);
+
+	virtual bool is_player() const;
+	virtual bool is_visible_to_player() const;
+
+	// Flags //
+	
+	virtual void set_flags(EntityFlag flag) { m_flags = flag; }
+
+	virtual void add_flag(EntityFlag flag)
+	{
+		if (static_cast<int>(flag) > 0)
+		{
+			if (m_flags & flag)
+				return;
+
+			m_flags |= flag;
+		}
+		else
+		{
+			if (!(m_flags & ~flag))
+				return;
+
+			m_flags &= flag;
+		}
+	}
+
+	virtual void remove_flag(EntityFlag flag)
+	{
+		if (static_cast<int>(flag) > 0)
+		{
+			if (!(m_flags & ~flag))
+				return;
+
+			m_flags &= ~flag;
+		}
+		else
+		{
+			if (m_flags & flag)
+				return;
+
+			m_flags |= ~flag;
+		}
+	}
+	
+	virtual void set_flag_to(EntityFlag flag, bool set_to)
+	{
+		if (set_to)
+		{
+			add_flag(flag);
+		}
+		else
+		{
+			remove_flag(flag);
+		}
+	}
+
+	virtual bool can_be_held() const { return m_flags & EntityFlag::CAN_BE_HELD; }
+	virtual bool can_hold_items() const { return m_flags & EntityFlag::CAN_HOLD_ITEMS; }
+
+	virtual bool is_not_map_bound() const { return m_flags & EntityFlag::NOT_MAP_BOUND; }
+	virtual bool is_map_bound() const { return !is_not_map_bound(); }
+
+	virtual bool can_collide() const { return m_flags & EntityFlag::CAN_COLLIDE; }
+	virtual bool has_no_collision() const { return !can_collide(); }
+
+	virtual bool is_blocking() const { return m_flags & EntityFlag::IS_BLOCKING; }
+	virtual bool is_not_blocking() const { return !is_blocking(); }
+
+	virtual bool can_fall() const { return m_flags & EntityFlag::CAN_FALL; }
+	virtual bool cannot_fall() const { return !can_fall(); }
+
+	virtual bool has_field_of_view() const { return m_flags & EntityFlag::HAS_FOV; }
+
+	virtual bool is_animate() const { return m_flags & EntityFlag::ANIMATE; }
+	virtual bool is_inanimate() const { return !is_animate(); }
+
+	virtual bool free_to_move() const { return m_flags & EntityFlag::FREE_TO_MOVE; }
+	virtual bool fixed_in_place() const { return !free_to_move(); }
+
+	virtual bool is_opaque() const { return m_flags & EntityFlag::IS_OPAQUE; }
+	virtual bool is_transparent() const { return !is_opaque(); }
+
+	virtual bool is_alive() const { return m_flags & EntityFlag::IS_ALIVE; }
+	virtual bool is_dead() const { return !is_alive(); }
+
+	virtual bool is_hidden() const { return m_flags & EntityFlag::IS_HIDDEN; }
+	virtual bool is_flashing() const { return m_flags& EntityFlag::IS_FLASHING; }
+
+	virtual bool is_creature() const { return m_flags & EntityFlag::IS_CREATURE; }
 
 public:
 	// - Field of View -- //
@@ -274,7 +418,7 @@ public:
 
 	virtual void on_action_complete(Action* completed_action, TimeUnit time_took_to_complete) {}
 
-	virtual bool flash();
+	virtual bool should_flash();
 	virtual void game_message(std::string msg);
 
 	// -- Game Loop -- //
@@ -283,5 +427,7 @@ public:
 	virtual void update();
 	//virtual void render(RenderParams params) const;
 };
+
+
 
 #endif // !LEMONADE_GAME_SRC_ENTITY_H

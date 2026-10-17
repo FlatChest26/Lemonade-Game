@@ -9,30 +9,32 @@
 #include <math.h>
 #include <vector>
 #include <string>
+#include <cmath>
 
 #include "enum_traits.h"
 
 template<typename T>
 struct Vec2D
 {
-	using _Num_Type = T;
-	using TupleVec2D = std::tuple<_Num_Type, _Num_Type>;
-	using Vec2DType = Vec2D<_Num_Type>;
+public:
+	using IntType = T;
+	using TupleVec2D = std::tuple<IntType, IntType>;
+	using Vec2DType = Vec2D<IntType>;
 
 public:
 	// -- Variables -- //
 
-	_Num_Type x{ 0 }, y{ 0 };
+	IntType x{ 0 }, y{ 0 };
 
 public:
 	// -- Constructors -- //
 
 	constexpr Vec2D() :
-		x(static_cast<_Num_Type>(0)), y(static_cast<_Num_Type>(0))
+		x(static_cast<IntType>(0)), y(static_cast<IntType>(0))
 	{
 	}
 
-	constexpr Vec2D(const _Num_Type& x, const _Num_Type& y) :
+	constexpr Vec2D(const IntType& x, const IntType& y) :
 		x(x), y(y)
 	{
 	}
@@ -42,7 +44,7 @@ public:
 	{
 	}
 
-	constexpr Vec2D(const _Num_Type& u) :
+	constexpr Vec2D(const IntType& u) :
 		x(u), y(u)
 	{
 	}
@@ -62,6 +64,22 @@ public:
 	constexpr TupleVec2D as_tuple() const
 	{
 		return TupleVec2D(x, y);
+	}
+
+	constexpr double length() const
+	{
+		return std::sqrtf(static_cast<double>(x) * static_cast<double>(x) + static_cast<double>(y) * static_cast<double>(y));
+	}
+
+	constexpr Vec2DType normalized() const
+	{
+		double _length = length();
+		if (_length > 0.0f)
+		{
+			return Vec2DType(static_cast<IntType>(static_cast<double>(x) / _length), static_cast<IntType>(static_cast<double>(y) / _length));
+		}
+
+		return Vec2DType(x, y);
 	}
 
 public:
@@ -297,6 +315,12 @@ public:
 	{
 		return x >= other.x && y >= other.y;
 	}
+
+	template<typename T>
+	constexpr operator Vec2D<T>()
+	{
+		return Vec2D<T>(static_cast<T>(x), static_cast<T>(y));
+	}
 };
 
 template <typename VEC_TYPE = int32_t>
@@ -315,25 +339,26 @@ inline float vec2d_length(const Vec2D<VEC_TYPE>& vec2d, bool squared = false)
 template<typename T>
 struct Vec3D
 {
-	using _Num_Type = T;
-	using TupleVec3D = std::tuple<_Num_Type, _Num_Type, _Num_Type>;
-	using TupleVec2D = std::tuple<_Num_Type, _Num_Type>;
-	using Vec3DType = Vec3D<_Num_Type>;
+public:
+	using IntType = T;
+	using TupleVec3D = std::tuple<IntType, IntType, IntType>;
+	using TupleVec2D = std::tuple<IntType, IntType>;
+	using Vec3DType = Vec3D<IntType>;
 
 public:
 	// -- Variables -- //
 
-	_Num_Type x{ 0 }, y{ 0 }, z{ 0 };
+	IntType x{ 0 }, y{ 0 }, z{ 0 };
 
 public:
 	// -- Constructors -- //
 
 	constexpr Vec3D() :
-		x(static_cast<_Num_Type>(0)), y(static_cast<_Num_Type>(0)), z(static_cast<_Num_Type>(0))
+		x(static_cast<IntType>(0)), y(static_cast<IntType>(0)), z(static_cast<IntType>(0))
 	{
 	}
 
-	constexpr Vec3D(const _Num_Type& x, const _Num_Type& y, const _Num_Type& z) :
+	constexpr Vec3D(const IntType& x, const IntType& y, const IntType& z) :
 		x(x), y(y), z(z)
 	{
 	}
@@ -343,7 +368,7 @@ public:
 	{
 	}
 
-	constexpr Vec3D(const _Num_Type& u) :
+	constexpr Vec3D(const IntType& u) :
 		x(u), y(u), z(u)
 	{
 	}
@@ -367,6 +392,26 @@ public:
 	constexpr TupleVec2D as_2d_tuple() const
 	{
 		return TupleVec2D(x, y);
+	}
+
+	constexpr double length() const
+	{
+		return std::sqrtf(static_cast<double>(x) * static_cast<double>(x) + static_cast<double>(y) * static_cast<double>(y) + static_cast<double>(z) * static_cast<double>(z));
+	}
+
+	constexpr Vec3DType normalized() const
+	{
+		double _length = length();
+		if (_length > 0.0f)
+		{
+			return Vec3DType(
+				static_cast<IntType>(static_cast<double>(x) / _length), 
+				static_cast<IntType>(static_cast<double>(y) / _length),
+				static_cast<IntType>(static_cast<double>(z) / _length)
+			);
+		}
+
+		return Vec3DType(x, y, z);
 	}
 
 public:
@@ -611,6 +656,14 @@ public:
 	{
 		return x >= other.x && y >= other.y && z >= other.z;
 	}
+
+public:
+
+	template<typename T>
+	constexpr operator Vec3D<T>()
+	{
+		return Vec3D<T>(static_cast<T>(x), static_cast<T>(y), static_cast<T>(z));
+	}
 };
 
 template <typename VEC_TYPE = int32_t>
@@ -631,7 +684,7 @@ using Coord = int32_t;
 using CoordF = double;
 
 using Position = Vec3D<Coord>;
-using PositionD = Vec3D<CoordF>;
+using PositionF = Vec3D<CoordF>;
 using TuplePosition = std::tuple<Coord, Coord, Coord>;
 using TuplePositionF = std::tuple<CoordF, CoordF, CoordF>;
 
@@ -758,54 +811,27 @@ namespace std
 }
 
 inline constexpr Position DEFAULT_POSITION = Position{ 0, 0, 0 };
+inline constexpr PositionF DEFAULT_POSITIONF = PositionF{ 0.0, 0.0, 0.0 };
 inline constexpr Size DEFAULT_SIZE = Size{ 1, 1, 1 };
+inline constexpr SizeF DEFAULT_SIZEF = SizeF{ 1.0, 1.0, 1.0 };
 inline constexpr Direction DEFAULT_DIRECTION = NO_DIRECTION;
 
+
+
+template<typename T, typename K>
 struct Transform
 {
+	using PositionType = T;
+	using SizeType = K;
+
 public:
 	// -- Variables -- //
-	Position position{ DEFAULT_POSITION };
-	Size size{ DEFAULT_SIZE };
+	PositionType position{ DEFAULT_POSITION };
+	SizeType size{ DEFAULT_SIZE };
 	Direction direction{ DEFAULT_DIRECTION };
 
-	constexpr Transform() :
-		position(DEFAULT_POSITION), size(DEFAULT_SIZE), direction(DEFAULT_DIRECTION)
-	{
-	}
-
-	constexpr Transform(const Position& position, const Size& size, const Direction& direction) :
+	constexpr Transform(const PositionType& position = DEFAULT_POSITION, const SizeType& size = DEFAULT_SIZE, const Direction& direction = DEFAULT_DIRECTION) :
 		position(position), size(size), direction(direction)
-	{
-	}
-
-	constexpr Transform(const Position& position, const Size& size) :
-		Transform(position, size, DEFAULT_DIRECTION)
-	{
-	}
-
-	constexpr Transform(const Position& position, const Direction& direction) :
-		Transform(position, DEFAULT_SIZE, direction)
-	{
-	}
-
-	constexpr Transform(const Size& size, const Direction& direction) :
-		Transform(DEFAULT_POSITION, size, direction)
-	{
-	}
-
-	constexpr Transform(const Position& position) :
-		Transform(position, DEFAULT_SIZE, DEFAULT_DIRECTION)
-	{
-	}
-
-	constexpr Transform(const Size& size) :
-		Transform(DEFAULT_POSITION, size, DEFAULT_DIRECTION)
-	{
-	}
-
-	constexpr Transform(const Direction& direction) :
-		Transform(DEFAULT_POSITION, DEFAULT_SIZE, direction)
 	{
 	}
 
@@ -821,6 +847,16 @@ public:
 		direction = other.direction;
 
 		return *this;
+	}
+
+	constexpr operator Transform<Position, Size>()
+	{
+		return Transform<Position, Size>(static_cast<Position>(position), static_cast<Size>(size), direction);
+	}
+
+	constexpr operator Transform<PositionF, SizeF>()
+	{
+		return Transform<PositionF, SizeF>(static_cast<PositionF>(position), static_cast<SizeF>(size), direction);
 	}
 };
 
@@ -883,31 +919,31 @@ namespace transforms
 			return std::vector<Position>
 			{
 				origin + Position(1, 0, -1),
-					origin + Position(1, 1, -1),
-					origin + Position(0, 1, -1),
-					origin + Position(-1, 1, -1),
-					origin + Position(-1, 0, -1),
-					origin + Position(-1, -1, -1),
-					origin + Position(0, -1, -1),
-					origin + Position(1, -1, -1),
+				origin + Position(1, 1, -1),
+				origin + Position(0, 1, -1),
+				origin + Position(-1, 1, -1),
+				origin + Position(-1, 0, -1),
+				origin + Position(-1, -1, -1),
+				origin + Position(0, -1, -1),
+				origin + Position(1, -1, -1),
 
-					origin + Position(1, 0, 0),
-					origin + Position(1, 1, 0),
-					origin + Position(0, 1, 0),
-					origin + Position(-1, 1, 0),
-					origin + Position(-1, 0, 0),
-					origin + Position(-1, -1, 0),
-					origin + Position(0, -1, 0),
-					origin + Position(1, -1, 0),
+				origin + Position(1, 0, 0),
+				origin + Position(1, 1, 0),
+				origin + Position(0, 1, 0),
+				origin + Position(-1, 1, 0),
+				origin + Position(-1, 0, 0),
+				origin + Position(-1, -1, 0),
+				origin + Position(0, -1, 0),
+				origin + Position(1, -1, 0),
 
-					origin + Position(1, 0, 1),
-					origin + Position(1, 1, 1),
-					origin + Position(0, 1, 1),
-					origin + Position(-1, 1, 1),
-					origin + Position(-1, 0, 1),
-					origin + Position(-1, -1, 1),
-					origin + Position(0, -1, 1),
-					origin + Position(1, -1, 1)
+				origin + Position(1, 0, 1),
+				origin + Position(1, 1, 1),
+				origin + Position(0, 1, 1),
+				origin + Position(-1, 1, 1),
+				origin + Position(-1, 0, 1),
+				origin + Position(-1, -1, 1),
+				origin + Position(0, -1, 1),
+				origin + Position(1, -1, 1)
 			};
 		}
 		else
@@ -915,16 +951,60 @@ namespace transforms
 			return std::vector<Position>
 			{
 				origin + Position(1, 0, 0),
-					origin + Position(1, 1, 0),
-					origin + Position(0, 1, 0),
-					origin + Position(-1, 1, 0),
-					origin + Position(-1, 0, 0),
-					origin + Position(-1, -1, 0),
-					origin + Position(0, -1, 0),
-					origin + Position(1, -1, 0)
+				origin + Position(1, 1, 0),
+				origin + Position(0, 1, 0),
+				origin + Position(-1, 1, 0),
+				origin + Position(-1, 0, 0),
+				origin + Position(-1, -1, 0),
+				origin + Position(0, -1, 0),
+				origin + Position(1, -1, 0)
 			};
 		}
 	}
+
+	inline std::vector<Position> get_surrounding_locations_above_or_below(Position origin, bool above = false, bool below = false)
+	{
+		std::vector<Position> positions;
+
+		positions.push_back(origin + Position(1, 0, 0));
+		positions.push_back(origin + Position(1, 1, 0));
+		positions.push_back(origin + Position(0, 1, 0));
+		positions.push_back(origin + Position(-1, 1, 0));
+		positions.push_back(origin + Position(-1, 0, 0));
+		positions.push_back(origin + Position(-1, -1, 0));
+		positions.push_back(origin + Position(0, -1, 0));
+		positions.push_back(origin + Position(1, -1, 0));
+
+		if (above)
+		{
+			positions.push_back(origin + Position(1, 0, 1));
+			positions.push_back(origin + Position(1, 1, 1));
+			positions.push_back(origin + Position(0, 1, 1));
+			positions.push_back(origin + Position(-1, 1, 1));
+			positions.push_back(origin + Position(-1, 0, 1));
+			positions.push_back(origin + Position(-1, -1, 1));
+			positions.push_back(origin + Position(0, -1, 1));
+			positions.push_back(origin + Position(1, -1, 1));
+		}
+
+		if (below)
+		{
+			positions.push_back(origin + Position(1, 0, -1));
+			positions.push_back(origin + Position(1, 1, -1));
+			positions.push_back(origin + Position(0, 1, -1));
+			positions.push_back(origin + Position(-1, 1, -1));
+			positions.push_back(origin + Position(-1, 0, -1));
+			positions.push_back(origin + Position(-1, -1, -1));
+			positions.push_back(origin + Position(0, -1, -1));
+			positions.push_back(origin + Position(1, -1, -1));
+		}
+		
+		return positions;
+	}
+
 }
+
+using TileTransform = Transform<Position, Size>;
+using PreciseTransform = Transform<PositionF, SizeF>;
 
 #endif // !LEMONADE_ENGINE_SRC_TRANSFORMS_H

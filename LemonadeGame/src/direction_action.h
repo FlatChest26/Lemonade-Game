@@ -19,18 +19,38 @@ public:
 
 	// -- Getters -- //
 
-	Position delta_pos() const { return Position(m_dx, m_dy, m_dz); }
-	Position destination() const { return Position(m_actor->posx() + m_dx, m_actor->posy() + m_dy, m_actor->posz() + m_dz); }
+	virtual bool check_action() override
+	{
+		if (!Action::check_action())
+			return false;
 
-	Coord destx() const { return m_actor->posx() + m_dx; }
-	Coord desty() const { return m_actor->posy() + m_dy; }
-	Coord destz() const { return m_actor->posz() + m_dz; }
+		return m_actor->has_movable();
+	}
+
+	Position delta_pos() const { return Position(m_dx, m_dy, m_dz); }
+	Position destination() const
+	{
+		if (!m_actor->has_movable())
+		{
+			CERR("Actor has no movable!" << m_actor->ID());
+			return Position();
+		}
+
+		return m_actor->get_movable()->pos() + delta_pos();
+	}
+
+	Coord destx() const { return destination().x; }
+	Coord desty() const { return destination().y; }
+	Coord destz() const { return destination().z; }
 };
 
 class BumpAction : public ActionWithDirection
 {
 public:
 	BumpAction(Entity* actor = nullptr, const Coord& dx = 0, const Coord& dy = 0, const Coord& dz = 0);
+	BumpAction(Entity* actor = nullptr, const Position& delta = {0, 0, 0}) :
+		BumpAction(actor, delta.x, delta.y, delta.z)
+	{}
 
 	virtual ActionResult perform() override;
 

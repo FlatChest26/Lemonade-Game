@@ -1,19 +1,21 @@
 #include "creature_soul.h"
-#include "creature.h"
+#include "entity.h"
 
 CreatureSoul::CreatureSoul(const initializer& init) :
-	m_ID(init.ID),
-	m_description(init.description),
-	m_name(init.name),
-	m_age(init.age),
-	m_gender(init.gender),
-	m_sexuality(init.sexuality),
-	m_sexual_position(init.sexual_position),
-	m_color(init.color)
+	m_ID(std::move(init.ID)),
+	m_description(std::move(init.description)),
+	m_name(std::move(init.name)),
+	m_gender(std::move(init.gender)),
+	m_color(std::move(init.color))
 {
 }
 
-Creature* CreatureSoul::get_physical_form() const
+void CreatureSoul::set_physical_form(Entity* form)
+{
+	m_physical_form = form;
+}
+
+Entity* CreatureSoul::get_physical_form() const
 {
 	return m_physical_form;
 }
@@ -23,6 +25,8 @@ bool CreatureSoul::has_physical_form() const
 	return get_physical_form() != nullptr;
 }
 
+
+/*
 bool CreatureSoul::can_be_attracted_to(CreatureSoul* other) const
 {
 	auto has_attraction = [&](SexualAttraction attraction)
@@ -39,24 +43,24 @@ bool CreatureSoul::can_be_attracted_to(CreatureSoul* other) const
 		return false;
 	}
 
-	/*
-		if( has_attraction( SexualAttraction::OPPOSITE ) )
-		{
-			return ( is_male() && other->is_female() ) || ( is_female() && other->is_male() );
-		}
-		if( has_attraction( SexualAttraction::SAME ) )
-		{
-			return ( is_male() && other->is_male() ) || ( is_female() && other->is_female() );
-		}
-		if( has_attraction( SexualAttraction::MALE ) )
-		{
-			return other->is_male();
-		}
-		if( has_attraction( SexualAttraction::FEMALE ) )
-		{
-			return other->is_female();
-		}
-	*/
+	
+	if( has_attraction( SexualAttraction::OPPOSITE ) )
+	{
+		return ( is_male() && other->is_female() ) || ( is_female() && other->is_male() );
+	}
+	if( has_attraction( SexualAttraction::SAME ) )
+	{
+		return ( is_male() && other->is_male() ) || ( is_female() && other->is_female() );
+	}
+	if( has_attraction( SexualAttraction::MALE ) )
+	{
+		return other->is_male();
+	}
+	if( has_attraction( SexualAttraction::FEMALE ) )
+	{
+		return other->is_female();
+	}
+	
 
 	if (has_attraction(SexualAttraction::NEUTER))
 	{
@@ -77,42 +81,20 @@ bool CreatureSoul::can_be_attracted_to(CreatureSoul* other) const
 
 	return false;
 }
+*/
 
 const Species* CreatureSoul::get_species() const
 {
-	if (auto creature = get_physical_form())
-		return creature->get_species();
+	if (auto entity = get_physical_form())
+		return entity->get_species();
 
 	return nullptr;
 }
 
-constexpr Noun CreatureSoul::species_noun() const
+Noun CreatureSoul::species_noun() const
 {
 	if (get_species())
 		return get_species()->noun;
 
 	return Noun();
-}
-
-Renderable CreatureSoul::get_renderable() const
-{
-	Renderable renderable;
-
-	if (get_species())
-		renderable = get_species()->renderable;
-
-	if (is_named())
-	{
-		renderable.glyph = nickname()[0];
-		if (get_sexual_position() & SexualPosition::SUB)
-		{
-			renderable.glyph = tolower(nickname()[0]);
-		}
-		else
-		{
-			renderable.glyph = toupper(nickname()[0]);
-		}
-	}
-
-	return renderable;
 }

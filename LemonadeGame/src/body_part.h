@@ -8,80 +8,114 @@
 #include "stat_values.h"
 #include "body_part_components.h"
 
-class Creature;
+#include "raw_master.h"
+
+class Entity;
 class Anatomy;
 struct BodyPartPlan;
 
+enum class BodyPartPosition
+{
+	CENTER,
+	SIDES,
+	FRONT,
+	BACK,
+	TOP,
+	BOTTOM,
+	LEFT,
+	RIGHT,
+	INSIDE,
+};
+
+enum class BodyPartRelativePosition
+{
+	INSIDE,
+	AROUND,
+
+	ABOVE,
+	BELOW,
+
+	IN_FRONT,
+	BEHIND,
+
+	SIDES,
+	BETWEEN,
+
+	LEFT,
+	RIGHT,
+};
+
+inline std::map<std::string, BodyPartPosition> AllBodyPartPositions
+{
+	{ "CENTER", BodyPartPosition::CENTER },
+	{ "SIDES", BodyPartPosition::SIDES },
+	{ "FRONT", BodyPartPosition::FRONT },
+	{ "BACK", BodyPartPosition::BACK },
+	{ "TOP", BodyPartPosition::TOP },
+	{ "BOTTOM", BodyPartPosition::BOTTOM },
+	{ "LEFT", BodyPartPosition::LEFT },
+	{ "RIGHT", BodyPartPosition::RIGHT },
+	{ "INSIDE", BodyPartPosition::INSIDE },
+};
+
+inline std::map<std::string, BodyPartRelativePosition> AllBodyPartRelativePosition
+{
+	{ "INSIDE", BodyPartRelativePosition::INSIDE },
+	{ "AROUND", BodyPartRelativePosition::AROUND },
+	{ "ABOVE", BodyPartRelativePosition::ABOVE },
+	{ "BELOW", BodyPartRelativePosition::BELOW },
+	{ "IN_FRONT", BodyPartRelativePosition::IN_FRONT },
+	{ "BEHIND", BodyPartRelativePosition::BEHIND },
+	{ "SIDES", BodyPartRelativePosition::SIDES },
+	{ "BETWEEN", BodyPartRelativePosition::BETWEEN },
+	{ "LEFT", BodyPartRelativePosition::LEFT },
+	{ "RIGHT", BodyPartRelativePosition::RIGHT },
+};
+
+
 class BodyPart : public Thing
 {
-public:
-	enum class Position
-	{
-		CENTER,
-		SIDES,
-		FRONT,
-		BACK,
-		TOP,
-		BOTTOM,
-		LEFT,
-		RIGHT,
-		INSIDE,
-	};
-
-	enum class RelativePosition
-	{
-		INSIDE,
-		AROUND,
-
-		ABOVE,
-		BELOW,
-
-		IN_FRONT,
-		BEHIND,
-
-		SIDES,
-		BETWEEN,
-
-		LEFT,
-		RIGHT,
-	};
-
 protected:
 
-	Creature* m_owner;
-	const BodyPartType* m_type;
+	Entity* m_owner;
+	RawMaster::Ref<BodyPartType> m_type;
 
 	ThingID m_ID;
 
 	double m_rel_size;
-	Position m_position;
+	BodyPartPosition m_position;
 
 	std::string m_prefix;
+
+	// Components //
 
 	std::unique_ptr<Allure> m_allure;
 
 public:
-	BodyPart(Creature* owner = nullptr, ThingID ID = "", const BodyPartType* type = nullptr, double rel_size = 25.0, BodyPart::Position position = BodyPart::Position::CENTER, std::string prefix = "");
+	BodyPart(Entity* owner = nullptr, ThingID ID = "", RawMaster::Ref<BodyPartType> type = nullptr, double rel_size = 25.0, BodyPartPosition position = BodyPartPosition::CENTER, std::string prefix = "");
+
+	constexpr bool is_body_part() const override { return true; }
+	constexpr BodyPart* as_body_part() override { return this; }
 
 	// -- Getters -- //
 
-	constexpr const BodyPartType* get_type() const { ASSERT(m_type, "Body part has no type"); return m_type; }
+	const BodyPartType* get_type() const { ASSERT(m_type, "Body part has no type"); return m_type.get(); }
 
-	virtual constexpr Creature* get_owner() const;
-	virtual constexpr Anatomy* get_anatomy() const;
+	Entity* get_owner() const;
+	Anatomy* get_anatomy() const;
 
 	// -- Thing -- //
 
-	constexpr BodyPartID ID() const override { return m_ID; }
+	BodyPartID ID() const override { return m_ID; }
 
-	constexpr Noun get_noun() const override { return get_type()->noun; }
-	constexpr Pronouns get_pronouns() const override { return pronouns::IT_ITS; }
+	Noun get_noun() const override { return m_type->noun; }
+	Pronouns get_pronouns() const override { return pronouns::IT_ITS; }
 
-	constexpr bool is_plural() const override { return get_type()->plural; }
+	bool is_plural() const override { return m_type->plural; }
 
-	constexpr BodyPartType::Category category() const { return get_type()->category; }
+	BodyPartType::Category category() const { return m_type->category; }
 
-	virtual constexpr std::string prefix() const override;
+	virtual std::string prefix() const override;
 
 	// -- Allure -- //
 
@@ -93,7 +127,7 @@ public:
 		if (!has_allure())
 			return 0;
 
-		return m_allure->lewdness * get_type()->base_allure.lewdness;
+		return m_allure->lewdness * m_type->base_allure.lewdness;
 	}
 
 	StatInt_t get_suggestiveness() const
@@ -101,7 +135,7 @@ public:
 		if (!has_allure())
 			return 0;
 
-		return m_allure->suggestiveness * get_type()->base_allure.suggestiveness;
+		return m_allure->suggestiveness * m_type->base_allure.suggestiveness;
 	}
 
 	StatInt_t get_kinkiness() const
@@ -109,7 +143,7 @@ public:
 		if (!has_allure())
 			return 0;
 
-		return m_allure->kinkiness * get_type()->base_allure.kinkiness;
+		return m_allure->kinkiness * m_type->base_allure.kinkiness;
 	}
 
 	StatInt_t get_beauty() const
@@ -117,74 +151,78 @@ public:
 		if (!has_allure())
 			return 0;
 
-		return m_allure->beauty * get_type()->base_allure.beauty;
+		return m_allure->beauty * m_type->base_allure.beauty;
 	}
 
 public:
 	// -- Flag Checks -- //
 
-	bool is_sensory() const { return get_type()->flags & BodyPartType::Flag::SENSORY; }
+	BodyPartType::Flag flags() const { return m_type->flags; }
 
-	bool can_choke() const { return get_type()->flags & BodyPartType::Flag::CHOKABLE; }
+	bool has_flag(BodyPartType::Flag flag) { return m_type->flags & flag; }
 
-	bool is_grasp() const { return get_type()->flags & BodyPartType::Flag::GRASP; }
-	bool is_limb() const { return get_type()->flags & BodyPartType::Flag::LIMB; }
-	bool is_stance() const { return get_type()->flags & BodyPartType::Flag::STANCE; }
+	bool is_sensory() const { return m_type->flags & BodyPartType::Flag::SENSORY; }
 
-	bool is_internal() const { return get_type()->flags & BodyPartType::Flag::INTERNAL; }
+	bool can_choke() const { return m_type->flags & BodyPartType::Flag::CHOKABLE; }
 
-	bool is_used_for_thought() const { return get_type()->flags & BodyPartType::Flag::THOUGHT; }
-	bool is_used_for_circulation() const { return get_type()->flags & BodyPartType::Flag::CIRCULATION; }
-	bool is_used_for_digestion() const { return get_type()->flags & BodyPartType::Flag::DIGESTION; }
+	bool is_grasp() const { return m_type->flags & BodyPartType::Flag::GRASP; }
+	bool is_limb() const { return m_type->flags & BodyPartType::Flag::LIMB; }
+	bool is_stance() const { return m_type->flags & BodyPartType::Flag::STANCE; }
 
-	bool is_used_to_eat() const { return get_type()->flags & BodyPartType::Flag::EAT; }
-	bool is_used_to_speak() const { return get_type()->flags & BodyPartType::Flag::SPEAK; }
+	bool is_internal() const { return m_type->flags & BodyPartType::Flag::INTERNAL; }
 
-	bool is_phallus() const { return get_type()->flags & BodyPartType::Flag::PHALLUS; }
-	bool is_orifice() const { return get_type()->flags & BodyPartType::Flag::ORIFICE; }
-	bool is_handle() const { return get_type()->flags & BodyPartType::Flag::HANDLE; }
-	bool is_cleavage() const { return get_type()->flags & BodyPartType::Flag::CLEAVAGE; }
+	bool is_used_for_thought() const { return m_type->flags & BodyPartType::Flag::THOUGHT; }
+	bool is_used_for_circulation() const { return m_type->flags & BodyPartType::Flag::CIRCULATION; }
+	bool is_used_for_digestion() const { return m_type->flags & BodyPartType::Flag::DIGESTION; }
 
-	bool is_lewd() const { return get_type()->flags & BodyPartType::Flag::LEWD; }
-	bool is_suggestive() const { return get_type()->flags & BodyPartType::Flag::SUGGESTIVE; }
-	bool is_kinky() const { return get_type()->flags & BodyPartType::Flag::KINKY; }
-	bool is_pretty() const { return get_type()->flags & BodyPartType::Flag::PRETTY; }
+	bool is_used_to_eat() const { return m_type->flags & BodyPartType::Flag::EAT; }
+	bool is_used_to_speak() const { return m_type->flags & BodyPartType::Flag::SPEAK; }
+
+	bool is_phallus() const { return m_type->flags & BodyPartType::Flag::PHALLUS; }
+	bool is_orifice() const { return m_type->flags & BodyPartType::Flag::ORIFICE; }
+	bool is_handle() const { return m_type->flags & BodyPartType::Flag::HANDLE; }
+	bool is_cleavage() const { return m_type->flags & BodyPartType::Flag::CLEAVAGE; }
+
+	bool is_lewd() const { return m_type->flags & BodyPartType::Flag::LEWD; }
+	bool is_suggestive() const { return m_type->flags & BodyPartType::Flag::SUGGESTIVE; }
+	bool is_kinky() const { return m_type->flags & BodyPartType::Flag::KINKY; }
+	bool is_pretty() const { return m_type->flags & BodyPartType::Flag::PRETTY; }
 
 public:
 
 	// -- Utilities -- //
 
-	static RelativePosition opposite_of(RelativePosition rel_pos)
+	static BodyPartRelativePosition opposite_of(BodyPartRelativePosition rel_pos)
 	{
 		switch (rel_pos)
 		{
-		case RelativePosition::INSIDE:
-			return RelativePosition::AROUND;
-		case RelativePosition::AROUND:
-			return RelativePosition::INSIDE;
+		case BodyPartRelativePosition::INSIDE:
+			return BodyPartRelativePosition::AROUND;
+		case BodyPartRelativePosition::AROUND:
+			return BodyPartRelativePosition::INSIDE;
 
-		case RelativePosition::ABOVE:
-			return RelativePosition::BELOW;
-		case RelativePosition::BELOW:
-			return RelativePosition::ABOVE;
+		case BodyPartRelativePosition::ABOVE:
+			return BodyPartRelativePosition::BELOW;
+		case BodyPartRelativePosition::BELOW:
+			return BodyPartRelativePosition::ABOVE;
 
-		case RelativePosition::IN_FRONT:
-			return RelativePosition::BEHIND;
-		case RelativePosition::BEHIND:
-			return RelativePosition::IN_FRONT;
+		case BodyPartRelativePosition::IN_FRONT:
+			return BodyPartRelativePosition::BEHIND;
+		case BodyPartRelativePosition::BEHIND:
+			return BodyPartRelativePosition::IN_FRONT;
 
-		case RelativePosition::SIDES:
-			return RelativePosition::BETWEEN;
-		case RelativePosition::BETWEEN:
-			return RelativePosition::SIDES;
+		case BodyPartRelativePosition::SIDES:
+			return BodyPartRelativePosition::BETWEEN;
+		case BodyPartRelativePosition::BETWEEN:
+			return BodyPartRelativePosition::SIDES;
 
-		case RelativePosition::LEFT:
-			return RelativePosition::RIGHT;
-		case RelativePosition::RIGHT:
-			return RelativePosition::LEFT;
+		case BodyPartRelativePosition::LEFT:
+			return BodyPartRelativePosition::RIGHT;
+		case BodyPartRelativePosition::RIGHT:
+			return BodyPartRelativePosition::LEFT;
 
 		default:
-			return RelativePosition::INSIDE;
+			return BodyPartRelativePosition::INSIDE;
 		}
 	}
 };

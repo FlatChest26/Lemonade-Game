@@ -1,7 +1,7 @@
 #include "world_state.h"
 #include "tile_map.h"
 #include "tile_type.h"
-#include "creature.h"
+#include "entity_builder.h"
 #include "game.h"
 #include "transforms.h"
 #include "game_states.h"
@@ -25,6 +25,11 @@ void WorldGameState::new_game()
 	m_world = std::make_unique<World>(this);
 	m_world->set_time(TimeDate{ .time_point = TimeUnit::from_hours(7.0), .day = 11, .month = 6, .year = 2025 });
 
+	// Create Tile Map
+	auto tile_map = std::make_unique<TileMap>(m_world.get());
+	Length road_width = 10;
+	Length sidewalk_width = 2;
+
 	// Create Camera
 	m_camera = std::make_unique<Camera>();
 
@@ -34,87 +39,38 @@ void WorldGameState::new_game()
 
 	// Create Creatures
 
-	/*
-	auto SnowSoul = new CreatureSoul(CreatureSoul::initializer{
-		.ID = "SNOW",
-		.name = {"Snow", "Snow Oaks"},
-		.age = 21,
-		.gender = gender::FEMBOY,
-		.sexuality = sexuality::PANSEXUAL,
-		.sexual_position = SexualPosition::SUB_SWITCH,
-		.description = "He is the cutest boy."
+	auto Player = EntityBuilder::create_creature
+	({
+		.soul = new CreatureSoul({
+			.ID = "PLAYER",
+			.name = {"Player", "Lemonade Person"},
+			.gender = gender::NON_SPECIFIC,
+			.description = "That is you."
+		}),
+		.species = RawMaster::get<Species>("HUMAN"),
+		.lifespan = static_cast<Age::age_t>(INFINITY),
+		.current_age = 18,
+		.body_mods = { RawMaster::get<BodyMod>("GirlCock")}
 	});
 
-	auto AdelineSoul = new CreatureSoul(CreatureSoul::initializer{
-		.ID = "ADELINE",
-		.name = {"Adeline", "Adeline Baudelaire"},
-		.age = 22,
-		.gender = gender::FEMININE,
-		.sexuality = sexuality::PANSEXUAL,
-		.sexual_position = SexualPosition::DOM_SWITCH,
-		.description = "She is the most devious succubus."
-	});
-
-	auto Snow = new Creature(Creature::initializer{
-		.soul = SnowSoul,
-		.species = human,
-		.body_mods = { body_mod::MaleParts },
-		.transform = { Position(7, 4, 0), DEFAULT_SIZE, NORTH },
-	});
-
-	auto Adeline = new Creature(Creature::initializer{
-		.soul = AdelineSoul,
-		.species = demon,
-		.body_mods = { body_mod::FemaleParts },
-		.transform = { Position(8, 4, 0), DEFAULT_SIZE, NORTH },
-	});
-
-	m_world->add_entity(std::unique_ptr<Creature>(Adeline));
-	m_world->add_entity(std::unique_ptr<Creature>(Snow));
-
-	*/
-
-	auto PlayerSoul = new CreatureSoul(CreatureSoul::initializer{
-		.ID = "PLAYER",
-		.name = {"Player", "Lemonade Person"},
-		.age = 24,
-		.gender = gender::NON_SPECIFIC,
-		.sexuality = sexuality::PANSEXUAL,
-		.sexual_position = SexualPosition::VERSE_SWITCH,
-		.description = "That is you."
-		});
-
-	auto Player = new Creature(Creature::initializer{
-		.soul = PlayerSoul,
-		.species = RawMaster::get_species("HUMAN"),
-		.body_mods = { body_mod::GirlCock },
-		.transform = { Position(0, 0, 0), DEFAULT_SIZE, NORTH },
-		});
-
-	m_player = m_world->add_entity(std::unique_ptr<Creature>(Player));
-
-	// Create Tile Map
-	auto tile_map = std::make_unique<TileMap>(m_world.get());
+	m_player = m_world->add_entity_at(std::unique_ptr<Entity>(Player), tile_map->get_width() - (road_width + sidewalk_width) - 5, 0, 0);
+	m_player->learn_name();
 
 	// Build Map
-	MapBuilder::set_floor(tile_map.get(), RawMaster::get_tile_type("TILE_GRASS"), 0);
-
-	// Add road
-	Length road_width = 6;
-	Length sidewalk_width = 2;
+	MapBuilder::set_floor(tile_map.get(), RawMaster::get<TileType>("TILE_GRASS"), 0);
 
 	MapBuilder::make_building(
 		tile_map.get(),
-		Position(0, tile_map->get_height() - (road_width + sidewalk_width), 0),
-		Size(tile_map->get_width(), road_width + sidewalk_width, 1),
-		RawMaster::get_tile_type("TILE_SIDEWALK")
+		Position(tile_map->get_width() - (road_width + sidewalk_width), 0, 0),
+		Size(road_width + sidewalk_width, tile_map->get_height(), 1),
+		RawMaster::get<TileType>("TILE_SIDEWALK")
 	);
 
 	MapBuilder::make_building(
 		tile_map.get(),
-		Position(0, tile_map->get_height() - (road_width), 0),
-		Size(tile_map->get_width(), road_width, 1),
-		RawMaster::get_tile_type("TILE_ROAD")
+		Position(tile_map->get_width() - (road_width), 0, 0),
+		Size(road_width, tile_map->get_height(), 1),
+		RawMaster::get<TileType>("TILE_ROAD")
 	);
 
 	// Add house
@@ -134,7 +90,7 @@ void WorldGameState::new_game()
 			"#.......#....#..#",
 			"#.......#######+#",
 			"#.......#.......#",
-			"##+#ooo##.......#",
+			"##+#[[[##.......#",
 			" .......#.......#",
 			" .......#.......#",
 			"        ##=====##",
@@ -143,21 +99,21 @@ void WorldGameState::new_game()
 
 	MapBuilder::ASCIIMap house_layout_floor2{
 		{
-			"VVVVVVVVVVVVV#oo#",
-			"VVVVVVVVVVVVVo>>#",
-			"##########ooo#>>#",
+			"VVVVVVVVVVVVV#[[#",
+			"VVVVVVVVVVVVV[>>[",
+			"##########[[[#>>#",
+			"#.......#.......[",
+			"#.......+.......[",
 			"#.......#.......#",
-			"#.......+.......#",
-			"#.......#.......o",
-			"#########.......o",
-			"#....#..........o",
-			"#....#..........#",
-			"#....#..#####+###",
+			"#########.......[",
+			"#....#..........[",
+			"[....#..........#",
+			"[....#..#####+###",
 			"#....+..#.......#",
 			"##+######.......#",
 			"#..#....+.......#",
 			"#..#....#.......#",
-			"##########oo#oo##",
+			"##########[[#[[##",
 			"VVVVVVVVVVVVVVVVV",
 			"VVVVVVVVVVVVVVVVV",
 			"        VVVVVVVVV",
@@ -199,6 +155,9 @@ void WorldGameState::new_game()
 
 	// Create AI Manger
 	m_ai_manager = std::make_unique<AIManager>(this);
+	m_ai_manager->set_sidewalk_start(Position(tile_map->get_width() - (road_width + sidewalk_width), 0, 0));
+	m_ai_manager->set_sidewalk_end(Position(tile_map->get_width() - (road_width + sidewalk_width), tile_map->get_height() - 2, 0));
+	m_ai_manager->set_sidewalk_width(sidewalk_width);
 
 	for (const auto& entity : m_world->get_entities())
 	{
@@ -214,7 +173,7 @@ void WorldGameState::new_game()
 	m_world->set_tile_map(std::move(tile_map));
 
 	// Update things
-	m_camera_focus = Position(m_world->get_tile_map()->get_width() / 2, m_world->get_tile_map()->get_height() / 2, m_player->posz());
+	m_camera_focus = Position(m_world->get_tile_map()->get_width() / 2, m_world->get_tile_map()->get_height() / 2, m_player->get_movable()->posz());
 
 	// Create Input Handler
 	handle_input_result(InputResult{ new PlayerInputHandler() });
@@ -222,9 +181,6 @@ void WorldGameState::new_game()
 
 void WorldGameState::update(double delta_time)
 {
-	if (m_tick_speed == TickSpeed::TURN_BASED)
-		return;
-
 	TimeUnit base_speed = TimeUnit::from_seconds(delta_time * 6);
 	int step_count = 0;
 
@@ -256,6 +212,17 @@ void WorldGameState::update(double delta_time)
 	{
 		step(base_speed);
 		step_count--;
+	}
+
+	for (auto& entity : m_world->get_entities())
+	{
+		auto prev = entity->is_flashing();
+		entity->set_flag_to(EntityFlag::IS_FLASHING, entity->should_flash());
+
+		if (prev != entity->is_flashing())
+		{
+			if (auto game = get_game()) game->request_screen_update();
+		}
 	}
 }
 
@@ -294,15 +261,20 @@ void WorldGameState::step(TimeUnit time_delta)
 		m_ai_manager->step(time_delta);
 	}
 
+	if (m_player->should_remove())
+	{
+		m_player = nullptr;
+	}
+
 	auto game_settings = get_game_settings();
 
 	if (game_settings.fixed_camera)
 	{
-		update_camera(Position(m_camera_focus.x, m_camera_focus.y, m_player ? m_player->posz() : m_camera_focus.z));
+		update_camera(Position(m_camera_focus.x, m_camera_focus.y, m_player ? m_player->get_movable()->posz() : m_camera_focus.z));
 	}
 	else
 	{
-		update_camera(m_player ? m_player->pos() : m_camera_focus);
+		update_camera(m_player ? static_cast<Position>(m_player->get_movable()->pos()) : m_camera_focus);
 	}
 
 	if (m_player)
@@ -312,7 +284,7 @@ void WorldGameState::step(TimeUnit time_delta)
 		{
 			if (auto tile_map = m_world->get_tile_map())
 			{
-				tile_map->compute_fov(m_player->posx(), m_player->posy(), m_player->posz(), m_player->view_range());
+				tile_map->compute_fov(m_player->get_movable()->posx(), m_player->get_movable()->posy(), m_player->get_movable()->posz(), m_player->view_range());
 			}
 		}
 	}
@@ -394,7 +366,7 @@ void WorldGameState::handle_input_result(InputResult result)
 {
 	if (result.type == InputResult::Type::Action /*&& get_run_speed() == runspeed_flag::TURN_BASED*/)
 	{
-		if (result.next_action)
+		if (result.next_action && result.next_action->check_action())
 		{
 			std::unique_ptr<Action> new_action = std::move(result.next_action);
 

@@ -1,8 +1,8 @@
 #include "body_part.h"
 #include "anatomy.h"
-#include "creature.h"
+#include "entity.h"
 
-BodyPart::BodyPart(Creature* owner, ThingID ID, const BodyPartType* type, double rel_size, Position position, std::string prefix) :
+BodyPart::BodyPart(Entity* owner, ThingID ID, RawMaster::Ref<BodyPartType> type, double rel_size, BodyPartPosition position, std::string prefix) :
 	m_owner(owner), m_ID(ID), m_type(type), m_rel_size(rel_size), m_position(position), m_prefix(prefix)
 {
 	if (is_lewd() || is_suggestive() || is_kinky() || is_pretty())
@@ -11,12 +11,12 @@ BodyPart::BodyPart(Creature* owner, ThingID ID, const BodyPartType* type, double
 	}
 }
 
-constexpr Creature* BodyPart::get_owner() const
+Entity* BodyPart::get_owner() const
 {
 	return m_owner;
 }
 
-constexpr Anatomy* BodyPart::get_anatomy() const
+Anatomy* BodyPart::get_anatomy() const
 {
 	if (m_owner && m_owner->get_anatomy())
 	{
@@ -25,7 +25,7 @@ constexpr Anatomy* BodyPart::get_anatomy() const
 	return nullptr;
 }
 
-constexpr std::string BodyPart::prefix() const
+std::string BodyPart::prefix() const
 {
 	return m_prefix;
 }

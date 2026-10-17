@@ -50,6 +50,14 @@ struct TimeUnit
 		miliseconds += other.miliseconds;
 	}
 
+	void subtract(TimeUnit other)
+	{
+		if (other.miliseconds > miliseconds)
+			miliseconds = 0;
+		else
+			miliseconds -= other.miliseconds;
+	}
+
 	void print_time_24_hr() const
 	{
 		TimeUnit_t display_hours = TimeUnit_t(total_hours()) % 24;
@@ -93,7 +101,7 @@ struct TimeUnit
 	template<typename U>
 	constexpr TimeUnit& operator=(const U& other)
 	{
-		miliseconds = static_cast<U>(other.miliseconds);
+		miliseconds = static_cast<U>(other);
 		return *this;
 	}
 

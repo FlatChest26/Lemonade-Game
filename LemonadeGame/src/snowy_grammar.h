@@ -57,16 +57,23 @@ inline constexpr std::string capitalize(std::string str)
 		return str;
 	}
 
-	str[0] = toupper(str[0]);
+	str[0] = std::toupper(str[0]);
 
 	return str;
 }
 
-constexpr std::string a(std::string noun) { return "a " + noun; }
-constexpr std::string A(std::string noun) { return capitalize(a(noun)); }
+namespace snowy::grammar
+{
+	inline std::vector<char> vowels { 'a', 'e', 'i', 'o', 'u' };
 
-constexpr std::string an(std::string noun) { return a(noun); }
-constexpr std::string An(std::string noun) { return A(noun); }
+	extern std::string a(std::string noun);
+	inline std::string A(std::string noun) { return capitalize(a(noun)); }
+
+	inline std::string an(std::string noun) { return a(noun); }
+	inline std::string An(std::string noun) { return A(noun); }
+
+	
+}
 
 struct Noun
 {
@@ -126,6 +133,15 @@ struct Noun
 	}
 };
 
+namespace snowy::grammar
+{
+	extern std::string a(Noun noun, bool plural = false);
+	inline std::string A(Noun noun, bool plural = false) { return capitalize(a(noun, plural)); }
+
+	inline std::string an(Noun noun, bool plural = false) { return a(noun, plural); }
+	inline std::string An(Noun noun, bool plural = false) { return A(noun, plural); }
+}
+
 namespace std
 {
 	inline constexpr string to_string(Noun noun) { return noun.singular; }
@@ -133,13 +149,70 @@ namespace std
 
 struct Name
 {
-	const char* nickname = "";
-	const char* full_name{ nickname };
+	std::string nickname = "";
+	std::string full_name{ nickname };
 
-	constexpr operator const char* () const { return nickname; }
+	constexpr operator const char* () const { return nickname.c_str(); }
 	constexpr operator std::string() const { return nickname; }
 
 	constexpr bool empty() const { return nickname[0] == '\0' && full_name[0] == '\0'; }
+
+	static Name from_json(const json& j)
+	{
+		Name n;
+
+		if (j.is_string())
+		{
+			n.nickname = j.get<std::string>();
+			n.full_name = j.get<std::string>();
+		}
+		else if (j.is_array() && j.size() > 0)
+		{
+			if (j.at(0).is_string())
+			{
+				n.nickname = j.at(0).get<std::string>();
+			}
+
+			if (j.size() > 1 && j.at(1).is_string())
+			{
+				n.full_name = j.at(1).get<std::string>();
+			}
+			else
+			{
+				n.full_name = n.nickname;
+			}
+		}
+		else if (j.is_structured())
+		{
+			if (j.contains("nickname"))
+			{
+				if (!j.at("nickname").is_string())
+				{
+					CERR("Invalid 'nickname' field in noun JSON object: " << j);
+					n.nickname = "<invalid nickname>";
+				}
+				else
+				{
+					n.nickname = j.at("nickname").get<std::string>();
+				}
+			}
+
+			if (j.contains("full_name"))
+			{
+				if (!j.at("full_name").is_string())
+				{
+					CERR("Invalid 'full_name' field in noun JSON object: " << j);
+					n.full_name = "<invalid full name>";
+				}
+				else
+				{
+					n.full_name = j.at("full_name").get<std::string>();
+				}
+			}
+		}
+		return n;
+	}
+
 };
 
 namespace std
@@ -151,11 +224,68 @@ struct Age
 {
 	using age_t = short;
 
-	age_t physical_age;
+	age_t physical_age{ 18 };
 	age_t chronological_age{ physical_age };
 
 	constexpr bool operator==(Age other) const { return physical_age == other.physical_age && chronological_age == other.chronological_age; }
 	constexpr operator age_t() const { return physical_age; }
+
+	static Age from_json(const json& j)
+	{
+		Age a;
+
+		if (j.is_number())
+		{
+			a.physical_age = j.get<age_t>();
+			a.chronological_age = j.get<age_t>();
+		}
+		else if (j.is_array() && j.size() > 0)
+		{
+			if (j.at(0).is_number())
+			{
+				a.physical_age = j.get<age_t>();
+			}
+
+			if (j.size() > 1 && j.at(1).is_number())
+			{
+				a.chronological_age = j.at(1).get<age_t>();
+			}
+			else
+			{
+				a.chronological_age = a.physical_age;
+			}
+		}
+		else if (j.is_structured())
+		{
+			if (j.contains("physical_age"))
+			{
+				if (!j.at("physical_age").is_number())
+				{
+					CERR("Invalid 'physical_age' field in noun JSON object: " << j);
+					a.physical_age = 18;
+				}
+				else
+				{
+					a.physical_age = j.at("physical_age").get<age_t>();
+				}
+			}
+
+			if (j.contains("chronological_age"))
+			{
+				if (!j.at("chronological_age").is_number())
+				{
+					CERR("Invalid 'chronological_age' field in noun JSON object: " << j);
+					a.chronological_age = 18;
+				}
+				else
+				{
+					a.chronological_age = j.at("chronological_age").get<age_t>();
+				}
+			}
+		}
+
+		return a;
+	}
 };
 
 struct Pronouns
@@ -234,6 +364,8 @@ namespace pronouns
 struct Gender
 {
 	Noun noun;
+	Noun young_noun; 
+
 	Pronouns pronouns;
 
 	bool is_plural = false;
@@ -252,6 +384,14 @@ struct Gender
 
 IS_FLAG_ENUM(Gender::type)
 
+inline std::map<std::string, Gender::type> AllGenderTypes{
+	{ "NEUTER",		Gender::type::NEUTER	},
+	{ "EPICENE",	Gender::type::EPICENE	},
+	{ "MASCULINE",	Gender::type::MASCULINE },
+	{ "FEMININE",	 Gender::type::FEMININE },
+
+};
+
 namespace gender
 {
 	inline Gender NEUTER{
@@ -264,6 +404,7 @@ namespace gender
 
 	inline Gender NON_SPECIFIC{
 		.noun = {"person", "people"},
+		.young_noun = { "young person", "young people" },
 		.pronouns = pronouns::THEY_THEM,
 		.is_plural = false,
 		.uses_noun = false,
@@ -272,6 +413,7 @@ namespace gender
 
 	inline Gender MASCULINE{
 		.noun = {"man", "men"},
+		.young_noun = { "boy", "boys" },
 		.pronouns = pronouns::HE_HIM,
 		.is_plural = false,
 		.uses_noun = true,
@@ -280,15 +422,8 @@ namespace gender
 
 	inline Gender FEMININE{
 		.noun = {"woman", "women"},
+		.young_noun = { "girl", "girls" },
 		.pronouns = pronouns::SHE_HER,
-		.is_plural = false,
-		.uses_noun = true,
-		.gender_type = Gender::type::FEMININE
-	};
-
-	inline Gender FEMBOY{
-		.noun = {"femboy", "femboys"},
-		.pronouns = pronouns::HE_HIM,
 		.is_plural = false,
 		.uses_noun = true,
 		.gender_type = Gender::type::FEMININE
@@ -386,49 +521,42 @@ IS_FLAG_ENUM(SexualPosition)
 
 struct GrammarObject
 {
-	virtual constexpr Noun get_noun() const { return Noun{ "grammar object", "grammar objects" }; }
-	virtual constexpr Name get_name() const { return Name(); }
-	virtual constexpr Pronouns get_pronouns() const { return pronouns::IT_ITS; }
+	virtual Noun get_noun() const { return Noun{ "grammar object", "grammar objects" }; }
+	virtual Name get_name() const { return Name(); }
+	virtual Pronouns get_pronouns() const { return pronouns::IT_ITS; }
 
-	constexpr std::string singular_noun() const { return get_noun().singular; }
-	constexpr std::string plural_noun() const { return get_noun().plural; }
+	std::string singular_noun() const { return get_noun().singular; }
+	std::string plural_noun() const { return get_noun().plural; }
 
-	constexpr bool is_named() const { return !get_name().empty(); }
+	bool is_named() const { return !get_name().empty(); }
 
-	constexpr std::string nickname() const
+	std::string nickname() const
 	{
 		if (is_named())
 			return prefix() + get_name().nickname + suffix();
 		return prefix() + singular_noun() + suffix();
 	}
 
-	constexpr std::string full_name() const
+	std::string full_name() const
 	{
 		if (is_named())
 			return prefix() + get_name().full_name + suffix();
 		return prefix() + singular_noun() + suffix();
 	}
 
-	constexpr std::string they() const { return get_pronouns().subjective; }
-	constexpr std::string them() const { return get_pronouns().objective; }
-	constexpr std::string their() const { return get_pronouns().determiner; }
-	constexpr std::string theirs() const { return get_pronouns().independent_possessive; }
-	constexpr std::string themselves() const { return get_pronouns().reflexive; }
+	std::string they() const { return get_pronouns().subjective; }
+	std::string them() const { return get_pronouns().objective; }
+	std::string their() const { return get_pronouns().determiner; }
+	std::string theirs() const { return get_pronouns().independent_possessive; }
+	std::string themselves() const { return get_pronouns().reflexive; }
 
-	virtual constexpr bool is_plural() const { return get_noun().always_plural; }
-	virtual constexpr bool is_pronouns_plural() const { return get_pronouns().acts_plural; }
+	virtual bool is_plural() const { return get_noun().always_plural; }
+	virtual bool is_pronouns_plural() const { return get_pronouns().acts_plural; }
 
-	virtual constexpr std::string prefix() const { return ""; }
-	virtual constexpr std::string suffix() const { return ""; }
+	virtual std::string prefix() const { return ""; }
+	virtual std::string suffix() const { return ""; }
 };
 
-namespace std
-{
-	inline constexpr string to_string(const GrammarObject& T) { return T.nickname(); }
-
-	template<typename GramObj>
-	inline constexpr string to_string(const GramObj& T) { return T.nickname(); }
-}
 
 inline constexpr std::string possessive(const GrammarObject& T) { return T.nickname() + "'s"; }
 inline constexpr std::string Possessive(const GrammarObject& T) { return capitalize(possessive(T)); }

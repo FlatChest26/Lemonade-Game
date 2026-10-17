@@ -3,32 +3,36 @@
 #ifndef LEMONADE_GAME_SRC_NPC_GENERATOR_H
 #define LEMONADE_GAME_SRC_NPC_GENERATOR_H
 
-#include "creature.h"
+#include "entity.h"
 #include "time_units.h"
 #include "transforms.h"
+#include "snowy_rng.h"
 
 #include <memory>
 
+class AIManager;
 class WorldGameState;
 class World;
 
 class NPCGenerator
 {
 protected:
-	WorldGameState* m_owner;
+	AIManager* m_owner{ nullptr };
+	int m_npc_count{ 0 };
+	
 
-	TimeUnit m_time_since_spawned_NPC{};
-	TimeUnit m_time_until_next_NPC{};
 public:
-	NPCGenerator(WorldGameState* owner);
+	NPCGenerator(AIManager* owner);
 
-	WorldGameState* get_world_game_state() const;
+	AIManager* get_ai_manager() const;
+	WorldGameState* get_world_state() const;
 	World* get_world() const;
+
 
 public:
 	// -- Utilities -- //
 
-	std::unique_ptr<Creature> generate_npc_at(Position pos) const;
+	Entity* generate_npc();
 };
 
 #endif // !LEMONADE_GAME_SRC_NPC_GENERATOR_H

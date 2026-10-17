@@ -95,28 +95,41 @@ void WorldRenderer::render_entities(RenderParams params) const
 
 void WorldRenderer::render_entity(RenderParams params, const Entity* entity) const
 {
-	if (entity->is_hidden())
+	if (!entity->has_movable())
+	{
 		return;
+	}
 
-	if (!entity->is_player() && params.use_fov && !(get_player()->can_see(entity)))
+	if (entity->is_hidden() || entity->is_flashing())
+	{
 		return;
+	}
+
+	if (params.use_fov && !entity->is_visible_to_player())
+	{
+		return;
+	}
 
 	auto tile_map = get_tile_map();
 
-	int world_x{ entity->posx() }, world_y{ entity->posy() }, world_z{ entity->posz() };
+	int world_x, world_y, world_z;
+	std::tie(world_x, world_y, world_z) = entity->get_movable()->pos().as_tuple();
+
 	int draw_x{ world_x }, draw_y{ world_y }, depth{ 0 };
 
 	if (auto& camera = params.camera)
 	{
 		if (!camera->in_view(world_x, world_y, world_z))
+		{
 			return;
+		}
 
 		std::tie(draw_x, draw_y, depth) = camera->get_screen(world_x, world_y, world_z).as_tuple();
 	}
 
 	if (params.use_fov)
 	{
-		if (!tile_map->is_visible(world_x, world_y, world_z))
+		if (!tile_map->is_visible(world_x, world_y, world_z) && entity->has_been_seen_by_player())
 		{
 			std::tie(world_x, world_y, world_z) = entity->get_last_seen_location().as_tuple();
 		}
@@ -126,7 +139,7 @@ void WorldRenderer::render_entity(RenderParams params, const Entity* entity) con
 	color_t draw_fg{};
 	color_t draw_bg{};
 
-	for (const auto& [offset_x, offset_y, offset_z] : entity->get_offsets()) // In the case of drawing an entity larger than 1x1x1
+	for (const auto& [offset_x, offset_y, offset_z] : entity->get_movable()->get_offsets()) // In the case of drawing an entity larger than 1x1x1
 	{
 		draw_glyph = entity->glyph();
 		draw_fg = entity->fg();
@@ -157,14 +170,14 @@ void WorldRenderer::render_entity(RenderParams params, const Entity* entity) con
 		{
 			if (auto world = get_world())
 			{
-				if (auto tile = world->get_tile(entity->pos()))
+				if (auto tile = world->get_tile(entity->get_movable()->pos()))
 				{
 					if (tile->has_ceiling())
 					{
 						continue;
 					}
 				}
-				if (auto tile_above = world->get_tile(entity->posx(), entity->posy(), entity->posz() + 1))
+				if (auto tile_above = world->get_tile(entity->get_movable()->pos() + Position(0, 0, 1)))
 				{
 					if (tile_above->has_floor())
 					{
@@ -172,6 +185,7 @@ void WorldRenderer::render_entity(RenderParams params, const Entity* entity) con
 					}
 				}
 			}
+
 			draw_glyph = DISTANT_DOT;
 		}
 

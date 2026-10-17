@@ -11,6 +11,7 @@ using ThingID = std::string;
 
 class CreatureSoul;
 class TileType;
+class BodyPart;
 
 /* An abstraction of a "thing" that can be represented in the game. A grammar object with some visual presence. */
 class Thing : public GrammarObject
@@ -24,7 +25,7 @@ public:
 	// -- Getters -- //
 
 	virtual ThingID ID() const { return "THING"; }
-	virtual std::string description() const { return std::string("This is ") + a(get_noun().singular); }
+	virtual std::string description() const { return std::string("This is ") + snowy::grammar::a(get_noun().singular); }
 
 	// Renderable //
 
@@ -36,11 +37,14 @@ public:
 
 	// -- Type Checks -- //
 
-	virtual constexpr bool is_creature() const { return false; }
-	virtual constexpr CreatureSoul* as_creature() { return nullptr; }
+	virtual constexpr bool is_creature_soul() const { return false; }
+	virtual constexpr CreatureSoul* as_creature_soul() { return nullptr; }
 
 	virtual constexpr bool is_tile_type() const { return false; }
 	virtual constexpr TileType* as_tile_type() { return nullptr; }
+
+	virtual constexpr bool is_body_part() const { return false; }
+	virtual constexpr BodyPart* as_body_part() { return nullptr; }
 
 	// Misc //
 

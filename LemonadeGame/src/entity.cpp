@@ -6,22 +6,57 @@
 
 #include "action.h"
 
-Entity::Entity(Thing* thing, Transform transform, World* world, EntityFlags entity_flags) :
-	Movable(transform), m_thing(nullptr), m_entity_flags(entity_flags)
+Entity::Entity(Thing* thing, EntityFlag entity_flags) :
+	m_thing(thing), m_flags(entity_flags)
 {
-	m_thing.reset(thing);
-
-	if (world)
-		set_location(world);
-
-	if (m_entity_flags & EntityFlag::CAN_HOLD_ITEMS)
-	{
-		setup_inventory(default_inventory_slots());
-	}
 }
 
 Entity::~Entity()
 {
+	// COUT(get_display_name() << " killed in action!");
+}
+
+TimeUnit Entity::speed() const
+{
+	if (auto gait = get_gait())
+	{
+		return TimeUnit::from_seconds(gait->get_current_speed());
+	}
+	else if (is_player())
+	{
+		return TimeUnit::from_seconds(0.7);
+	}
+	else if (is_creature())
+	{
+		return TimeUnit::from_seconds(1.2);
+	}
+
+	return TimeUnit::from_seconds(1.0f);
+}
+
+int Entity::view_range() const
+{
+	if (is_creature())
+	{
+		return 32;
+	}
+
+	return 0;
+}
+
+size_t Entity::default_inventory_slots() const
+{
+	if (m_anatomy)
+	{
+		return m_anatomy->count_body_parts_with_flag(BodyPartType::Flag::GRASP);
+	}
+
+	return 1;
+}
+
+size_t Entity::inventory_size() const
+{
+	return 1;
 }
 
 Inventory* Entity::get_holder_inventory() const
@@ -46,7 +81,7 @@ World* Entity::get_world() const
 		return holder->get_world();
 	}
 
-	CERR("No world holder or entity holder found on entity " << m_thing->ID());
+	CERR("No world holder or entity holder found on entity " << ID());
 
 	return nullptr;
 }
@@ -121,6 +156,7 @@ TileMap* Entity::get_tile_map() const
 	return nullptr;
 }
 
+
 bool Entity::operator==(Entity other)
 {
 	return ID() == other.ID();
@@ -135,16 +171,6 @@ bool Entity::is_player() const
 	return false;
 }
 
-bool Entity::can_be_held() const
-{
-	return m_entity_flags & EntityFlag::CAN_BE_HELD;
-}
-
-bool Entity::can_hold_items() const
-{
-	return m_entity_flags & EntityFlag::CAN_HOLD_ITEMS;
-}
-
 bool Entity::set_location(World* world)
 {
 	if (auto holder = get_entity_holder())
@@ -155,6 +181,107 @@ bool Entity::set_location(World* world)
 	m_location = world;
 
 	return true;
+}
+
+void Entity::add_soul(CreatureSoul* soul)
+{
+	soul->set_physical_form(this);
+	m_thing.reset(soul);
+
+	add_flag(EntityFlag::ANIMATE);
+}
+
+
+std::string Entity::get_display_name() const
+{
+	if (is_name_known())
+	{
+		return full_name();
+	}
+
+	Noun display_noun = get_noun();
+
+	if (has_soul() && get_soul()->get_gender().uses_noun)
+	{
+		Noun gender_noun = get_soul()->gender_noun();
+
+		bool species_mention = false;
+
+		if (has_living())
+		{
+			if (get_living()->is_young())
+			{
+				if (has_species() && get_species()->gendered_nouns.has_immature_gendered_noun(get_soul()->get_gender()))
+				{
+					gender_noun = get_species()->gendered_nouns.get_immature_gendered_noun(get_soul()->get_gender());
+					species_mention = true;
+				}
+				else
+				{
+					gender_noun = get_soul()->young_gender_noun();
+				}
+			}
+			else
+			{
+				if (has_species() && get_species()->gendered_nouns.has_mature_gendered_noun(get_soul()->get_gender()))
+				{
+					gender_noun = get_species()->gendered_nouns.get_mature_gendered_noun(get_soul()->get_gender());
+					species_mention = true;
+				}
+				else
+				{
+					gender_noun = get_soul()->gender_noun();
+				}
+			}
+		}
+
+		if (species_mention || (has_species() && get_species()->is_mundane()))
+		{
+			display_noun = gender_noun;
+		}
+		else
+		{
+			display_noun.singular += " " + gender_noun.singular;
+		}
+	}
+
+
+	return snowy::grammar::a(display_noun);
+}
+
+constexpr Renderable Entity::get_renderable() const
+{
+	Renderable renderable{ '?', color::get("white"), color::get("black") };
+
+	if (get_thing())
+	{
+		renderable = get_thing()->get_renderable();
+	}
+
+	if (has_species())
+	{
+		renderable = get_species()->renderable;
+	}
+
+	if (is_named() && is_name_known())
+	{
+		renderable.glyph = nickname()[0];
+		if (has_living() && get_living()->is_young())
+		{
+			renderable.glyph = tolower(nickname()[0]);
+		}
+		else
+		{
+			renderable.glyph = toupper(nickname()[0]);
+		}
+	}
+
+	if (has_soul())
+	{
+		renderable.fg = get_soul()->fg();
+	}
+
+	return renderable;
 }
 
 bool Entity::set_location(Entity* entity)
@@ -172,30 +299,17 @@ bool Entity::set_location(Entity* entity)
 	return false;
 }
 
-bool Entity::is_map_bound() const
-{
-	return m_entity_flags & EntityFlag::IS_MAP_BOUND;
-}
-
-bool Entity::can_collide() const
-{
-	return m_entity_flags & EntityFlag::CAN_COLLIDE;
-}
-
-bool Entity::is_blocking() const
-{
-	return m_entity_flags & EntityFlag::IS_BLOCKING;
-}
-
-bool Entity::can_fall() const
-{
-	return m_entity_flags & EntityFlag::CAN_FALL;
-}
-
-bool Entity::is_visible() const
+bool Entity::is_visible_to_player() const
 {
 	if (is_hidden())
+	{
 		return false;
+	}
+
+	if (is_player())
+	{
+		return true;
+	}
 
 	if (auto player = get_player())
 	{
@@ -205,44 +319,13 @@ bool Entity::is_visible() const
 	return false;
 }
 
-bool Entity::is_hidden() const
-{
-	if (m_hidden)
-		return true;
-
-	if (m_is_flashing)
-		return true;
-
-	return false;
-}
-
-bool Entity::has_field_of_view() const
-{
-	return m_entity_flags & EntityFlag::HAS_FOV;
-}
-
-bool Entity::is_animate() const
-{
-	return m_entity_flags & EntityFlag::ANIMATE;
-}
-
-bool Entity::fixed_in_place() const
-{
-	return m_entity_flags & EntityFlag::FIXED_IN_PLACE;
-}
-
-bool Entity::is_transparent() const
-{
-	return m_entity_flags & EntityFlag::IS_TRANSPARENT;
-}
-
-bool Entity::is_opaque() const
-{
-	return !is_transparent();
-}
-
 bool Entity::is_on_floor() const
 {
+	if (!has_movable())
+	{
+		return false;
+	}
+
 	auto world = get_world();
 	if (!world)
 	{
@@ -250,7 +333,7 @@ bool Entity::is_on_floor() const
 		return true;
 	}
 
-	auto tile = world->get_tile(pos());
+	auto tile = world->get_tile(get_movable()->pos());
 
 	if (!tile)
 	{
@@ -265,7 +348,7 @@ bool Entity::is_on_floor() const
 
 	if (auto world = get_world())
 	{
-		if (world->is_blocked(posx(), posy(), posz() - 1, this, -1))
+		if (world->is_blocked(get_movable()->posx(), get_movable()->posy(), get_movable()->posz() - 1, this, -1))
 		{
 			return true;
 		}
@@ -333,6 +416,11 @@ void Entity::remove_from_inventory(Entity* entity)
 
 bool Entity::queue_action(std::unique_ptr<Action> action)
 {
+	if (!action->check_action())
+	{
+		return false;
+	}
+
 	if (!can_queue_action())
 	{
 		return false;
@@ -408,11 +496,6 @@ void Entity::complete_action()
 	}
 }
 
-void Entity::update_last_seen()
-{
-	m_last_seen_location = pos();
-}
-
 bool Entity::can_see(const Coord& x, const Coord& y, const Coord& z) const
 {
 	if (is_player())
@@ -424,9 +507,9 @@ bool Entity::can_see(const Coord& x, const Coord& y, const Coord& z) const
 	}
 	else
 	{
-		int dx = posx() - x;
-		int dy = posy() - y;
-		int dz = posz() - z;
+		int dx = get_movable()->posx() - x;
+		int dy = get_movable()->posy() - y;
+		int dz = get_movable()->posz() - z;
 
 		if ((dx * dx) + (dy * dy) + (dz * dz) < static_cast<Coord>(pow(view_range(), 2)))
 			return true;
@@ -440,7 +523,7 @@ bool Entity::can_see(const Entity* entity) const
 	if (entity->is_hidden())
 		return false;
 
-	for (const auto& [px, py, pz] : entity->get_points())
+	for (const auto& [px, py, pz] : entity->get_movable()->get_points())
 	{
 		if (can_see(px, py, pz))
 			return true;
@@ -460,26 +543,29 @@ bool Entity::has_seen(const Coord& x, const Coord& y, const Coord& z) const
 	return false;
 }
 
-bool Entity::flash()
+bool Entity::should_flash()
 {
-	if (m_hidden && being_held())
+	if (being_held() || is_hidden())
+	{
 		return false;
+	}
 
 	if (auto world = get_world())
 	{
-		auto blocking = world->get_entities_at(pos());
-		if (blocking.size() < 2)
-			return false;
+		auto blocking = world->get_entities_at(get_movable()->pos());
 
-		auto frame = get_game()->frame_count();
+		if (blocking.size() < 2)
+		{
+			return false;
+		}
+
 		auto my_index = std::find_if(
 			blocking.begin(), blocking.end(),
 			[&](const auto& entity) { return entity == this; }
 		);
 
 		auto i = std::distance(blocking.begin(), my_index);
-
-		return (int(frame / (2000.0f / blocking.size())) % blocking.size()) != i;
+		return (int(get_game()->frame_count() / (60.0f / blocking.size())) % blocking.size()) != i;
 	}
 
 	return false;
@@ -487,6 +573,11 @@ bool Entity::flash()
 
 void Entity::game_message(std::string msg)
 {
+	if (msg.empty())
+	{
+		return;
+	}
+		
 	if (auto world_state = get_world_game_state())
 	{
 		world_state->game_message(msg);
@@ -496,7 +587,7 @@ void Entity::game_message(std::string msg)
 void Entity::step(TimeUnit time_delta)
 {
 	// Fall if not on ground
-	if (can_fall() && !is_on_floor())
+	if (has_movable() && can_fall() && !is_on_floor())
 	{
 		if (m_fall_timer < TimeUnit::from_seconds(1.0))
 		{
@@ -505,8 +596,8 @@ void Entity::step(TimeUnit time_delta)
 
 		if (m_fall_timer >= TimeUnit::from_seconds(1.0))
 		{
-			move(0, 0, -1);
-			m_fall_timer = TimeUnit::none(); // Reset the fall timer
+			get_movable()->move(0, 0, -1);
+			m_fall_timer.subtract(TimeUnit::from_seconds(1.0)); // Reset the fall timer
 		}
 	}
 
@@ -522,31 +613,18 @@ void Entity::step(TimeUnit time_delta)
 	}
 
 	// Handle last seen location
-	if (is_visible())
+	if (is_visible_to_player())
 	{
-		m_seen_by_player = true;
-		update_last_seen();
+		m_last_seen_location = std::make_unique<Position>(get_movable()->pos());
 	}
-	else if (auto player = get_player())
+	else if (m_last_seen_location && get_player() && !get_player()->can_see(*m_last_seen_location))
 	{
-		if (!player->can_see(m_last_seen_location))
-		{
-			m_seen_by_player = false;
-		}
+		m_last_seen_location.reset();
 	}
 }
 
 void Entity::update()
 {
-	auto prev = m_is_flashing;
-	m_is_flashing = flash();
-
-	if (prev != m_is_flashing)
-	{
-		if (auto game = get_game())
-			game->request_screen_update();
-	}
-
 	if (can_hold_items() && !m_inventory)
 	{
 		setup_inventory(default_inventory_slots());

@@ -20,9 +20,6 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="Code\Source Files\Things">
-      <UniqueIdentifier>{553d1e5c-0296-4537-bde3-aa16d5ebcd7e}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Code\Source Files\Game States">
       <UniqueIdentifier>{35f7d9eb-3f3d-4dc2-a658-7d501cfe0177}</UniqueIdentifier>
     </Filter>
@@ -47,9 +44,6 @@
     </Filter>
     <Filter Include="Code\Header Files\Data">
       <UniqueIdentifier>{f6074b59-93f4-4419-b061-9f750a4ddd78}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Code\Header Files\Things">
-      <UniqueIdentifier>{b52a7e55-435d-41b3-af2f-e4ec1ba6a450}</UniqueIdentifier>
     </Filter>
     <Filter Include="Code\Header Files\Entity">
       <UniqueIdentifier>{4f6a588c-1770-4a2b-b5b8-6a79b4e975aa}</UniqueIdentifier>
@@ -78,9 +72,6 @@
     <Filter Include="Code\Source Files\Data">
       <UniqueIdentifier>{a39e1750-726e-44d3-8d83-dd332cb845ee}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Code\Header Files\Data\Game">
-      <UniqueIdentifier>{dd315d88-5f98-41fd-8318-ba7a1dd3807c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Code\Header Files\World">
       <UniqueIdentifier>{53aefce0-f13e-41e7-a92b-4509fa8253d5}</UniqueIdentifier>
     </Filter>
@@ -104,9 +95,6 @@
     <ClInclude Include="src\snowy_grammar.h">
       <Filter>Code\Header Files\Data</Filter>
     </ClInclude>
-    <ClInclude Include="src\creature_soul.h">
-      <Filter>Code\Header Files\Things</Filter>
-    </ClInclude>
     <ClInclude Include="src\game_loop.h">
       <Filter>Code\Header Files</Filter>
     </ClInclude>
@@ -115,9 +103,6 @@
     </ClInclude>
     <ClInclude Include="src\tile_map.h">
       <Filter>Code\Header Files\Tile Map</Filter>
-    </ClInclude>
-    <ClInclude Include="src\thing.h">
-      <Filter>Code\Header Files\Things</Filter>
     </ClInclude>
     <ClInclude Include="src\tile.h">
       <Filter>Code\Header Files\Tile Map</Filter>
@@ -133,9 +118,6 @@
     </ClInclude>
     <ClInclude Include="src\player_input_handler.h">
       <Filter>Code\Header Files\Input</Filter>
-    </ClInclude>
-    <ClInclude Include="src\creature.h">
-      <Filter>Code\Header Files\Entity</Filter>
     </ClInclude>
     <ClInclude Include="src\map_builder.h">
       <Filter>Code\Header Files\Tile Map</Filter>
@@ -158,9 +140,6 @@
     <ClInclude Include="src\snowy_units.h">
       <Filter>Code\Header Files\Data</Filter>
     </ClInclude>
-    <ClInclude Include="src\body_part.h">
-      <Filter>Code\Header Files\Things</Filter>
-    </ClInclude>
     <ClInclude Include="src\raw_master.h">
       <Filter>Code\Header Files</Filter>
     </ClInclude>
@@ -172,18 +151,6 @@
     </ClInclude>
     <ClInclude Include="src\stat_values.h">
       <Filter>Code\Header Files\Data</Filter>
-    </ClInclude>
-    <ClInclude Include="src\body_part_type.h">
-      <Filter>Code\Header Files\Data\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="src\body_part_components.h">
-      <Filter>Code\Header Files\Data\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="src\body_plan.h">
-      <Filter>Code\Header Files\Data\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="src\species.h">
-      <Filter>Code\Header Files\Data\Game</Filter>
     </ClInclude>
     <ClInclude Include="src\snowy_rng.h">
       <Filter>Code\Header Files\Data</Filter>
@@ -200,11 +167,50 @@
     <ClInclude Include="src\world_state.h">
       <Filter>Code\Header Files\World</Filter>
     </ClInclude>
-    <ClInclude Include="src\npc_generator.h">
-      <Filter>Code\Header Files\World</Filter>
-    </ClInclude>
     <ClInclude Include="src\fov.h">
       <Filter>Code\Header Files\Tile Map</Filter>
+    </ClInclude>
+    <ClInclude Include="src\entity_builder.h">
+      <Filter>Code\Header Files\Entity</Filter>
+    </ClInclude>
+    <ClInclude Include="src\species.h">
+      <Filter>Code\Header Files\Entity\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\body_plan.h">
+      <Filter>Code\Header Files\Entity\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\body_part_type.h">
+      <Filter>Code\Header Files\Entity\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\body_part_components.h">
+      <Filter>Code\Header Files\Entity\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\name_set.h">
+      <Filter>Code\Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="src\npc_generator.h">
+      <Filter>Code\Header Files\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ai_behavior.h">
+      <Filter>Code\Header Files\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="src\pathfinding.h">
+      <Filter>Code\Header Files\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gait.h">
+      <Filter>Code\Header Files\Entity\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\creature_soul.h">
+      <Filter>Code\Header Files\Entity\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\living.h">
+      <Filter>Code\Header Files\Entity\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thing.h">
+      <Filter>Code\Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="src\body_part.h">
+      <Filter>Code\Header Files\Entity\Components</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -226,9 +232,6 @@
     <ClCompile Include="src\player_input_handler.cpp">
       <Filter>Code\Source Files\Input</Filter>
     </ClCompile>
-    <ClCompile Include="src\creature_soul.cpp">
-      <Filter>Code\Source Files\Things</Filter>
-    </ClCompile>
     <ClCompile Include="src\direction_action.cpp">
       <Filter>Code\Source Files\Actions</Filter>
     </ClCompile>
@@ -238,17 +241,11 @@
     <ClCompile Include="src\misc_actions.cpp">
       <Filter>Code\Source Files\Actions</Filter>
     </ClCompile>
-    <ClCompile Include="src\creature.cpp">
-      <Filter>Code\Source Files\Entity</Filter>
-    </ClCompile>
     <ClCompile Include="src\ai_handler.cpp">
       <Filter>Code\Source Files\AI</Filter>
     </ClCompile>
     <ClCompile Include="src\input_handler.cpp">
       <Filter>Code\Source Files\Input</Filter>
-    </ClCompile>
-    <ClCompile Include="src\body_part.cpp">
-      <Filter>Code\Source Files\Things</Filter>
     </ClCompile>
     <ClCompile Include="src\game_states.cpp">
       <Filter>Code\Source Files\Game States</Filter>
@@ -261,12 +258,6 @@
     </ClCompile>
     <ClCompile Include="src\inventory.cpp">
       <Filter>Code\Source Files\Entity\Components</Filter>
-    </ClCompile>
-    <ClCompile Include="src\species.cpp">
-      <Filter>Code\Source Files\Data</Filter>
-    </ClCompile>
-    <ClCompile Include="src\body_part_type.cpp">
-      <Filter>Code\Source Files\Data</Filter>
     </ClCompile>
     <ClCompile Include="src\tile.cpp">
       <Filter>Code\Source Files\Tile Map</Filter>
@@ -283,14 +274,47 @@
     <ClCompile Include="src\world_state.cpp">
       <Filter>Code\Source Files\World</Filter>
     </ClCompile>
-    <ClCompile Include="src\npc_generator.cpp">
-      <Filter>Code\Source Files\World</Filter>
-    </ClCompile>
     <ClCompile Include="src\renderer.cpp">
       <Filter>Code\Source Files\World</Filter>
     </ClCompile>
     <ClCompile Include="src\world.cpp">
       <Filter>Code\Source Files\World</Filter>
+    </ClCompile>
+    <ClCompile Include="src\entity_builder.cpp">
+      <Filter>Code\Source Files\Entity</Filter>
+    </ClCompile>
+    <ClCompile Include="src\body_part_type.cpp">
+      <Filter>Code\Source Files\Entity\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\species.cpp">
+      <Filter>Code\Source Files\Entity\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\name_set.cpp">
+      <Filter>Code\Source Files\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\npc_generator.cpp">
+      <Filter>Code\Source Files\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ai_behavior.cpp">
+      <Filter>Code\Source Files\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\pathfinding.cpp">
+      <Filter>Code\Source Files\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\snowy_grammar.cpp">
+      <Filter>Code\Source Files\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\creature_soul.cpp">
+      <Filter>Code\Source Files\Entity\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\living.cpp">
+      <Filter>Code\Source Files\Entity\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\body_part.cpp">
+      <Filter>Code\Source Files\Entity\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\body_plan.cpp">
+      <Filter>Code\Source Files\Entity\Components</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

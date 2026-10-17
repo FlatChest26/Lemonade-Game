@@ -5,27 +5,29 @@
 
 #include "thing.h"
 #include "tile_type.h"
+#include "raw_master.h"
 
 #include "snowy_rng.h"
 #include <random>
 #include <string>
-
-#include <cassert>
+#include <set>
 
 class Tile
 {
 protected:
-	const TileType* m_type{ nullptr };
+	RawMaster::Ref<TileType> m_type;
 	size_t m_texture_idx{ 0 };
 
 	bool m_visible = false;
 	bool m_explored = false;
 
+	//std::unordered_set<Tile*> m_connected_tiles;
+
 public:
 
-	Tile(const TileType* type, size_t idx = 0);
+	Tile(RawMaster::Ref<TileType> type = nullptr);
 
-	constexpr const	TileType* get_type() const { return m_type; }
+	const TileType* get_type() const { return m_type.get(); }
 
 	// -- Thing -- //
 
@@ -72,7 +74,7 @@ public:
 
 	// Misc //
 
-	std::string get_display_name() const { return full_name(); }
+	std::string get_display_name() const;
 	operator std::string() const { return get_display_name(); }
 
 	// Flag Checks //
@@ -124,6 +126,8 @@ public:
 	constexpr bool is_random_texture() const { return m_type->has_random_texture(); }
 	constexpr bool is_wall_texture() const { return m_type->has_wall_texture(); }
 
+	double get_move_cost() const { return m_type->get_move_cost(); }
+
 	constexpr bool can_connect_with(Tile* other) const
 	{
 		if (!other)
@@ -147,22 +151,22 @@ public:
 
 	constexpr bool operator==(TileType* other)
 	{
-		return m_type == other;
+		return m_type->ID() == other->ID();
 	}
 
 	constexpr bool operator==(Tile* other)
 	{
-		return m_type == other->get_type();
+		return m_type->ID() == other->m_type->ID();
 	}
 
 	constexpr bool operator!=(TileType* other)
 	{
-		return m_type != other;
+		return m_type->ID() != other->ID();
 	}
 
 	constexpr bool operator!=(Tile* other)
 	{
-		return m_type != other->get_type();
+		return m_type->ID() != other->m_type->ID();
 	}
 };
 

@@ -90,6 +90,8 @@ protected:
 
 	ThingID m_transforms_to{ "" };
 
+	double m_move_cost{ 1.0f };
+
 public:
 	struct initializer {
 		ThingID ID;
@@ -109,6 +111,8 @@ public:
 		std::vector<ThingID> connects_with{};
 
 		ThingID transforms_to{ "" };
+
+		double move_cost{ 1.0f };
 	};
 
 public:
@@ -123,8 +127,8 @@ public:
 
 	virtual ThingID ID() const override { return m_ID; }
 
-	virtual constexpr Noun get_noun() const override { return m_noun; }
-	virtual constexpr Pronouns get_pronouns() const override { return m_pronouns; }
+	virtual Noun get_noun() const override { return m_noun; }
+	virtual Pronouns get_pronouns() const override { return m_pronouns; }
 	virtual std::string description() const override { return m_description; }
 
 	virtual TileTexture& get_texture() { return m_texture; }
@@ -142,6 +146,7 @@ public:
 	virtual const std::vector<ThingID>& get_connect_with() const { return m_connects_with; }
 
 	virtual ThingID get_transform_ID() const { return m_transforms_to; }
+	virtual double get_move_cost() const { return m_move_cost; }
 };
 
 inline std::map<std::string, TileType::Flag> AllTileFlags
@@ -167,25 +172,14 @@ IS_FLAG_ENUM(TileType::Flag);
 
 namespace tile_types
 {
-	using TileTypeDB = snowy::SingletonDatabase<TileType>;
-
 	inline TileType NO_TILE{ {
 		.ID = "TILE_VOID",
 		.noun = { "void", "void" },
 		.texture = { { ' ', color::get("red"), color::get("black") } },
 		.flags = TileType::Flag::IS_TRANSPARENT | TileType::Flag::HAS_FLOOR | TileType::Flag::HAS_CEILING,
-		.tags = { "VOID" }
+		.tags = { "VOID" },
+		.move_cost = 0.0f
 	} };
-
-	inline snowy::Database<TileType*> tiles_db
-	{
-		{ "TILE_VOID", &NO_TILE },
-	};
-
-	static inline void initialize_db()
-	{
-		TileTypeDB::init();
-	}
 }
 
 #endif // !LEMONADE_GAME_SRC_TILE_TYPE_H

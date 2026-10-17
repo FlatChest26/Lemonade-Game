@@ -8,7 +8,7 @@
 
 static constexpr Length CAMERA_VIEW_DEPTH = 4;
 
-class Camera : public Movable
+class Camera : public Movable<Position, Size>
 {
 public:
 	// -- Getters -- //
@@ -22,7 +22,7 @@ public:
 	Coord get_z2() const { return posz() + 1; }
 
 public:
-	explicit Camera(Transform transform = { DEFAULT_POSITION, {1, 1, CAMERA_VIEW_DEPTH }, BELOW }) :
+	explicit Camera(TransformType transform = { DEFAULT_POSITION, {1, 1, CAMERA_VIEW_DEPTH }, BELOW }) :
 		Movable(transform)
 	{
 	}

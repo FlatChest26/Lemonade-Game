@@ -4,7 +4,7 @@
 
 namespace MapBuilder
 {
-	void set_floor(TileMap* tile_map, TileType* floor_tile, Coord layer)
+	void set_floor(TileMap* tile_map, RawMaster::Ref<TileType> floor_tile, Coord layer)
 	{
 		if (!tile_map)
 		{
@@ -18,7 +18,7 @@ namespace MapBuilder
 		}
 	}
 
-	void make_building(TileMap* tile_map, Position building_position, Size building_size, TileType* floor_tile, TileType* wall_tile, TileType* air_tile, TileType* roof_tile)
+	void make_building(TileMap* tile_map, Position building_position, Size building_size, RawMaster::Ref<TileType> floor_tile, RawMaster::Ref<TileType> wall_tile, RawMaster::Ref<TileType> air_tile, RawMaster::Ref<TileType> roof_tile)
 	{
 		if (!tile_map)
 		{
@@ -35,7 +35,7 @@ namespace MapBuilder
 		int building_back = building_position.z;
 		int building_front = building_position.z + building_size.z;
 
-		TileType* place_tile;
+		RawMaster::Ref<TileType> place_tile;
 
 		for (int z = building_back; z < building_front; z++) for (int y = building_top; y < building_bottom; y++) for (int x = building_left; x < building_right; x++)
 		{
@@ -98,11 +98,11 @@ namespace MapBuilder
 				if (!ascii_map.tile_mappings.contains(character))
 				{
 					CERR("invalid tile character found " << character);
-					tile_map->set_tile(x, y, z, RawMaster::get_tile_type("TILE_AIR"));
+					tile_map->set_tile(x, y, z, RawMaster::get<TileType>("TILE_AIR"));
 					continue;
 				}
 
-				tile_map->set_tile(x, y, z, RawMaster::get_tile_type(ascii_map.tile_mappings[character]));
+				tile_map->set_tile(x, y, z, RawMaster::get<TileType>(ascii_map.tile_mappings[character]));
 			}
 
 			y += 1;

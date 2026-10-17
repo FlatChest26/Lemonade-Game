@@ -147,4 +147,21 @@ namespace FOV
 			scan(map, &row, radius, radius_squared);
 		}
 	}
+
+	void compute_fov2(TileMap* map, int player_x, int player_y, int player_z, int radius)
+	{
+		if (!map)
+		{
+			CERR("map is null!");
+			return;
+		}
+
+		if ((Length)player_z >= map->get_width())
+		{
+			return;
+		}
+
+		auto tcod_map = map->get_tcod_map_layer((size_t)player_z);
+		tcod_map->computeFov(player_x, player_y, radius, true, FOV_SHADOW);
+	}
 }

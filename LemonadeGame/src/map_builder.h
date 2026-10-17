@@ -5,6 +5,7 @@
 
 #include "transforms.h"
 #include "thing.h"
+#include "raw_master.h"
 
 #include <string>
 #include <vector>
@@ -21,10 +22,12 @@ namespace MapBuilder
 	{
 		{ ' ', "TILE_AIR"					},
 		{ ',', "TILE_GRASS"					},
+		{ 'u', "TILE_GRAVEL"				},
 		{ '.', "TILE_PLAIN_FLOOR"			},
 		{ '#', "TILE_PLAIN_WALL"			},
 		{ '+', "TILE_DOOR"					},
-		{ 'o', "TILE_WINDOW"				},
+		{ '[', "TILE_WINDOW"				},
+		{ 'o', "TILE_GLASS"					},
 		{ '<', "TILE_UPWARD_STAIRCASE"		},
 		{ '>', "TILE_DOWNWARD_STAIRCASE"	},
 		{ 'X', "TILE_UP_AND_DOWN_STAIRCASE" },
@@ -40,16 +43,16 @@ namespace MapBuilder
 		TileMapping tile_mappings{ MapBuilder::default_tile_mapping };
 	};
 
-	extern void set_floor(TileMap* tile_map, TileType* floor_tile, Coord layer = 0);
+	extern void set_floor(TileMap* tile_map, RawMaster::Ref<TileType> floor_tile, Coord layer = 0);
 
 	extern void make_building(
 		TileMap* tile_map,
 		Position building_position,
 		Size building_size,
-		TileType* floor_tile = nullptr,
-		TileType* wall_tile = nullptr,
-		TileType* air_tile = nullptr,
-		TileType* roof_tile = nullptr
+		RawMaster::Ref<TileType> floor_tile = nullptr,
+		RawMaster::Ref<TileType> wall_tile = nullptr,
+		RawMaster::Ref<TileType> air_tile = nullptr,
+		RawMaster::Ref<TileType> roof_tile = nullptr
 	);
 
 	extern void make_from_ascii_map(

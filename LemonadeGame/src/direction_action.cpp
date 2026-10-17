@@ -74,11 +74,17 @@ ActionResult BumpAction::perform()
 
 ActionResult MovementAction::perform()
 {
+	if (!m_actor->has_movable())
+	{
+		CERR("Entity has no movable!");
+		return ActionResult(false);
+	}
+
 	auto world = get_world();
 
 	if (!world)
 	{
-		CERR("No world found");
+		CERR("No world found!");
 		return ActionResult(false);
 	}
 
@@ -87,9 +93,9 @@ ActionResult MovementAction::perform()
 		return ActionResult(false);
 	}
 
-	Coord start_x = m_actor->posx();
-	Coord start_y = m_actor->posy();
-	Coord start_z = m_actor->posz();
+	Coord start_x = m_actor->get_movable()->posx();
+	Coord start_y = m_actor->get_movable()->posy();
+	Coord start_z = m_actor->get_movable()->posz();
 
 	Coord final_x = start_x + m_dx;
 	Coord final_y = start_y + m_dy;
@@ -151,7 +157,7 @@ ActionResult MovementAction::perform()
 		}
 	}
 
-	m_actor->set_position(Position(final_x, final_y, final_z));
+	m_actor->get_movable()->set_position(Position(final_x, final_y, final_z));
 
 	if (start_x == final_x && start_y == final_y && start_z == final_z)
 	{

@@ -1,0 +1,700 @@
+[
+  {
+    "//": "Pretty much all of these are just copied from the DF Wiki: https://dwarffortresswiki.org/index.php/Color"
+  },
+  {
+    "type": "color",
+    "ID": "amber",
+    "color": "#FFBF00"
+  },
+  {
+    "type": "color",
+    "ID": "amethyst",
+    "color": "#9966CC"
+  },
+  {
+    "type": "color",
+    "ID": "aqua",
+    "color": "#00FFFF"
+  },
+  {
+    "type": "color",
+    "ID": "aquamarine",
+    "color": "#7FFFD4"
+  },
+  {
+    "type": "color",
+    "ID": "ash_gray",
+    "color": "#B2BEB5"
+  },
+  {
+    "type": "color",
+    "ID": "auburn",
+    "color": "#6F351A"
+  },
+  {
+    "type": "color",
+    "ID": "azure",
+    "color": "#007FFF"
+  },
+  {
+    "type": "color",
+    "ID": "beige",
+    "color": "#F5F5DC"
+  },
+  {
+    "type": "color",
+    "ID": "pitch_black",
+    "color": "#000000"
+  },
+  {
+    "type": "color",
+    "ID": "blue",
+    "color": "#0000FF"
+  },
+  {
+    "type": "color",
+    "ID": "blue_gray",
+    "color": "#BACAE2"
+  },
+  {
+    "type": "color",
+    "ID": "brass",
+    "color": "#B5A642"
+  },
+  {
+    "type": "color",
+    "ID": "bronze",
+    "color": "#CD7F32"
+  },
+  {
+    "type": "color",
+    "ID": "brown",
+    "color": "#964B60"
+  },
+  {
+    "type": "color",
+    "ID": "buff",
+    "color": "#F0DC82"
+  },
+  {
+    "type": "color",
+    "ID": "burnt_sienna",
+    "color": "#E97451"
+  },
+  {
+    "type": "color",
+    "ID": "burnt_umber",
+    "color": "#8A3324"
+  },
+  {
+    "type": "color",
+    "ID": "cardinal",
+    "color": "#C41E3A"
+  },
+  {
+    "type": "color",
+    "ID": "carmine",
+    "color": "#990018"
+  },
+  {
+    "type": "color",
+    "ID": "cerulean",
+    "color": "#007BA7"
+  },
+  {
+    "type": "color",
+    "ID": "charcoal",
+    "color": "#36454F"
+  },
+  {
+    "type": "color",
+    "ID": "chartreuse",
+    "color": "#7BFF00"
+  },
+  {
+    "type": "color",
+    "ID": "chestnut",
+    "color": "#CD5C5C"
+  },
+  {
+    "type": "color",
+    "ID": "chocolate",
+    "color": "#DC691E"
+  },
+  {
+    "type": "color",
+    "ID": "cinnamon",
+    "color": "#7B3F00"
+  },
+  {
+    "type": "color",
+    "ID": "clear",
+    "color": "#808080"
+  },
+  {
+    "type": "color",
+    "ID": "cobalt",
+    "color": "#0047AB"
+  },
+  {
+    "type": "color",
+    "ID": "copper",
+    "color": "#B87333"
+  },
+  {
+    "type": "color",
+    "ID": "cream",
+    "color": "#FFFDD0"
+  },
+  {
+    "type": "color",
+    "ID": "crimson",
+    "color": "#DC143C"
+  },
+  {
+    "type": "color",
+    "ID": "cyan",
+    "color": "#008080"
+  },
+  {
+    "type": "color",
+    "ID": "dark_blue",
+    "color": "#00008B"
+  },
+  {
+    "type": "color",
+    "ID": "dark_brown",
+    "color": "#654321"
+  },
+  {
+    "type": "color",
+    "ID": "dark_chestnut",
+    "color": "#986960"
+  },
+  {
+    "type": "color",
+    "ID": "dark_green",
+    "color": "#013220"
+  },
+  {
+    "type": "color",
+    "ID": "dark_indigo",
+    "color": "#310062"
+  },
+  {
+    "type": "color",
+    "ID": "dark_magenta",
+    "color": "#800080"
+  },
+  {
+    "type": "color",
+    "ID": "dark_olive",
+    "color": "#556832"
+  },
+  {
+    "type": "color",
+    "ID": "dark_peach",
+    "color": "#FFDAB9"
+  },
+  {
+    "type": "color",
+    "ID": "dark_pink",
+    "color": "#E75480"
+  },
+  {
+    "type": "color",
+    "ID": "dark_scarlet",
+    "color": "#560319"
+  },
+  {
+    "type": "color",
+    "ID": "dark_tan",
+    "color": "#918151"
+  },
+  {
+    "type": "color",
+    "ID": "dark_violet",
+    "color": "#423189"
+  },
+  {
+    "type": "color",
+    "ID": "dark_gray",
+    "color": "#646464"
+  },
+  {
+    "type": "color",
+    "ID": "dark_yellow",
+    "color": "#808000"
+  },
+  {
+    "type": "color",
+    "ID": "ecru",
+    "color": "#C2B280"
+  },
+  {
+    "type": "color",
+    "ID": "eggplant",
+    "color": "#614051"
+  },
+  {
+    "type": "color",
+    "ID": "emerald",
+    "color": "#50C878"
+  },
+  {
+    "type": "color",
+    "ID": "fern_green",
+    "color": "#4F7942"
+  },
+  {
+    "type": "color",
+    "ID": "flax",
+    "color": "#EEDC82"
+  },
+  {
+    "type": "color",
+    "ID": "fuchsia",
+    "color": "#F400A1"
+  },
+  {
+    "type": "color",
+    "ID": "gold",
+    "color": "#D4AF37"
+  },
+  {
+    "type": "color",
+    "ID": "goldenrod",
+    "color": "#DAA520"
+  },
+  {
+    "type": "color",
+    "ID": "golden_yellow",
+    "color": "#FFDF00"
+  },
+  {
+    "type": "color",
+    "ID": "gray",
+    "color": "#808080"
+  },
+  {
+    "type": "color",
+    "ID": "green",
+    "color": "#00FF00"
+  },
+  {
+    "type": "color",
+    "ID": "green_yellow",
+    "color": "#ADFF2F"
+  },
+  {
+    "type": "color",
+    "ID": "heliotrope",
+    "color": "#DF73FF"
+  },
+  {
+    "type": "color",
+    "ID": "indigo",
+    "color": "#4B0082"
+  },
+  {
+    "type": "color",
+    "ID": "ivory",
+    "color": "#FFFFF0"
+  },
+  {
+    "type": "color",
+    "ID": "jade",
+    "color": "#00A86B"
+  },
+  {
+    "type": "color",
+    "ID": "lavender",
+    "color": "#E6E6FA"
+  },
+  {
+    "type": "color",
+    "ID": "lavender_blush",
+    "color": "#FFF0F5"
+  },
+  {
+    "type": "color",
+    "ID": "lemon",
+    "color": "#FDE910"
+  },
+  {
+    "type": "color",
+    "ID": "light_blue",
+    "color": "#ADD8E6"
+  },
+  {
+    "type": "color",
+    "ID": "light_brown",
+    "color": "#CD853F"
+  },
+  {
+    "type": "color",
+    "ID": "light_cyan",
+    "color": "#00FFFF"
+  },
+  {
+    "type": "color",
+    "ID": "dark_cyan",
+    "color": "#008080"
+  },
+  {
+    "type": "color",
+    "ID": "light_gray",
+    "color": "#969696"
+  },
+  {
+    "type": "color",
+    "ID": "lilac",
+    "color": "#C8A2C8"
+  },
+  {
+    "type": "color",
+    "ID": "lime",
+    "color": "#CCFF00"
+  },
+  {
+    "type": "color",
+    "ID": "light_red",
+    "color": "#FF8080"
+  },
+  {
+    "type": "color",
+    "ID": "magenta",
+    "color": "#800080"
+  },
+  {
+    "type": "color",
+    "ID": "mahogany",
+    "color": "#C04000"
+  },
+  {
+    "type": "color",
+    "ID": "maroon",
+    "color": "#800000"
+  },
+  {
+    "type": "color",
+    "ID": "mauve",
+    "color": "#993366"
+  },
+  {
+    "type": "color",
+    "ID": "mauve_taupe",
+    "color": "#915F6D"
+  },
+  {
+    "type": "color",
+    "ID": "midnight_blue",
+    "color": "#003366"
+  },
+  {
+    "type": "color",
+    "ID": "mint_green",
+    "color": "#98FF98"
+  },
+  {
+    "type": "color",
+    "ID": "moss_green",
+    "color": "#ADDFAD"
+  },
+  {
+    "type": "color",
+    "ID": "ochre",
+    "color": "#CC7722"
+  },
+  {
+    "type": "color",
+    "ID": "olive",
+    "color": "#808000"
+  },
+  {
+    "type": "color",
+    "ID": "orange",
+    "color": "#FFA500"
+  },
+  {
+    "type": "color",
+    "ID": "pale_blue",
+    "color": "#AFEEEE"
+  },
+  {
+    "type": "color",
+    "ID": "pale_brown",
+    "color": "#987654"
+  },
+  {
+    "type": "color",
+    "ID": "pale_chestnut",
+    "color": "#DDADAF"
+  },
+  {
+    "type": "color",
+    "ID": "pale_pink",
+    "color": "#FADADD"
+  },
+  {
+    "type": "color",
+    "ID": "peach",
+    "color": "#FFE5B4"
+  },
+  {
+    "type": "color",
+    "ID": "pearl",
+    "color": "#F0EBD6"
+  },
+  {
+    "type": "color",
+    "ID": "periwinkle",
+    "color": "#CCCCFF"
+  },
+  {
+    "type": "color",
+    "ID": "pine_green",
+    "color": "#01796F"
+  },
+  {
+    "type": "color",
+    "ID": "pink",
+    "color": "#FFC0CB"
+  },
+  {
+    "type": "color",
+    "ID": "plum",
+    "color": "#660066"
+  },
+  {
+    "type": "color",
+    "ID": "puce",
+    "color": "#CC8899"
+  },
+  {
+    "type": "color",
+    "ID": "pumpkin",
+    "color": "#FF7518"
+  },
+  {
+    "type": "color",
+    "ID": "purple",
+    "color": "#660099"
+  },
+  {
+    "type": "color",
+    "ID": "raw_umber",
+    "color": "#734A12"
+  },
+  {
+    "type": "color",
+    "ID": "red",
+    "color": "#FF0000"
+  },
+  {
+    "type": "color",
+    "ID": "red_purple",
+    "color": "#B2004B"
+  },
+  {
+    "type": "color",
+    "ID": "rose",
+    "color": "#F4C2C2"
+  },
+  {
+    "type": "color",
+    "ID": "russet",
+    "color": "#755A57"
+  },
+  {
+    "type": "color",
+    "ID": "rust",
+    "color": "#B7410E"
+  },
+  {
+    "type": "color",
+    "ID": "saffron",
+    "color": "#F4C430"
+  },
+  {
+    "type": "color",
+    "ID": "scarlet",
+    "color": "#FF0024"
+  },
+  {
+    "type": "color",
+    "ID": "sea_green",
+    "color": "#2E8B57"
+  },
+  {
+    "type": "color",
+    "ID": "sepia",
+    "color": "#704214"
+  },
+  {
+    "type": "color",
+    "ID": "silver",
+    "color": "#C0C0C0"
+  },
+  {
+    "type": "color",
+    "ID": "sky_blue",
+    "color": "#87CEEB"
+  },
+  {
+    "type": "color",
+    "ID": "slate_gray",
+    "color": "#708090"
+  },
+  {
+    "type": "color",
+    "ID": "spring_green",
+    "color": "#00FF7F"
+  },
+  {
+    "type": "color",
+    "ID": "tan",
+    "color": "#D2B48C"
+  },
+  {
+    "type": "color",
+    "ID": "taupe_dark",
+    "color": "#483C32"
+  },
+  {
+    "type": "color",
+    "ID": "taupe_gray",
+    "color": "#8B8589"
+  },
+  {
+    "type": "color",
+    "ID": "taupe_medium",
+    "color": "#674C47"
+  },
+  {
+    "type": "color",
+    "ID": "taupe_pale",
+    "color": "#BC987E"
+  },
+  {
+    "type": "color",
+    "ID": "taupe_purple",
+    "color": "#50404D"
+  },
+  {
+    "type": "color",
+    "ID": "taupe_rose",
+    "color": "#905D5D"
+  },
+  {
+    "type": "color",
+    "ID": "taupe_sandy",
+    "color": "#967117"
+  },
+  {
+    "type": "color",
+    "ID": "teal",
+    "color": "#008080"
+  },
+  {
+    "type": "color",
+    "ID": "turquoise",
+    "color": "#30D5C8"
+  },
+  {
+    "type": "color",
+    "ID": "vermilion",
+    "color": "#E34234"
+  },
+  {
+    "type": "color",
+    "ID": "violet",
+    "color": "#8B00FF"
+  },
+  {
+    "type": "color",
+    "ID": "white",
+    "color": "#FFFFFF"
+  },
+  {
+    "type": "color",
+    "ID": "yellow",
+    "color": "#FFFF00"
+  },
+  {
+    "type": "color",
+    "ID": "yellow_green",
+    "color": "#9ACD32"
+  },
+  {
+    "type": "color",
+    "ID": "dark_color",
+    "color": "#328080"
+  },
+  {
+    "type": "color",
+    "ID": "error",
+    "color": "#FF4040"
+  },
+  {
+    "type": "color",
+    "ID": "explored_color",
+    "color": "#322D28"
+  },
+  {
+    "type": "color",
+    "ID": "impossible",
+    "color": "#800080"
+  },
+  {
+    "type": "color",
+    "ID": "impossible2",
+    "color": "#FF00FF"
+  },
+  {
+    "type": "color",
+    "ID": "invalid",
+    "color": "#FFFF00"
+  },
+  {
+    "type": "color",
+    "ID": "mystery_color",
+    "color": "#FFFF00"
+  },
+  {
+    "type": "color",
+    "ID": "sai_color",
+    "color": "#423189"
+  },
+  {
+    "type": "color",
+    "ID": "sai_menu_color",
+    "color": "#FFFFFF"
+  },
+  {
+    "type": "color",
+    "ID": "stat_recovered",
+    "color": "#00FF00"
+  },
+  {
+    "type": "color",
+    "ID": "light_green",
+    "color": "#80FF80"
+  },
+  {
+    "type": "color",
+    "ID": "dark_red",
+    "color": "#800000"
+  },
+  {
+    "type": "color",
+    "ID": "light_yellow",
+    "color": "#FFFF80"
+  },
+  {
+    "type": "color",
+    "ID": "light_magenta",
+    "color": "#FF80FF"
+  }
+]

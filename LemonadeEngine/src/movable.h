@@ -6,18 +6,30 @@
 #include "transforms.h"
 
 /* A class that represents an object with a transform. Also provides useful utilities for working with said transform. */
+
+template<typename T = Position, typename K = Size>
 class Movable
 {
+public:
+	using TransformType = Transform<T, K>;
+
+	using PositionType = T;
+	using SizeType = K;
+
+	using CoordType = PositionType::IntType;
+	using LengthType = SizeType::IntType;
+
+
 protected:
-	Transform m_transform{};
+	TransformType m_transform{};
 
 public:
 	Movable() :
-		m_transform({ DEFAULT_POSITION, DEFAULT_SIZE, NORTH })
+		m_transform({ PositionType(), SizeType(), NORTH})
 	{
 	}
 
-	Movable(Transform transform) :
+	Movable(TransformType transform) :
 		m_transform(transform)
 	{
 	}
@@ -32,71 +44,72 @@ public:
 	// Transform //
 
 	/* Returns a reference to this thing's transform.*/
-	virtual Transform& transform() { return m_transform; }
+	virtual TransformType& transform() { return m_transform; }
 	/* Returns a constant reference to this thing's transform.*/
-	virtual const Transform& transform() const { return m_transform; }
+	virtual const TransformType& transform() const { return m_transform; }
 	/* Returns a copy of this thing's transform.*/
-	virtual Transform get_transform() const { return m_transform; }
+	virtual TransformType get_transform() const { return m_transform; }
 
 	// Position
 
 	/* Returns a reference to this thing's position.*/
-	virtual Position& pos() { return m_transform.position; }
+	virtual PositionType& pos() { return m_transform.position; }
 	/* Returns a constant reference to this thing's position.*/
-	virtual const Position& pos() const { return m_transform.position; }
+	virtual const PositionType& pos() const { return m_transform.position; }
 	/* Returns a copy of this thing's position.*/
-	virtual Position get_pos() const { return m_transform.position; }
+	virtual PositionType get_pos() const { return m_transform.position; }
 
 	/* Returns a reference to this thing's x position. */
-	virtual Coord& posx() { return m_transform.position.x; }
+	virtual CoordType& posx() { return m_transform.position.x; }
 	/* Returns a constant reference to this thing's x position. */
-	virtual const Coord& posx() const { return m_transform.position.x; }
+	virtual const CoordType& posx() const { return m_transform.position.x; }
 	/* Returns a copy of this thing's x position. */
-	virtual Coord get_posx() const { return m_transform.position.x; }
+	virtual CoordType get_posx() const { return m_transform.position.x; }
 
 	/* Returns a reference to this thing's y position. */
-	virtual Coord& posy() { return m_transform.position.y; }
+	virtual CoordType& posy() { return m_transform.position.y; }
 	/* Returns a constant reference to this thing's y position. */
-	virtual const Coord& posy() const { return m_transform.position.y; }
+	virtual const CoordType& posy() const { return m_transform.position.y; }
 	/* Returns a copy of this thing's y position. */
-	virtual Coord get_posy() const { return m_transform.position.y; }
+	virtual CoordType get_posy() const { return m_transform.position.y; }
 
 	/* Returns a reference to this thing's z position. */
-	virtual Coord& posz() { return m_transform.position.z; }
+	virtual CoordType& posz() { return m_transform.position.z; }
 	/* Returns a constant reference to this thing's z position. */
-	virtual const Coord& posz() const { return m_transform.position.z; }
+	virtual const CoordType& posz() const { return m_transform.position.z; }
 	/* Returns a copy of this thing's z position. */
-	virtual Coord get_posz() const { return m_transform.position.z; }
+	virtual CoordType get_posz() const { return m_transform.position.z; }
 
 	// Size
 
 	/* Returns a reference to this thing's size.*/
-	virtual Size& size() { return m_transform.size; }
+	virtual SizeType& size() { return m_transform.size; }
 	/* Returns a constant reference to this thing's size.*/
-	virtual const Size& size() const { return m_transform.size; }
+	virtual const SizeType& size() const { return m_transform.size; }
 	/* Returns a copy of this thing's size.*/
-	virtual Size get_size() const { return m_transform.size; }
+	virtual SizeType get_size() const { return m_transform.size; }
 
 	/* Returns a reference to this thing's width.*/
-	virtual Length& width() { return m_transform.size.x; }
+	virtual LengthType& width() { return m_transform.size.x; }
 	/* Returns a constant reference to this thing's width.*/
-	virtual const Length& width() const { return m_transform.size.x; }
+	virtual const LengthType& width() const { return m_transform.size.x; }
 	/* Returns a copy of this thing's width.*/
-	virtual Length get_width() const { return m_transform.size.x; }
+	virtual LengthType get_width() const { return m_transform.size.x; }
 
 	/* Returns a reference to this thing's height.*/
-	virtual Length& height() { return m_transform.size.y; }
+	virtual LengthType& height() { return m_transform.size.y; }
 	/* Returns a constant reference to this thing's height.*/
-	virtual const Length& height() const { return m_transform.size.y; }
+	virtual const LengthType& height() const { return m_transform.size.y; }
 	/* Returns a copy of this thing's height.*/
-	virtual Length get_height() const { return m_transform.size.y; }
+	virtual LengthType get_height() const { return m_transform.size.y; }
 
 	/* Returns a reference to this thing's depth.*/
-	virtual Length& depth() { return m_transform.size.z; }
+	virtual LengthType& depth() { return m_transform.size.z; }
 	/* Returns a constant reference to this thing's depth.*/
-	virtual const Length& depth() const { return m_transform.size.z; }
+	virtual const LengthType& depth() const { return m_transform.size.z; }
 	/* Returns a copy of this thing's depth.*/
-	virtual Length get_depth() const { return m_transform.size.z; }
+	virtual LengthType get_depth() const { return m_transform.size.z; }
+
 
 	// Direction
 
@@ -113,23 +126,31 @@ public:
 	// Transform //
 
 	/* Sets this thing's transform. */
-	virtual void set_transform(Transform t) { m_transform = t; }
+	template<typename T>
+	void set_transform(T t) { m_transform = static_cast<TransformType>(t); }
+	virtual void set_transform(TransformType t) { m_transform = t; }
 	/* Sets this thing's transform. */
-	virtual void set_transform(Position p, Size s, Direction dir = Direction::NORTH) { return set_transform(Transform(p, s, dir)); }
+	template<typename T, typename K>
+	void set_transform(T p, K s, Direction dir = Direction::NORTH) { return set_transform(TransformType(static_cast<PositionType>(p), static_cast<SizeType>(s), dir)); }
+	virtual void set_transform(PositionType p, SizeType s, Direction dir = Direction::NORTH) { return set_transform(TransformType(p, s, dir)); }
 
 	// Position
 
 	/* Sets this thing's position. */
-	virtual void set_position(Position position) { m_transform.position = position; }
+	template<typename T>
+	void set_position(T position) { m_transform.position = static_cast<PositionType>(position); }
+	virtual void set_position(PositionType position) { m_transform.position = position; }
 	/* Sets this thing's position. */
-	virtual void set_position(Coord x = 0, Coord y = 0, Coord z = 0) { return set_position(Position(x, y, z)); }
+	template<typename T>
+	void set_position(T x, T y, T z) { return set_position(PositionType(static_cast<CoordType>(x), static_cast<CoordType>(y), static_cast<CoordType>(z))); }
+	virtual void set_position(CoordType x = 0, CoordType y = 0, CoordType z = 0) { return set_position(PositionType(x, y, z)); }
 
 	// Size
 
 	/* Sets this thing's size. */
-	virtual void set_size(Size size) { m_transform.size = size; }
+	virtual void set_size(SizeType size) { m_transform.size = size; }
 	/* Sets this thing's size. */
-	virtual void set_size(Length width = 0, Length height = 0, Length depth = 0) { return set_size(Size(width, height, depth)); }
+	virtual void set_size(LengthType width = 0, LengthType height = 0, LengthType depth = 0) { return set_size(SizeType(width, height, depth)); }
 
 	// Direction
 
@@ -138,23 +159,33 @@ public:
 	/* Faces this thing in the specified direction. */
 	virtual void face_direction(Position pos) { face_direction(transforms::pos_as_dir(pos)); }
 	/* Faces this thing in the specified direction. */
-	virtual void face_direction(Coord x = 0, Coord y = 0, Coord z = 0) { face_direction(transforms::pos_as_dir(x, y, z)); }
+	template<typename T>
+	void face_direction(T x, T y, T z) { face_direction(static_cast<CoordType>(x), static_cast<CoordType>(y), static_cast<CoordType>(z)); }
+	virtual void face_direction(CoordType x = 0, CoordType y = 0, CoordType z = 0) { face_direction(transforms::pos_as_dir(x, y, z)); }
 
 public:
 
 	// -- Utility -- //
 
 	/* Changes this thing's position by the specified amount. Returns true if the move is valid. */
-	virtual bool move(Coord dx = 0, Coord dy = 0, Coord dz = 0)
+	template<typename T>
+	bool move(T dx, T dy, T dz)
+	{
+		return move(static_cast<CoordType>(dx), static_cast<CoordType>(dy), static_cast<CoordType>(dz));
+	}
+
+	virtual bool move(CoordType dx = 0, CoordType dy = 0, CoordType dz = 0)
 	{
 		posx() += dx; posy() += dy; posz() += dz;
 		return true;
 	}
 
 	/* Changes this thing's position by the specified amount. Returns true if the move is valid. */
-	virtual bool move(Position delta) { return move(delta.x, delta.y, delta.z); }
+	template<typename T>
+	bool move(T delta) { return move(static_cast<PositionType>(delta)); }
+	virtual bool move(PositionType delta) { return move(delta.x, delta.y, delta.z); }
 	/* Changes this thing's position by the specified amount. Returns true if the move is valid. */
-	virtual bool move(Direction dir, Coord distance = 1) { return move((Position)transforms::dir_as_pos(dir) * distance); }
+	virtual bool move(Direction dir, CoordType distance = 1) { return move((PositionType)transforms::dir_as_pos(dir) * distance); }
 
 	/* Returns true if the point is inside this thing. */
 	virtual bool contains_point(int x, int y, int z) const
@@ -162,12 +193,14 @@ public:
 		return posx() <= x && x < posx() + (int)width() && posy() <= y && y < posy() + (int)height() && posz() <= z && z < posz() + (int)depth();
 	}
 	/* Returns true if the point is inside this thing. */
-	virtual bool contains_point(Position pos) const { return contains_point(pos.x, pos.y, pos.z); }
+	template<typename T>
+	bool contains_point(T pos) const { return contains_point(static_cast<PositionType>(pos)); }
+	virtual bool contains_point(PositionType pos) const { return contains_point(pos.x, pos.y, pos.z); }
 
 	/* Returns the points inside this thing, with the top-left-lower corner at (0, 0, 0). */
 	virtual std::vector<Position> get_offsets() const
 	{
-		if (m_transform.size == DEFAULT_SIZE) return { {0, 0, 0} };
+		if (m_transform.size == SizeType{0, 0, 0}) return { {0, 0, 0} };
 
 		std::vector<Position> offsets;
 		offsets.reserve((size_t)width() * (size_t)height() * (size_t)depth());
@@ -183,7 +216,7 @@ public:
 	/* Returns the points inside this thing. */
 	virtual std::vector<Position> get_points() const
 	{
-		if (m_transform.size == DEFAULT_SIZE) return { m_transform.position };
+		if (m_transform.size == SizeType{ 0, 0, 0 }) return { m_transform.position };
 
 		std::vector<Position> points;
 		points.reserve((size_t)width() * (size_t)height() * (size_t)depth());
@@ -195,6 +228,19 @@ public:
 
 		return points;
 	}
+
+	constexpr operator Movable<Position, Size>()
+	{
+		return Movable<Position, Size>(static_cast<Position>(m_transform.position), static_cast<Size>(m_transform.size), m_transform.direction);
+	}
+	
+	constexpr operator Movable<PositionF, SizeF>()
+	{
+		return Movable<PositionF, SizeF>(static_cast<PositionF>(m_transform.position), static_cast<SizeF>(m_transform.size), m_transform.direction);
+	}
 };
+
+using TileMovable = Movable<Position, Size>;
+using PreciseMovable = Movable<PositionF, SizeF>;
 
 #endif // !LEMONADE_ENGINE_SRC_MOVABLE_H

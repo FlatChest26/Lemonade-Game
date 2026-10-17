@@ -13,6 +13,8 @@
 class Game;
 class WorldGameState;
 
+inline constexpr size_t MAX_ENTITY_COUNT = 32;
+
 class World : public std::enable_shared_from_this<World>
 {
 private:
@@ -42,13 +44,16 @@ public:
 
 	std::vector<Entity*> get_entities();
 
-	void set_tile_map(std::unique_ptr<TileMap> tile_map) { m_tile_map = std::move(tile_map); }
+	void set_tile_map(std::unique_ptr<TileMap> tile_map) { m_tile_map = std::move(tile_map); m_tile_map->set_world(this); }
 
 	TimeDate get_time() const { return m_current_time; }
 	void set_time(const TimeDate& time) { m_current_time = time; }
 	void add_time(TimeUnit time_delta) { m_current_time.add(time_delta); }
 
 	// -- Utilities -- //
+
+	void queue_remove_entity(Entity* entity);
+	void remove_entity(Entity* entity);
 
 	Entity* add_entity(std::unique_ptr<Entity> entity);
 	Entity* add_entity_at(std::unique_ptr<Entity> entity, const Coord& x, const Coord& y, const Coord& z);
@@ -61,6 +66,12 @@ public:
 	std::vector<Entity*> get_entities_at(const Position& pos)
 	{
 		return get_entities_at(pos.x, pos.y, pos.z);
+	}
+
+	int count_entities_at(const Coord& x, const Coord& y, const Coord& z) const;
+	int count_entities_at(const Position& pos)  const
+	{
+		return count_entities_at(pos.x, pos.y, pos.z);
 	}
 
 	// -- Checks -- //

@@ -6,8 +6,35 @@ World::World(GameState* game_state) :
 {
 }
 
+void World::queue_remove_entity(Entity* entity)
+{
+	for (auto& check_entity : m_entities)
+	{
+		if (check_entity->ID() == entity->ID())
+		{
+			check_entity->queue_remove();
+		}
+	}
+}
+
+void World::remove_entity(Entity* entity)
+{
+	if (auto entity_holder = entity->get_entity_holder())
+	{
+		entity_holder->remove_from_inventory(entity);
+	}
+
+	if (auto brain = get_world_game_state()->get_ai_manager()->get_entity_brain(entity))
+	{
+		brain->queue_remove();
+	}
+}
+
 Entity* World::add_entity(std::unique_ptr<Entity> entity)
 {
+	if (m_entities.size() >= MAX_ENTITY_COUNT)
+		return nullptr;
+
 	m_entities.push_back(std::move(entity));
 	m_entities.back()->set_location(this);
 
@@ -17,7 +44,10 @@ Entity* World::add_entity(std::unique_ptr<Entity> entity)
 Entity* World::add_entity_at(std::unique_ptr<Entity> entity, const Coord& x, const Coord& y, const Coord& z)
 {
 	auto new_entity = add_entity(std::move(entity));
-	new_entity->set_position(x, y, z);
+	if (new_entity == nullptr)
+		return nullptr;
+
+	new_entity->movable()->set_position(x, y, z);
 
 	return new_entity;
 }
@@ -28,7 +58,10 @@ std::vector<Entity*> World::get_entities_at(const Coord& x, const Coord& y, cons
 
 	for (const auto& entity : m_entities)
 	{
-		if (entity->get_posx() == x && entity->get_posy() == y && entity->get_posz() == z)
+		if (!entity->has_movable())
+			continue;
+
+		if (entity->get_movable()->get_pos() == Position(x, y, z))
 		{
 			entities_at_location.push_back(entity.get());
 		}
@@ -106,9 +139,12 @@ Tile* World::get_tile(const Coord& x, const Coord& y, const Coord& z) const
 
 bool World::has_blocking_entities_at(const Position& pos) const
 {
-	auto blocking_entity = find_if(
+	auto blocking_entity = std::find_if(
 		m_entities.begin(), m_entities.end(),
-		[&pos](const auto& entity) { return entity->is_blocking() && entity->contains_point(pos); }
+		[&pos](const auto& entity)
+		{
+			return entity->has_movable() && entity->is_blocking() && entity->get_movable()->contains_point(pos);
+		}
 	);
 
 	return blocking_entity != m_entities.end();
@@ -120,13 +156,31 @@ std::vector<Entity*> World::get_blocking_entities_at(const Position& pos) const
 
 	for (const auto& entity : m_entities)
 	{
-		if (entity->is_blocking() && entity->contains_point(pos))
+		if (!entity->has_movable())
+			continue;
+		
+		if (entity->is_blocking() && entity->get_movable()->contains_point(pos))
 		{
 			entities_at.push_back(entity.get());
 		}
 	}
 
 	return entities_at;
+}
+
+int World::count_entities_at(const Coord& x, const Coord& y, const Coord& z) const
+{
+	Position pos{ x, y, z };
+
+	auto count = std::count_if(
+		m_entities.begin(), m_entities.end(),
+		[&pos](const auto& entity)
+		{
+			return entity->has_movable() && entity->is_blocking() && entity->get_movable()->contains_point(pos);
+		}
+	);
+
+	return static_cast<int>(count);
 }
 
 bool World::is_blocked(const Coord& x, const Coord& y, const Coord& z, const Entity* fit, const Coord& z_dir)
@@ -142,7 +196,7 @@ bool World::is_blocked(const Coord& x, const Coord& y, const Coord& z, const Ent
 		return true;
 	}
 
-	if (abs(z_dir) > 0)
+	if (std::abs(z_dir) > 0)
 	{
 		if (z_dir > 0 && m_tile_map->get_tile(x, y, z)->has_floor())
 			return true;
@@ -195,23 +249,30 @@ bool World::is_opaque(const Coord& x, const Coord& y, const Coord& z, const Enti
 
 void World::step(TimeUnit time_delta)
 {
-	for (const auto& entity : m_entities)
+	std::vector<size_t> remove_entities;
+
+	for (size_t i = 0; i < m_entities.size(); i++)
 	{
-		entity->step(time_delta);
+		auto& entity = m_entities[i];
+
+		if (entity->should_remove())
+		{
+			remove_entities.push_back(i);
+		}
+		else
+		{
+			entity->step(time_delta);
+		}
+	}
+
+	for (const auto& remove_idx : remove_entities)
+	{
+		if (remove_idx > m_entities.size() - 1)
+			continue;
+
+		remove_entity(m_entities[remove_idx].get());
+		m_entities.erase(m_entities.begin() + remove_idx);
 	}
 
 	m_current_time.add(time_delta);
 }
-//
-//void World::render(RenderParams params)
-//{
-//	if (m_tile_map)
-//	{
-//		m_tile_map->render(params);
-//	}
-//
-//	for (const auto& entity : m_entities)
-//	{
-//		entity->render(params);
-//	}
-//}

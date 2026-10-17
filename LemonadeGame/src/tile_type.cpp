@@ -17,7 +17,8 @@ TileType::TileType(const initializer& init) :
 	m_wall_texture(init.wall_texture),
 	m_tags(init.tags),
 	m_connects_with(init.connects_with),
-	m_transforms_to(init.transforms_to)
+	m_transforms_to(init.transforms_to),
+	m_move_cost(init.move_cost)
 {
 }
 
@@ -35,6 +36,83 @@ TileType TileType::from_json(const json& j)
 	if (j.contains("renderable"))
 	{
 		t.texture = { Renderable::from_json(j.at("renderable")) };
+	}
+	else if (j.contains("random_glyph") || j.contains("random_fg") || j.contains("random_bg"))
+	{
+		if (!j.at("random_glyph").is_array())
+		{
+			CERR("Invalid 'random_glyph' field in species JSON object: " << j);
+		}
+
+		if (!j.at("random_fg").is_array())
+		{
+			CERR("Invalid 'random_fg' field in species JSON object: " << j);
+		}
+
+		if (!j.at("random_bg").is_array())
+		{
+			CERR("Invalid 'random_bg' field in species JSON object: " << j);
+		}
+
+		std::vector<glyph_t> random_glyph{ DEFAULT_GLPYH };
+		std::vector<color_t> random_fg{ DEFAULT_FG_COLOR };
+		std::vector<color_t> random_bg{ DEFAULT_BG_COLOR };
+
+		if (j.at("random_glyph").is_array())
+		{
+			random_glyph.clear();
+
+			for (const auto& json_glyph : j.at("random_glyph"))
+			{
+				if (json_glyph.is_number())
+				{
+					random_glyph.push_back(json_glyph.get<glyph_t>());
+				}
+				else if (json_glyph.is_string())
+				{
+					std::string glyph_str = json_glyph.get<std::string>();
+					
+					if (glyph_str.empty())
+					{
+						continue;
+					}
+
+					random_glyph.push_back(static_cast<glyph_t>(glyph_str[0]));
+					
+				}
+				else
+				{
+					CERR("Invalid glyph type: " << json_glyph);
+				}
+			}
+		}
+		
+		if (j.at("random_fg").is_array())
+		{
+			random_fg.clear();
+			for (const auto& json_fg : j.at("random_fg"))
+			{
+				random_fg.push_back(color::from_json(json_fg));
+			}
+		}
+
+		if (j.at("random_bg").is_array())
+		{
+			random_bg.clear();
+			for (const auto& json_bg : j.at("random_bg"))
+			{
+				random_bg.push_back(color::from_json(json_bg));
+			}
+		}
+
+		t.texture.clear();
+			
+		for (glyph_t g : random_glyph) for (color_t fg : random_fg) for (color_t bg : random_bg)
+		{
+			t.texture.push_back(Renderable(g, fg, bg));
+		}
+
+		t.random_texture = true;
 	}
 	else if (j.contains("random_texture"))
 	{
@@ -136,13 +214,13 @@ TileType TileType::from_json(const json& j)
 					continue;
 				}
 
-				if (flag_name == "IS_BLOCKED" || flag_name == "IS_OPAQUE")
+				if (static_cast<int>(AllTileFlags[flag_name]) > 0)
 				{
-					t.flags &= AllTileFlags[flag_name];
+					t.flags |= AllTileFlags[flag_name];
 				}
 				else
 				{
-					t.flags |= AllTileFlags[flag_name];
+					t.flags &= AllTileFlags[flag_name];
 				}
 			}
 		}
@@ -177,6 +255,27 @@ TileType TileType::from_json(const json& j)
 		else
 		{
 			t.transforms_to = j.at("transforms_to").get<std::string>();
+		}
+	}
+
+	if (j.contains("move_cost"))
+	{
+		if (!j.at("move_cost").is_number())
+		{
+			CERR("Invalid 'move_cost' field in species JSON object: " << j);
+
+			if (t.flags & TileType::Flag::IS_WALKABLE)
+			{
+				t.move_cost = 1.0f;
+			}
+			else
+			{
+				t.move_cost = 0.0f;
+			}
+		}
+		else
+		{
+			t.move_cost = j.at("move_cost").get<double>();
 		}
 	}
 

@@ -37,36 +37,52 @@ public:
 	virtual bool check_action() override;
 };
 
-class OpenAction : public ActionWithLocation
+class TransformAction : public ActionWithLocation
 {
+protected:
+	bool m_open{ true };
+
 public:
-	OpenAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, const Coord& loc_x = 0, const Coord& loc_y = 0, const Coord& loc_z = 0) :
-		ActionWithLocation(action_length, actor, loc_x, loc_y, loc_z)
+	TransformAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, const Coord& loc_x = 0, const Coord& loc_y = 0, const Coord& loc_z = 0, bool open = true) :
+		ActionWithLocation(action_length, actor, loc_x, loc_y, loc_z), m_open(open)
 	{
 	}
-	OpenAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, const Position& location = Position(0, 0, 0)) :
-		ActionWithLocation(action_length, actor, location)
+	TransformAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, const Position& location = Position(0, 0, 0), bool open = true) :
+		ActionWithLocation(action_length, actor, location), m_open(open)
 	{
 	}
 
-	virtual bool check_action() override;
 	virtual ActionResult perform();
 };
 
-class CloseAction : public ActionWithLocation
+class OpenAction : public TransformAction
 {
 public:
-	CloseAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, const Coord& loc_x = 0, const Coord& loc_y = 0, const Coord& loc_z = 0) :
-		ActionWithLocation(action_length, actor, loc_x, loc_y, loc_z)
+	OpenAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, const Coord& loc_x = 0, const Coord& loc_y = 0, const Coord& loc_z = 0) :
+		TransformAction(action_length, actor, loc_x, loc_y, loc_z, true)
 	{
 	}
-	CloseAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, const Position& location = Position(0, 0, 0)) :
-		ActionWithLocation(action_length, actor, location)
+	OpenAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, const Position& location = Position(0, 0, 0)) :
+		TransformAction(action_length, actor, location, true)
 	{
 	}
 
 	virtual bool check_action() override;
-	virtual ActionResult perform();
+};
+
+class CloseAction : public TransformAction
+{
+public:
+	CloseAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, const Coord& loc_x = 0, const Coord& loc_y = 0, const Coord& loc_z = 0) :
+		TransformAction(action_length, actor, loc_x, loc_y, loc_z, false)
+	{
+	}
+	CloseAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, const Position& location = Position(0, 0, 0)) :
+		TransformAction(action_length, actor, location, false)
+	{
+	}
+
+	virtual bool check_action() override;
 };
 
 #endif // !LEMONADE_GAME_SRC_LOCATION_ACTIONS_H

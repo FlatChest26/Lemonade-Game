@@ -1,67 +1,78 @@
 #include "anatomy.h"
 #include "units.h"
 
-Anatomy::Anatomy(BodyPlan bd_plan, std::vector<BodyMod> bd_mods) :
-	m_height(bd_plan.height), m_weight(bd_plan.weight)
+Anatomy::Anatomy(RawMaster::Ref<BodyPlan> bd_plan, std::vector<RawMaster::Ref<BodyMod>> bd_mods) :
+	m_height(bd_plan->height), m_weight(bd_plan->weight)
 {
-	for (auto& bp : bd_plan.body_parts)
+	for (auto& bp : bd_plan->body_parts)
 	{
 		add_body_part(bp);
 	}
 
 	for (auto& bdm : bd_mods)
 	{
-		if (bdm.set_height > 0_ft)
+		if (bdm->set_height > 0_ft)
 		{
-			m_height = bdm.set_height;
+			m_height = bdm->set_height;
 		}
 
-		m_height += bdm.add_height;
-		m_height *= bdm.multiply_height;
+		m_height += bdm->add_height;
+		m_height *= bdm->multiply_height;
 
-		if (bdm.set_weight > 0_lb)
+		if (bdm->set_weight > 0_lb)
 		{
-			m_weight = bdm.set_weight;
+			m_weight = bdm->set_weight;
 		}
 
-		m_weight += bdm.add_weight;
-		m_weight *= bdm.multiply_weight;
+		m_weight += bdm->add_weight;
+		m_weight *= bdm->multiply_weight;
 
-		for (auto& bp : bdm.add_parts)
+		for (auto& bp : bdm->add_parts)
 		{
 			add_body_part(bp);
 		}
 
-		for (auto& bp_id : bdm.remove_parts)
+		for (auto& bp_id : bdm->remove_parts)
 		{
 			remove_body_part(bp_id);
 		}
 
-		for (auto& [bp_id, bp] : bdm.replace_parts)
+		for (auto& [bp_id, bp] : bdm->replace_parts)
 		{
 			remove_body_part(bp_id);
 			add_body_part(bp);
 		}
 	}
 
-	for (auto& bc : bd_plan.body_connections)
+	for (auto& bc : bd_plan->body_connections)
 	{
 		add_body_connection(bc);
 	}
 
 	for (auto& bdm : bd_mods)
 	{
-		for (auto& bc : bdm.add_connections)
+		for (auto& bc : bdm->add_connections)
 		{
 			add_body_connection(bc);
 		}
 	}
 }
 
+void Anatomy::set_owner(Entity* entity)
+{
+	m_owner = entity;
+}
+
 BodyPart* Anatomy::add_body_part(const BodyPartPlan& bp_plan)
 {
-	auto bp = std::make_unique<BodyPart>(m_owner, bp_plan.ID, bp_plan.type, bp_plan.rel_size, bp_plan.position, bp_plan.prefix);
-	m_body_parts.push_back(std::move(bp));
+	auto bp_type = RawMaster::get<BodyPartType>(bp_plan.type);
+
+	if (!bp_type)
+	{
+		return nullptr;
+	}
+
+	m_body_parts.push_back(std::move(std::make_unique<BodyPart>(m_owner, bp_plan.ID, bp_type, bp_plan.rel_size, bp_plan.position, bp_plan.prefix)));
 
 	if (!root)
 	{
@@ -73,8 +84,8 @@ BodyPart* Anatomy::add_body_part(const BodyPartPlan& bp_plan)
 
 bool Anatomy::add_body_connection(const BodyConnectionPlan& bc_plan)
 {
-	BodyPart* parent = get_body_part(bc_plan.parent);
-	BodyPart* child = get_body_part(bc_plan.child);
+	BodyPart* parent = get_first_body_part_with_id(bc_plan.parent);
+	BodyPart* child = get_first_body_part_with_id(bc_plan.child);
 
 	if (!parent || !child)
 	{
@@ -89,8 +100,8 @@ bool Anatomy::add_body_connection(const BodyConnectionPlan& bc_plan)
 
 bool Anatomy::add_body_relation(const BodyConnectionPlan& bc_plan)
 {
-	BodyPart* parent = get_body_part(bc_plan.parent);
-	BodyPart* child = get_body_part(bc_plan.child);
+	BodyPart* parent = get_first_body_part_with_id(bc_plan.parent);
+	BodyPart* child = get_first_body_part_with_id(bc_plan.child);
 
 	if (!parent || !child)
 	{
@@ -105,7 +116,7 @@ bool Anatomy::add_body_relation(const BodyConnectionPlan& bc_plan)
 
 bool Anatomy::remove_body_part(BodyPartID bp_ID)
 {
-	if (!has_body_part(bp_ID))
+	if (!has_body_part_with_id(bp_ID))
 	{
 		return false;
 	}

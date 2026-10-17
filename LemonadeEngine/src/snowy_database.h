@@ -363,9 +363,9 @@ namespace snowy
 			get().m_data.insert({ id, std::move(data) });
 		}
 
-		constexpr static void erase(const DataType& data)
+		constexpr static void erase(const KeyType& id)
 		{
-			get().m_data.erase(data);
+			get().m_data.erase(id);
 		}
 
 		constexpr static void add(const std::initializer_list<std::tuple<KeyType, DataType>>& init)
@@ -375,6 +375,33 @@ namespace snowy
 				get().m_data.insert({ id, std::move(data) });
 			}
 		}
+
+		constexpr static std::vector<K> get_keys()
+		{
+			std::vector<K> keys;
+			keys.reserve(get().m_data.size());
+
+			for (const auto& [id, data] : get().m_data)
+			{
+				keys.push_back(id);
+			}
+
+			return keys;
+		}
+
+		constexpr static std::vector<T> get_values()
+		{
+			std::vector<T> values;
+			values.reserve(get().m_data.size());
+
+			for (const auto& [id, data] : get().m_data)
+			{
+				values.push_back(data);
+			}
+
+			return values;
+		}
+
 	};
 
 	template<typename T>

@@ -7,90 +7,116 @@ using namespace std;
 
 bool ActionWithLocation::check_action()
 {
-	return get_world() != nullptr;
+	return get_tile_map() != nullptr;
 }
 
 Tile* ActionWithLocation::get_tile_at_dest()
 {
 	if (auto tm = get_tile_map())
 		return tm->get_tile(m_loc_x, m_loc_y, m_loc_z);
-	return &::tile_map::VOID_TILE;
+	return nullptr;
 }
 
-static bool transform_tile(World* world, int loc_x, int loc_y, int loc_z)
+ActionResult TransformAction::perform()
 {
-	if (!world)
+	auto tile_map = get_tile_map();
+	if (!tile_map)
 	{
-		return false;
+		CERR("tile_map is null!");
+		return ActionResult(false);
 	}
 
-	auto tile_map = world->get_tile_map();
-	const auto tile = tile_map->get_tile(loc_x, loc_y, loc_z);
-
-	auto transformed_tile = RawMaster::get_tile_type(tile->get_type()->get_transform_ID());
-
-	if (world->has_blocking_entities_at(loc_x, loc_y, loc_z))
+	if (!tile_map->in_bounds(location()))
 	{
-		return false;
+		CERR("no tile at destination!");
+		return ActionResult(false);
 	}
 
-	tile_map->set_tile(loc_x, loc_y, loc_z, transformed_tile);
+	auto transformed_tile = RawMaster::get<TileType>(get_tile_at_dest()->get_type()->get_transform_ID());
+	bool will_be_blocked = !(transformed_tile->tile_flags() & TileType::Flag::IS_WALKABLE);
 
-	return true;
-}
+	std::vector<Position> tiles_to_transform;
 
-static bool recursively_open_or_close_tiles(World* world, int loc_x, int loc_y, int loc_z, bool open)
-{
-	if (!world)
+	std::vector<Position> locations_to_check;
+	locations_to_check.push_back(location());
+
+	std::vector<Position> locations_already_checked;
+
+	while (!locations_to_check.empty())
 	{
-		return false;
-	}
+		Position loc = locations_to_check.back();
+		locations_to_check.pop_back();
 
-	auto tile_map = world->get_tile_map();
-	auto tile = tile_map->get_tile(loc_x, loc_y, loc_z);
+		locations_already_checked.push_back(loc);
 
-	if (!transform_tile(world, loc_x, loc_y, loc_z))
-	{
-		return false;
-	}
+		auto tile = tile_map->get_tile(loc);
+		if (!tile || (m_open && !tile->can_open()) || (!m_open && !tile->can_close()))
+			continue;
 
-	if (!(tile->opens_neighbors() || tile->closes_neighbors()))
-	{
-		return true;
-	}
-
-	for (auto& check_location : transforms::get_surrounding_locations(Position(loc_x, loc_y, loc_z)))
-	{
-		auto other_tile = tile_map->get_tile(check_location);
-
-		if (tile->can_connect_with(other_tile) || other_tile->can_connect_with(tile))
+		if (will_be_blocked)
 		{
-			if (open && other_tile->can_open())
+			auto entities = tile_map->get_world()->get_entities_at(loc);
+
+			if (!entities.empty())
 			{
-				if (!recursively_open_or_close_tiles(world, check_location.x, check_location.y, check_location.z, true))
+				auto is_blocked = std::find_if(
+					entities.begin(), entities.end(),
+					[&](const auto& entity) { return entity->can_collide(); }
+				);
+
+				if (is_blocked != entities.end())
 				{
-					transform_tile(world, loc_x, loc_y, loc_z);
-					return false;
+					return ActionResult(false);
 				}
 			}
+		}
 
-			if (!open && other_tile->can_close())
+		tiles_to_transform.push_back(loc);
+
+		if ((m_open && tile->opens_neighbors()) || (!m_open && tile->closes_neighbors()))
+		{
+			std::vector<Position> tiles_to_check
 			{
-				if (!recursively_open_or_close_tiles(world, check_location.x, check_location.y, check_location.z, false))
-				{
-					transform_tile(world, loc_x, loc_y, loc_z);
-					return false;
-				}
+				loc + Position(1, 0, 0),
+				loc + Position(-1, 0, 0),
+				loc + Position(0, 1, 0),
+				loc + Position(0, -1, 0),
+			};
+
+			for (auto& check_location : tiles_to_check)
+			{
+				if (!tile_map->in_bounds(check_location))
+					continue;
+
+				auto other_tile = tile_map->get_tile(check_location);
+
+				if (!(tile->can_connect_with(other_tile) || other_tile->can_connect_with(tile)))
+					continue;
+
+				auto already_checked = std::find_if(
+					locations_already_checked.begin(), locations_already_checked.end(),
+					[&check_location](const auto& pos) { return pos == check_location; }
+				);
+
+				if (already_checked != locations_already_checked.end())
+					continue;
+
+				locations_to_check.push_back(check_location);
 			}
 		}
 	}
 
-	return true;
+	for (auto& loc_to_trans : tiles_to_transform)
+	{
+		tile_map->set_tile(loc_to_trans, transformed_tile);
+	}
+
+	return ActionResult(true);
 }
 
 bool OpenAction::check_action()
 {
-	if (get_tile_map() == nullptr)
+	if (!ActionWithLocation::check_action())
 		return false;
 
 	if (!get_tile_at_dest()->can_open())
@@ -99,23 +125,13 @@ bool OpenAction::check_action()
 	return true;
 }
 
-ActionResult OpenAction::perform()
-{
-	return ActionResult(recursively_open_or_close_tiles(get_world(), m_loc_x, m_loc_y, m_loc_z, true));
-}
-
 bool CloseAction::check_action()
 {
-	if (get_tile_map() == nullptr)
+	if (!ActionWithLocation::check_action())
 		return false;
 
 	if (!get_tile_at_dest()->can_close())
 		return false;
 
 	return true;
-}
-
-ActionResult CloseAction::perform()
-{
-	return ActionResult(recursively_open_or_close_tiles(get_world(), m_loc_x, m_loc_y, m_loc_z, false));
 }

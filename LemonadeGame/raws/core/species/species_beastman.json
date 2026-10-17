@@ -1,0 +1,27 @@
+[
+  {
+    "type": "species",
+    "ID": "CAT_PERSON",
+    "noun": { "singular": "cat-person", "plural": "cat-people" },
+    "gendered_nouns": {
+      "immature": {
+        "MASCULINE": { "singular": "cat-boy", "plural": "cat-boys" },
+        "FEMININE": { "singular": "cat-girl", "plural": "cat-girls" }
+      },
+      "mature": {
+        "MASCULINE": { "singular": "cat-man", "plural": "cat-men" },
+        "FEMININE": { "singular": "cat-woman", "plural": "cat-women" }
+      }
+    },
+    "adjective": "feline",
+    "renderable": { "glyph": "C", "fg": "dark_blue", "bg": "black" },
+    "default_body_plan": "GenericBody",
+    "body_mods": [ "HeadDetails", "CatFeatures" ],
+    "description": "A humanoid with feline features.",
+    "frequency": 6.0,
+    "lifespan": { "min": 60, "max": 80 },
+    "child_age": 12,
+    "adult_age": 18,
+    "mature_age": 20
+  }
+]
