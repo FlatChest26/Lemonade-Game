@@ -57,5 +57,4 @@ public:
 	virtual bool perform(AIBrain* brain, TimeUnit delta = TimeUnit::none()) override;
 };
 
-
 #endif // !LEMONADE_GAME_SRC_AI_BEHAVIOR_H

@@ -8,6 +8,8 @@
 #include "game.h"
 #include "world_state.h"
 
+#include "keybinds.h"
+
 #include <libtcod/timer.hpp>
 
 static constexpr const char* GAME_TITLE = "Lemonade Game";
@@ -17,11 +19,15 @@ namespace game_loop
 {
 	void new_game()
 	{
+		keybinds::initialize();
+
 		// Make new game
 		game = std::make_unique<Game>();
 
-		game->get_settings().fixed_camera = false;
+		game->get_settings().fixed_camera = true;
 		game->get_settings().show_explored_tiles = true;
+		game->get_settings().instant_actions = true;
+		game->get_settings().use_second_person_pronouns = true;
 
 		// Start new game on world state
 		WorldGameState* world_state = new WorldGameState();
@@ -121,7 +127,7 @@ namespace game_loop
 			// Update window title if needed
 			if (game->should_update_window_title)
 			{
-				if (cfg::settings::SHOW_FPS)
+				if (cfg::init::SHOW_FPS)
 				{
 					output::set_window_title((std::string)GAME_TITLE + " | FPS: " + std::to_string(timer.get_mean_fps()));
 				}

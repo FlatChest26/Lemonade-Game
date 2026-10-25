@@ -34,19 +34,24 @@ void WorldGameState::new_game()
 	m_camera = std::make_unique<Camera>();
 
 	// Create renderer
-
 	m_renderer = std::make_unique<WorldRenderer>(this);
+
+	// Create message log
+	m_log = std::make_unique<GameLog>(this);
+
+	// Create sidebar
+	m_sidebar = std::make_unique<Sidebar>(this);
 
 	// Create Creatures
 
 	auto Player = EntityBuilder::create_creature
 	({
-		.soul = new CreatureSoul({
+		.soul = new CreatureSoul{
 			.ID = "PLAYER",
 			.name = {"Player", "Lemonade Person"},
 			.gender = gender::NON_SPECIFIC,
 			.description = "That is you."
-		}),
+		},
 		.species = RawMaster::get<Species>("HUMAN"),
 		.lifespan = static_cast<Age::age_t>(INFINITY),
 		.current_age = 18,
@@ -55,6 +60,13 @@ void WorldGameState::new_game()
 
 	m_player = m_world->add_entity_at(std::unique_ptr<Entity>(Player), tile_map->get_width() - (road_width + sidewalk_width) - 5, 0, 0);
 	m_player->learn_name();
+
+
+	auto Dildo = EntityBuilder::create_item({
+		RawMaster::get<ItemDefinition>("DILDO")
+	});
+
+	m_world->add_entity_at(std::unique_ptr<Entity>(Dildo), tile_map->get_width() - (road_width + sidewalk_width) - 5, 1, 0);
 
 	// Build Map
 	MapBuilder::set_floor(tile_map.get(), RawMaster::get<TileType>("TILE_GRASS"), 0);
@@ -155,25 +167,24 @@ void WorldGameState::new_game()
 
 	// Create AI Manger
 	m_ai_manager = std::make_unique<AIManager>(this);
+
 	m_ai_manager->set_sidewalk_start(Position(tile_map->get_width() - (road_width + sidewalk_width), 0, 0));
-	m_ai_manager->set_sidewalk_end(Position(tile_map->get_width() - (road_width + sidewalk_width), tile_map->get_height() - 2, 0));
+	m_ai_manager->set_sidewalk_end(Position(tile_map->get_width() - (road_width + sidewalk_width), tile_map->get_height() - 1, 0));
 	m_ai_manager->set_sidewalk_width(sidewalk_width);
 
-	for (const auto& entity : m_world->get_entities())
+	// Add AI Brains
+	for (const auto& entity : m_world->get_entities(
+		EntityFilter
+		{ 
+			.ignore_entities = { m_player }, 
+			.required_flags = EntityFlag::ANIMATE
+		}
+	))
 	{
-		if (!entity->is_animate())
-			continue;
-
-		if (entity == get_player())
-			continue;
-
-		m_ai_manager->add_brain_to_entity(entity);
+		entity->add_brain(m_ai_manager->create_brain());
 	}
 
 	m_world->set_tile_map(std::move(tile_map));
-
-	// Update things
-	m_camera_focus = Position(m_world->get_tile_map()->get_width() / 2, m_world->get_tile_map()->get_height() / 2, m_player->get_movable()->posz());
 
 	// Create Input Handler
 	handle_input_result(InputResult{ new PlayerInputHandler() });
@@ -230,23 +241,53 @@ void WorldGameState::update(double delta_time)
 
 void WorldGameState::render() const
 {
-	if (auto renderer = get_renderer())
+	Coord console_width = output::get_console_width();
+	Coord tile_map_width = get_world()->get_tile_map()->get_width();
+
+	Coord console_height = output::get_console_height();
+	Coord tile_map_height = get_world()->get_tile_map()->get_height();
+
+	auto params = RenderParams
 	{
-		auto params = RenderParams{
-			.camera = m_camera.get(),
-			.use_fov = m_player != nullptr,
-			.show_explored_tiles = get_game_settings().show_explored_tiles,
-			.render_world = true,
-			.render_entities = true,
-			.render_tile_map = true,
-		};
+		.camera = m_camera.get(),
+		.world_render_frame = { Vec2D<Coord>(0, 0), Vec2D<Length>(tile_map_width + 2, tile_map_height + 2), 1},
+		.use_fov = m_player != nullptr,
+		.show_explored_tiles = get_game_settings().show_explored_tiles,
+		.render_world = true,
+		.render_entities = true,
+		.render_tile_map = true,
+	};
 
-		renderer->render(params);
+	if (m_renderer)
+	{
+		m_renderer->render(params);
+	}
+	else
+	{
+		CERR("No renderer attatched to world state!");
+	}
 
-		for (auto& input_handler : std::views::reverse(m_input_handlers))
-		{
-			input_handler->render(params);
-		}
+	if (m_log)
+	{
+		m_log->render(params);
+	}
+	else
+	{
+		CERR("No game log attatched to world state!");
+	}
+
+	if (m_sidebar)
+	{
+		m_sidebar->render(params);
+	}
+	else
+	{
+		CERR("No side bar attatched to world state!");
+	}
+
+	for (const auto& input_handler : std::views::reverse(m_input_handlers))
+	{
+		input_handler->render(params);
 	}
 }
 
@@ -266,16 +307,7 @@ void WorldGameState::step(TimeUnit time_delta)
 		m_player = nullptr;
 	}
 
-	auto game_settings = get_game_settings();
-
-	if (game_settings.fixed_camera)
-	{
-		update_camera(Position(m_camera_focus.x, m_camera_focus.y, m_player ? m_player->get_movable()->posz() : m_camera_focus.z));
-	}
-	else
-	{
-		update_camera(m_player ? static_cast<Position>(m_player->get_movable()->pos()) : m_camera_focus);
-	}
+	update_camera();
 
 	if (m_player)
 	{
@@ -302,23 +334,57 @@ void WorldGameState::step(TimeUnit time_delta)
 	//COUT("Simulation stepped by " << time_delta.total_seconds() << " seconds");
 }
 
-void WorldGameState::update_camera(const Position& pos)
+void WorldGameState::update_camera()
 {
 	if (!m_camera)
 	{
 		return;
 	}
 
-	m_camera->set_position(pos);
+	auto game_settings = get_game_settings();
 
-	m_camera->set_size(
-		Size
+	if (game_settings.fixed_camera || !m_player)
+	{
+		Position focus = Position(m_world->get_tile_map()->get_width() / 2, m_world->get_tile_map()->get_height() / 2, 0);
+
+		if (m_player)
 		{
-			(uint32_t)floor(output::get_console_width() * 0.7),
-			(uint32_t)floor(output::get_console_height() * 0.7),
-			CAMERA_VIEW_DEPTH
+			focus.z = m_player->get_movable()->posz();
 		}
-	);
+
+		if (m_camera_focus)
+		{
+			focus.z = m_camera_focus->z;
+		}
+
+		m_camera->set_position(focus);
+		m_camera->set_size(
+			Size
+			{
+				m_world->get_tile_map()->get_width(),
+				m_world->get_tile_map()->get_height(),
+				CAMERA_VIEW_DEPTH
+			}
+		);
+	}
+	else
+	{
+		Position focus = Position(m_player->get_movable()->pos());
+
+		if (m_camera_focus)
+		{
+			focus = *m_camera_focus;
+		}
+
+		m_camera->set_size(
+			Size
+			{
+				(Length)floor(output::get_console_width()),
+				(Length)floor(output::get_console_height()),
+				CAMERA_VIEW_DEPTH
+			}
+		);
+	}
 }
 
 #include "snowy_macros.h"
@@ -335,48 +401,77 @@ void WorldGameState::handle_action(std::unique_ptr<Action> action)
 		return;
 	}
 
-	auto actor = action->get_actor();
 	auto action_result = action->perform();
 
 	if (action_result.response != "")
 	{
-		game_message(action_result.response);
+		game_message(GameMessage(action_result.response));
 	}
 
-	if (actor && action_result.success)
+	if (!action_result.success)
+		return;
+
+	while (action_result.has_next_action())
 	{
-		while (action_result.has_next_action())
+		auto next_action = action_result.get_next_action();
+
+		if (action->has_actor())
 		{
+			auto actor = action->get_actor();
+
 			if (actor->can_queue_action())
 			{
 				if (actor == get_player())
 				{
-					handle_input_result(InputResult(std::move(action_result.get_next_action())));
+					handle_input_result(InputResult(std::move(next_action)));
 				}
 				else
 				{
-					actor->queue_action(std::move(action_result.get_next_action()));
+					actor->queue_action(std::move(next_action));
 				}
 			}
+		}
+		else
+		{
+			handle_input_result(InputResult(std::move(next_action)));
 		}
 	}
 }
 
 void WorldGameState::handle_input_result(InputResult result)
 {
-	if (result.type == InputResult::Type::Action /*&& get_run_speed() == runspeed_flag::TURN_BASED*/)
+	bool can_instant_act = get_game_settings().instant_actions || get_tick_speed() == TickSpeed::TURN_BASED;
+
+	if (result.type == InputResult::Type::Action)
 	{
 		if (result.next_action && result.next_action->check_action())
 		{
 			std::unique_ptr<Action> new_action = std::move(result.next_action);
 
-			auto actor = new_action->get_actor();
-			auto action_length = new_action->get_action_length();
-			actor->queue_action(std::move(new_action));
-
-			if (actor == m_player)
+			if (new_action->has_actor())
 			{
+				auto actor = new_action->get_actor();
+				auto action_length = new_action->get_action_length();
+
+				if (actor == m_player && !can_instant_act)
+				{
+					actor->start_action(std::move(new_action));
+				}
+				else
+				{
+					actor->queue_action(std::move(new_action));
+				}
+
+				if (actor == m_player && can_instant_act)
+				{
+					step(action_length);
+				}
+			}
+			else
+			{
+				auto action_length = new_action->get_action_length();
 				step(action_length);
+				handle_action(std::move(new_action));
 			}
 		}
 		else
@@ -391,16 +486,23 @@ void WorldGameState::handle_input_result(InputResult result)
 	}
 }
 
-void WorldGameState::game_message(std::string msg)
+void WorldGameState::game_message(GameMessage msg)
 {
-	if (m_last_msg == msg)
+	if (!m_log)
+	{
+		CERR("No game log attatched to world state!");
+		return;
+	}
+
+	auto last_msg = m_log->get_message(0);
+
+	if (last_msg.text == msg.text)
 	{
 		return;
 	}
 
-	m_last_msg = msg;
-
-	std::cout << msg << std::endl;
+	m_log->add_message(msg);
+	std::cout << msg.text << std::endl;
 
 	if (auto game = m_game)
 	{

@@ -11,9 +11,14 @@ ActionResult Action::perform()
 	return ActionResult{ false };
 }
 
+bool Action::has_actor() const
+{
+	return get_actor() != nullptr;
+}
+
 Entity* Action::get_actor() const
 {
-	return m_actor;
+	return nullptr;
 }
 
 World* Action::get_world() const
@@ -45,3 +50,31 @@ WorldGameState* Action::get_world_game_state() const
 
 	return {};
 }
+
+
+bool EntityAction::check_action() const
+{
+	if (!Action::check_action())
+		return false;
+
+	if (!m_actor)
+	{
+		ACTION_CERR("Actor is null!");
+		return false;
+	}
+
+	if (!m_actor->can_do_actions())
+	{
+		ACTION_CERR("This actor cannot perform actions");
+		return false;
+	}
+
+	return true;
+}
+
+Entity* EntityAction::get_actor() const
+{
+	return m_actor;
+}
+
+

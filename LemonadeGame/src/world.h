@@ -10,6 +10,8 @@
 #include "tile_map.h"
 #include "game_states.h"
 
+#include "entity_filter.h"
+
 class Game;
 class WorldGameState;
 
@@ -32,6 +34,8 @@ private:
 		.year = 2025
 	};
 
+	double time_progress_rate = 20.0f;
+
 public:
 	World(GameState* game_state = {});
 
@@ -43,6 +47,7 @@ public:
 	TileMap* get_tile_map() const { return m_tile_map.get(); }
 
 	std::vector<Entity*> get_entities();
+	std::vector<const Entity*> get_entities() const;
 
 	void set_tile_map(std::unique_ptr<TileMap> tile_map) { m_tile_map = std::move(tile_map); m_tile_map->set_world(this); }
 
@@ -50,31 +55,56 @@ public:
 	void set_time(const TimeDate& time) { m_current_time = time; }
 	void add_time(TimeUnit time_delta) { m_current_time.add(time_delta); }
 
-	// -- Utilities -- //
-
+public:
+	// -- Entity Utilities -- //
+	
+	// Sets the given entity to be removed on the next frame.
 	void queue_remove_entity(Entity* entity);
-	void remove_entity(Entity* entity);
-
+	
+	// Adds an entity to the world. Returns a pointer to the entity if successful.
 	Entity* add_entity(std::unique_ptr<Entity> entity);
+
+	// Adds an entity to the world at the given coordinates. Returns a pointer to the entity if successful.
 	Entity* add_entity_at(std::unique_ptr<Entity> entity, const Coord& x, const Coord& y, const Coord& z);
+	// Adds an entity to the world at the given position. Returns a pointer to the entity if successful.
 	Entity* add_entity_at(std::unique_ptr<Entity> entity, const Position& pos)
 	{
 		return add_entity_at(std::move(entity), pos.x, pos.y, pos.z);
 	}
 
-	std::vector<Entity*> get_entities_at(const Coord& x, const Coord& y, const Coord& z);
-	std::vector<Entity*> get_entities_at(const Position& pos)
+	// -- Entity Getters -- //
+
+	std::vector<Entity*> get_entities(const EntityFilter& filter);
+	std::vector<const Entity*> get_entities(const EntityFilter& filter) const;
+
+	bool has_entities(const EntityFilter& filter) const;
+	int count_entities(const EntityFilter& filter) const;
+
+	// Returns a vector of entities at the given coordinates. EntityFilter is used to ignore certain entities.
+	std::vector<Entity*> get_entities_at(const Coord& x, const Coord& y, const Coord& z, const EntityFilter& filter = { .ignore_held = true });
+	// Returns a vector of entities at the given position.
+	std::vector<Entity*> get_entities_at(const Position& pos, const EntityFilter& filter = { .ignore_held = true })
 	{
-		return get_entities_at(pos.x, pos.y, pos.z);
+		return get_entities_at(pos.x, pos.y, pos.z, filter);
 	}
 
-	int count_entities_at(const Coord& x, const Coord& y, const Coord& z) const;
-	int count_entities_at(const Position& pos)  const
+	int count_entities_at(const Coord& x, const Coord& y, const Coord& z, const EntityFilter& filter = { .ignore_held = true }) const;
+	int count_entities_at(const Position& pos, const EntityFilter& filter = { .ignore_held = true }) const { return count_entities_at(pos.x, pos.y, pos.z, filter); }
+
+	bool has_entities_at(const Coord& x, const Coord& y, const Coord& z, const EntityFilter& filter = { .ignore_held = true }) const;
+	bool has_entities_at(const Position& pos, const EntityFilter& filter = { .ignore_held = true }) const { return has_entities_at(pos.x, pos.y, pos.z, filter); }
+
+	bool has_blocking_entities_at(const Coord& x, const Coord& y, const Coord& z,  const EntityFilter& filter = { .ignore_held = true }) const;
+	bool has_blocking_entities_at(const Position& pos, const EntityFilter& filter = { .ignore_held = true }) const { return has_blocking_entities_at(pos.x, pos.y, pos.z, filter); }
+
+	std::vector<Entity*> get_blocking_entities_at(const Coord& x, const Coord& y, const Coord& z, const EntityFilter& filter = { .ignore_held = true });
+	std::vector<Entity*> get_blocking_entities_at(const Position& pos, const EntityFilter& filter = { .ignore_held = true })
 	{
-		return count_entities_at(pos.x, pos.y, pos.z);
+		return get_blocking_entities_at(pos.x, pos.y, pos.z, filter);
 	}
 
-	// -- Checks -- //
+public:
+	// -- Tile Map Utilities -- //
 
 	bool in_bounds(const Coord& x, const Coord& y, const Coord& z) const;
 	bool in_bounds(const Position& pos) const
@@ -86,18 +116,6 @@ public:
 	Tile* get_tile(const Position& pos) const
 	{
 		return get_tile(pos.x, pos.y, pos.z);
-	}
-
-	bool has_blocking_entities_at(const Position& pos) const;
-	bool has_blocking_entities_at(const Coord& x, const Coord& y, const Coord& z) const
-	{
-		return has_blocking_entities_at(Position(x, y, z));
-	}
-
-	std::vector<Entity*> get_blocking_entities_at(const Position& pos) const;
-	std::vector<Entity*> get_blocking_entities_at(const Coord& x, const Coord& y, const Coord& z) const
-	{
-		return get_blocking_entities_at(Position(x, y, z));
 	}
 
 	bool is_blocked(const Coord& x, const Coord& y, const Coord& z, const Entity* fit = nullptr, const Coord& z_dir = 0);
@@ -112,11 +130,13 @@ public:
 		return is_opaque(pos.x, pos.y, pos.z, fit);
 	}
 
+public:
 	// -- Game Loop -- //
 
 	void step(TimeUnit time_delta); // Tick the world's time forward
 
-	// void render(RenderParams params);
+protected:
+	void prepare_remove_entity(Entity* entity) const;
 };
 
 #endif // !LEMONADE_GAME_SRC_WORLD_H

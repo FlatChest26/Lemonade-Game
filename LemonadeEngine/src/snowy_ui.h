@@ -319,7 +319,6 @@ namespace ui
 
 		color_t m_fg{ DEFAULT_FG_COLOR };
 		color_t m_bg{ DEFAULT_BG_COLOR };
-
 	public:
 		UIElement() = default;
 		UIElement(const UINode_ID& ID, const UIPosition& position, const UISize& size, const color_t& fg, const color_t& bg) :

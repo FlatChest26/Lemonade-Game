@@ -629,56 +629,6 @@
   },
   {
     "type": "color",
-    "ID": "dark_color",
-    "color": "#328080"
-  },
-  {
-    "type": "color",
-    "ID": "error",
-    "color": "#FF4040"
-  },
-  {
-    "type": "color",
-    "ID": "explored_color",
-    "color": "#322D28"
-  },
-  {
-    "type": "color",
-    "ID": "impossible",
-    "color": "#800080"
-  },
-  {
-    "type": "color",
-    "ID": "impossible2",
-    "color": "#FF00FF"
-  },
-  {
-    "type": "color",
-    "ID": "invalid",
-    "color": "#FFFF00"
-  },
-  {
-    "type": "color",
-    "ID": "mystery_color",
-    "color": "#FFFF00"
-  },
-  {
-    "type": "color",
-    "ID": "sai_color",
-    "color": "#423189"
-  },
-  {
-    "type": "color",
-    "ID": "sai_menu_color",
-    "color": "#FFFFFF"
-  },
-  {
-    "type": "color",
-    "ID": "stat_recovered",
-    "color": "#00FF00"
-  },
-  {
-    "type": "color",
     "ID": "light_green",
     "color": "#80FF80"
   },
@@ -696,5 +646,55 @@
     "type": "color",
     "ID": "light_magenta",
     "color": "#FF80FF"
+  },
+  {
+    "type": "color",
+    "ID": "col_dark",
+    "color": "#328080"
+  },
+  {
+    "type": "color",
+    "ID": "col_error",
+    "color": "#FF4040"
+  },
+  {
+    "type": "color",
+    "ID": "col_explored",
+    "color": "#322D28"
+  },
+  {
+    "type": "color",
+    "ID": "col_impossible",
+    "color": "#800080"
+  },
+  {
+    "type": "color",
+    "ID": "col_impossible2",
+    "color": "#FF00FF"
+  },
+  {
+    "type": "color",
+    "ID": "col_invalid",
+    "color": "#FFFF00"
+  },
+  {
+    "type": "color",
+    "ID": "col_mystery",
+    "color": "#FFFF00"
+  },
+  {
+    "type": "color",
+    "ID": "col_sai",
+    "color": "#423189"
+  },
+  {
+    "type": "color",
+    "ID": "col_sai_menu",
+    "color": "#FFFFFF"
+  },
+  {
+    "type": "color",
+    "ID": "col_stat_recovered",
+    "color": "#00FF00"
   }
 ]

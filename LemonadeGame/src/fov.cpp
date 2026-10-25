@@ -69,7 +69,7 @@ namespace sym_shadowcast
 			if (!map->in_bounds(map_x, map_y, row->pov_z))
 				continue;
 
-			const bool is_wall = map->is_opaque(map_x, map_y, row->pov_z /*, {row->pov_x, row->pov_y, row->pov_z}*/);
+			const bool is_wall = map->get_tile(map_x, map_y, row->pov_z)->is_opaque();
 
 			if (is_wall || is_symmetric(row, column))
 			{
@@ -156,12 +156,26 @@ namespace FOV
 			return;
 		}
 
-		if ((Length)player_z >= map->get_width())
+		size_t bottom_lyr = 0;
+		size_t top_lyr = map->get_depth();
+
+		auto tile_below = map->get_tile(player_x, player_y, player_z - 1);
+		auto tile_above = map->get_tile(player_x, player_y, player_z + 1);
+
+		if (!tile_below || tile_below->is_opaque() || tile_below->has_ceiling())
 		{
-			return;
+			bottom_lyr = size_t(player_z);
 		}
 
-		auto tcod_map = map->get_tcod_map_layer((size_t)player_z);
-		tcod_map->computeFov(player_x, player_y, radius, true, FOV_SHADOW);
+		if (!tile_above || tile_above->is_opaque() || tile_above->has_floor())
+		{
+			top_lyr = size_t(player_z + 1);
+		}
+
+		for (size_t z_layer = bottom_lyr; z_layer < top_lyr; z_layer++)
+		{
+			auto tcod_map = map->get_tcod_map_layer((size_t)z_layer);
+			tcod_map->computeFov(player_x, player_y, radius, true, FOV_SHADOW);
+		}
 	}
 }

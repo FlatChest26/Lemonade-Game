@@ -105,6 +105,11 @@ void WorldRenderer::render_entity(RenderParams params, const Entity* entity) con
 		return;
 	}
 
+	if (entity->is_being_held())
+	{
+		return;
+	}
+
 	if (params.use_fov && !entity->is_visible_to_player())
 	{
 		return;
@@ -194,7 +199,11 @@ void WorldRenderer::render_entity(RenderParams params, const Entity* entity) con
 			draw_bg = color::get("light_cyan");
 		}
 
-		output::put_rgb(draw_x + offset_x, draw_y + offset_y, draw_glyph, draw_fg, draw_bg);
+		output::put_rgb(
+			draw_x + params.world_render_frame.pos.x + params.world_render_frame.padding,
+			draw_y + params.world_render_frame.pos.y + params.world_render_frame.padding,
+			draw_glyph, draw_fg, draw_bg
+		);
 	}
 }
 
@@ -282,6 +291,10 @@ void WorldRenderer::render_tile_map(RenderParams params) const
 			}
 		}
 
-		output::put_rgb(draw_x, draw_y, draw_glyph, draw_fg, draw_bg);
+		output::put_rgb(
+			draw_x + params.world_render_frame.pos.x + params.world_render_frame.padding, 
+			draw_y + params.world_render_frame.pos.y + params.world_render_frame.padding,
+			draw_glyph, draw_fg, draw_bg
+		);
 	}
 }

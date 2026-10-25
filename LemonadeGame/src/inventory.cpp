@@ -1,8 +1,33 @@
 #include "inventory.h"
+#include "entity.h"
 
-Inventory::Inventory(Entity* owner, size_t max_slots, std::vector<Entity*> items) :
-	m_owner(owner), m_items(items), m_max_slots(max_slots)
+Inventory::~Inventory()
 {
+	if (auto owner = get_owner())
+	{
+		for (auto& item : m_items)
+		{
+			owner->remove_from_inventory(item);
+		}
+	}
+}
+
+bool Inventory::has_item(Entity* item) const
+{
+	return std::find_if(m_items.begin(), m_items.end(), [&item](Entity* other) { return item == other; }) != m_items.end();
+}
+
+Entity* Inventory::get_item(int slot)
+{
+	if (slot < 0 || slot >= m_items.size())
+		return nullptr;
+
+	return m_items[size_t(slot)];
+}
+
+size_t Inventory::get_item_slot(Entity* item) const
+{
+	return size_t(std::find_if(m_items.begin(), m_items.end(), [&item](Entity* other) { return item == other; }) - m_items.begin());
 }
 
 bool Inventory::add_item(Entity* item)

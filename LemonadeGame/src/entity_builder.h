@@ -5,6 +5,7 @@
 
 #include "entity.h"
 #include "creature_soul.h"
+#include "item_def.h"
 
 #include "raw_master.h"
 
@@ -25,7 +26,7 @@ namespace EntityBuilder
 
 	struct ItemInitializer
 	{
-		
+		RawMaster::Ref<ItemDefinition> item_definition{ nullptr };
 	};
 
 	Entity* create_item(ItemInitializer init);

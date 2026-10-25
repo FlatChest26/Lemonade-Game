@@ -17,9 +17,9 @@
 
 namespace cfg
 {
-	inline FilePath settings_path;
+	inline FilePath init_path;
 
-	namespace settings
+	namespace init
 	{
 		inline std::string RENDERER = "SDL";
 
@@ -29,7 +29,7 @@ namespace cfg
 		inline bool FULLSCREEN = false;
 		inline int FULLSCREEN_WIDTH = 1280, FULLSCREEN_HEIGHT = 1024;
 
-		inline std::string TILESET = "data/graphics/(8x12) curses_640x300.png";
+		inline std::string TILESET = "(8x12) curses_640x300.png";
 
 		inline bool SHOW_FPS = false;
 		inline bool USE_CONSOLE_SIZE = true;
@@ -49,23 +49,23 @@ namespace cfg
 		"fullscreen_height",
 	};
 
-	inline bool parse_settings_cfg(const char* filename)
+	inline bool parse_init_cfg(const char* filename)
 	{
 		TCODParser parser{};
 		auto init_struct = parser.newStructure("init");
 
-		init_struct->addProperty("renderer", TCOD_TYPE_STRING, true);
-		init_struct->addProperty("console_width", TCOD_TYPE_INT, false);
-		init_struct->addProperty("console_height", TCOD_TYPE_INT, false);
-		init_struct->addProperty("screen_width", TCOD_TYPE_INT, true);
-		init_struct->addProperty("screen_height", TCOD_TYPE_INT, true);
-		init_struct->addProperty("use_console_size", TCOD_TYPE_BOOL, true);
-		init_struct->addProperty("tileset", TCOD_TYPE_STRING, true);
-		init_struct->addProperty("fullscreen", TCOD_TYPE_BOOL, true);
-		init_struct->addProperty("fullscreen_width", TCOD_TYPE_INT, true);
-		init_struct->addProperty("fullscreen_height", TCOD_TYPE_INT, true);
+		init_struct->addProperty("renderer",			TCOD_TYPE_STRING,	true);
+		init_struct->addProperty("console_width",		TCOD_TYPE_INT,		false);
+		init_struct->addProperty("console_height",		TCOD_TYPE_INT,		false);
+		init_struct->addProperty("screen_width",		TCOD_TYPE_INT,		false);
+		init_struct->addProperty("screen_height",		TCOD_TYPE_INT,		false);
+		init_struct->addProperty("use_console_size",	TCOD_TYPE_BOOL,		false);
+		init_struct->addProperty("tileset",				TCOD_TYPE_STRING,	true);
+		init_struct->addProperty("fullscreen",			TCOD_TYPE_BOOL,		false);
+		init_struct->addProperty("fullscreen_width",	TCOD_TYPE_INT,		true);
+		init_struct->addProperty("fullscreen_height",	TCOD_TYPE_INT,		true);
 
-		init_struct->addProperty("show_fps", TCOD_TYPE_BOOL, false);
+		init_struct->addProperty("show_fps",			TCOD_TYPE_BOOL,		false);
 
 		parser.run(filename, NULL);
 
@@ -81,70 +81,70 @@ namespace cfg
 		}
 
 		// Console Resolution
-		settings::CONSOLE_WIDTH = parser.getIntProperty("init.console_width");
-		settings::CONSOLE_HEIGHT = parser.getIntProperty("init.console_height");
+		init::CONSOLE_WIDTH = parser.getIntProperty("init.console_width");
+		init::CONSOLE_HEIGHT = parser.getIntProperty("init.console_height");
 
-		CONFIG_COUT("CONSOLE_WIDTH: " << settings::CONSOLE_WIDTH);
-		CONFIG_COUT("CONSOLE_HEIGHT: " << settings::CONSOLE_HEIGHT);
+		CONFIG_COUT("CONSOLE_WIDTH: " << init::CONSOLE_WIDTH);
+		CONFIG_COUT("CONSOLE_HEIGHT: " << init::CONSOLE_HEIGHT);
 
 		// Screen Resolution
-		settings::SCREEN_WIDTH = parser.getIntProperty("init.screen_width");
-		settings::SCREEN_HEIGHT = parser.getIntProperty("init.screen_height");
+		init::SCREEN_WIDTH = parser.getIntProperty("init.screen_width");
+		init::SCREEN_HEIGHT = parser.getIntProperty("init.screen_height");
 
-		CONFIG_COUT("SCREEN_WIDTH: " << settings::SCREEN_WIDTH);
-		CONFIG_COUT("SCREEN_HEIGHT: " << settings::SCREEN_HEIGHT);
+		CONFIG_COUT("SCREEN_WIDTH: " << init::SCREEN_WIDTH);
+		CONFIG_COUT("SCREEN_HEIGHT: " << init::SCREEN_HEIGHT);
 
 		// Use Console Size
-		settings::USE_CONSOLE_SIZE = parser.getBoolProperty("init.use_console_size");
+		init::USE_CONSOLE_SIZE = parser.getBoolProperty("init.use_console_size");
 
-		CONFIG_COUT("USE_CONSOLE_SIZE: " << (settings::USE_CONSOLE_SIZE ? "true" : "false"));
+		CONFIG_COUT("USE_CONSOLE_SIZE: " << (init::USE_CONSOLE_SIZE ? "true" : "false"));
 
 		// Tileset
-		settings::TILESET = parser.getStringProperty("init.tileset");
+		init::TILESET = parser.getStringProperty("init.tileset");
 
-		CONFIG_COUT("TILESET: " << settings::TILESET);
+		CONFIG_COUT("TILESET: " << init::TILESET);
 
 		// Renderer
-		settings::RENDERER = parser.getStringProperty("init.renderer");
+		init::RENDERER = parser.getStringProperty("init.renderer");
 
-		CONFIG_COUT("RENDERER: " << settings::RENDERER);
+		CONFIG_COUT("RENDERER: " << init::RENDERER);
 
 		// Fullscreen
-		settings::FULLSCREEN = parser.getBoolProperty("init.fullscreen");
-		settings::FULLSCREEN_WIDTH = parser.getIntProperty("init.fullscreen_width");
-		settings::FULLSCREEN_HEIGHT = parser.getIntProperty("init.fullscreen_height");
+		init::FULLSCREEN = parser.getBoolProperty("init.fullscreen");
+		init::FULLSCREEN_WIDTH = parser.getIntProperty("init.fullscreen_width");
+		init::FULLSCREEN_HEIGHT = parser.getIntProperty("init.fullscreen_height");
 
-		CONFIG_COUT("FULLSCREEN: " << (settings::FULLSCREEN ? "true" : "false"));
-		CONFIG_COUT("FULLSCREEN_WIDTH: " << settings::FULLSCREEN_WIDTH);
-		CONFIG_COUT("FULLSCREEN_HEIGHT: " << settings::FULLSCREEN_HEIGHT);
+		CONFIG_COUT("FULLSCREEN: " << (init::FULLSCREEN ? "true" : "false"));
+		CONFIG_COUT("FULLSCREEN_WIDTH: " << init::FULLSCREEN_WIDTH);
+		CONFIG_COUT("FULLSCREEN_HEIGHT: " << init::FULLSCREEN_HEIGHT);
 
 		// Settings
-		settings::SHOW_FPS = parser.getBoolProperty("init.show_fps");
+		init::SHOW_FPS = parser.getBoolProperty("init.show_fps");
 
-		CONFIG_COUT("SHOW_FPS: " << (settings::SHOW_FPS ? "true" : "false"));
+		CONFIG_COUT("SHOW_FPS: " << (init::SHOW_FPS ? "true" : "false"));
 
 		return true;
 	}
 
-	inline bool load_settings_file()
+	inline bool load_init_file()
 	{
-		// Find config/settings.cfg
-		settings_path = files::config_directory / "settings.cfg";
+		// Find config/init.cfg
+		init_path = files::config_directory / "init.cfg";
 
-		if (!std::filesystem::exists(settings_path)) // Failed to find config/settings.cfg
+		if (!std::filesystem::exists(init_path)) // Failed to find config/init.cfg
 		{
-			CONFIG_COUT("Error: Could not find settings.cfg file " + settings_path.generic_string());
+			CONFIG_COUT("Error: Could not find init.cfg file " + init_path.generic_string());
 			return false;
 		}
-		// Open config/settings.cfg
-		auto parse_result = parse_settings_cfg("data/config/settings.cfg");
+		// Open config/init.cfg
+		auto parse_result = parse_init_cfg("data/config/init.cfg");
 
 		return true;
 	}
 
-	inline bool init()
+	inline bool initialize()
 	{
-		VALIDATE_OR_RET(load_settings_file(), "Failed to load settings file.");
+		VALIDATE_OR_RET(load_init_file(), "Failed to load settings file.");
 
 		return true;
 	}
@@ -152,7 +152,7 @@ namespace cfg
 
 inline bool config_init()
 {
-	VALIDATE_OR_RET(cfg::init(), "Failed to initialize.");
+	VALIDATE_OR_RET(cfg::initialize(), "Failed to initialize.");
 
 	return true;
 }

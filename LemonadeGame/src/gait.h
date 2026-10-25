@@ -76,11 +76,11 @@ public:
 namespace gaits
 {
 	inline std::unordered_map<std::string, GaitType> StandardGaits{
-		{ "CREEP",		{"stroll",	0.2	}		},
-		{ "STROLL",		{"stroll",	0.5	}		},
-		{ "WALK",		{"walk",	0.8, true }	},
-		{ "RUN",		{"run",		1.2	}		},
-		{ "SPRINT",		{"sprint",	2.0	}		},
+		{ "CREEP",		{"stroll",	2.0	}		},
+		{ "STROLL",		{"stroll",	1.6	}		},
+		{ "WALK",		{"walk",	1.2, true }	},
+		{ "RUN",		{"run",		0.8	}		},
+		{ "SPRINT",		{"sprint",	0.5	}		},
 	};
 }
 

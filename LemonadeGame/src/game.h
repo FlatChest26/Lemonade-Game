@@ -8,7 +8,9 @@
 struct GameSettings
 {
 	bool show_explored_tiles = true;
-	bool fixed_camera = true;
+	bool fixed_camera = true; 
+	bool instant_actions = true;
+	bool use_second_person_pronouns = true;
 };
 
 /*

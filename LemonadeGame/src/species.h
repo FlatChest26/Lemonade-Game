@@ -7,23 +7,26 @@
 #include "gait.h"
 
 #include "raw_master.h"
+#include "raw_object_checker.h"
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
-enum class SpeciesFlag : uint32_t
+enum class SpeciesFlag : uint64_t
 { 
 	NONE = 0,
 
 	MUNDANE = 1 << 0,
+	DOES_NOT_EXIST = 1 << 1,
 };
 
 IS_FLAG_ENUM(SpeciesFlag);
 
 inline std::map<std::string, SpeciesFlag> AllSpeciesFlags
 {
-	{ "NONE",			SpeciesFlag::NONE		},
-	{ "MUNDANE",		SpeciesFlag::MUNDANE	},
+	{ "NONE",				SpeciesFlag::NONE			},
+	{ "MUNDANE",			SpeciesFlag::MUNDANE		},
+	{ "DOES_NOT_EXIST",		SpeciesFlag::DOES_NOT_EXIST	},
 };
 
 struct GenderedNouns
@@ -105,11 +108,15 @@ struct Species
 	SpeciesFlag flags{ SpeciesFlag::NONE };
 
 	bool is_mundane() const { return flags & SpeciesFlag::MUNDANE; }
+	bool does_not_exist() const { return flags & SpeciesFlag::DOES_NOT_EXIST; }
 
 
 public:
 	bool operator==(const Species& other) const { return other.ID == ID; }
+	
+	static std::shared_ptr<RawObjectChecker> get_checker();
 	static Species from_json(const json& j);
+
 };
 
 namespace species
@@ -121,3 +128,4 @@ namespace species
 		.renderable = {'U', color::get("cyan"), color::get("black") }
 	};
 }
+

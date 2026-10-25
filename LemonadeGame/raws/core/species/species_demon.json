@@ -1,0 +1,54 @@
+[
+  {
+    "type": "species",
+    "ID": "DEMON",
+    "noun": { "singular": "demon", "plural": "demons", "always_plural": false },
+    "adjective": "demonic",
+    "renderable": { "glyph": "&", "fg": "dark_red", "bg": [ 0, 0, 0 ] },
+    "default_body_plan": "GenericBody",
+    "body_mods": [ "DemonParts", "HeadDetails" ],
+    "description": "A demon person.",
+    "frequency": 2.0,
+    "lifespan": { "min": 80, "max": 120 },
+    "child_age": 12,
+    "adult_age": 18,
+    "mature_age": 20,
+    "flags": [ "DOES_NOT_EXIST" ]
+  },
+  {
+    "type": "species",
+    "ID": "IMP",
+    "noun": { "singular": "imp", "plural": "imps", "always_plural": false },
+    "adjective": "imp",
+    "renderable": { "glyph": "I", "fg": "orange", "bg": "black" },
+    "default_body_plan": "GenericBody",
+    "body_mods": [ { "modify_size": 0.8, "add_parts": [ { "bp_type": "BP_HORNS", "position": "TOP" } ] }, "HeadDetails" ],
+    "description": "A small humanoid demon.",
+    "frequency": 2.0,
+    "lifespan": { "min": 80, "max": 120 },
+    "child_age": 12,
+    "adult_age": 18,
+    "mature_age": 20,
+    "flags": [ "DOES_NOT_EXIST" ]
+  },
+  {
+    "copy_from": "IMP",
+    "type": "species",
+    "ID": "FIRE_IMP",
+    "noun": { "singular": "fire imp", "plural": "fire imps" },
+    "adjective": "fire imp",
+    "renderable": { "glyph": "I", "fg": "orange", "bg": "black" },
+    "description": "A small humanoid demon, known for their ability to produce fire.",
+    "remove_flags": [ "DOES_NOT_EXIST" ]
+  },
+  {
+    "copy_from": "IMP",
+    "type": "species",
+    "ID": "ICE_IMP",
+    "noun": { "singular": "ice imp", "plural": "ice imps" },
+    "adjective": "ice imp",
+    "renderable": { "glyph": "I", "fg": "light_cyan", "bg": "black" },
+    "description": "A small humanoid demon, known for their ability to produce ice.",
+    "remove_flags": [ "DOES_NOT_EXIST" ]
+  }
+]

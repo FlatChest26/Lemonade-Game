@@ -9,6 +9,7 @@
 #include "snowy_database.h"
 
 #include "body_part_components.h"
+#include "raw_object_checker.h"
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -84,7 +85,7 @@ struct BodyPartType
 		CHOKABLE = 1 << 21,
 	};
 
-	BodyPartID ID{};
+	BodyPartID ID;
 	Noun noun{ "body part", "body parts" };
 
 	double default_rel_size{ 25.0f }; // Percentage size in comparison to the rest of the body
@@ -96,6 +97,7 @@ struct BodyPartType
 
 	AllureType base_allure;
 
+	static std::shared_ptr<RawObjectChecker> get_checker();
 	static BodyPartType from_json(const json& j);
 };
 
@@ -420,33 +422,6 @@ namespace body_part
 		.plural = true,
 	};
 
-	inline snowy::Database<BodyPartType*> _body_parts_db
-	{
-		{ Head.ID,					&Head		},
-		{ Neck.ID,					&Neck		},
-		{ UpperBody.ID,				&UpperBody	},
-		{ LowerBody.ID,				&LowerBody	},
-		{ UpperArm.ID,				&UpperArm	},
-		{ LowerArm.ID,				&LowerArm	},
-		{ Hand.ID,					&Hand		},
-		{ Groin.ID,					&Groin		},
-		{ UpperLeg.ID,				&UpperLeg	},
-		{ LowerLeg.ID,				&LowerLeg	},
-		{ Foot.ID,					&Foot		},
-		{ Vagina.ID,				&Vagina		},
-		{ Breasts.ID,				&Breasts	},
-		{ Penis.ID,					&Penis		},
-		{ Testicles.ID,				&Testicles	},
-		{ Butt.ID,					&Butt		},
-		{ Anus.ID,					&Anus		},
-		{ Eyes.ID,					&Eyes		},
-		{ Mouth.ID,					&Mouth		},
-		{ Ears.ID,					&Ears		},
-		{ Nose.ID,					&Nose		},
-		{ Tongue.ID,				&Tongue		},
-		{ Tail.ID,					&Tail		},
-		{ Horns.ID,					&Horns		},
-	};
 }
 
 #endif // !LEMONADE_GAME_SRC_BODY_PART_TYPE_H

@@ -10,6 +10,7 @@
 
 #include "file_management.h"
 #include "config.h"
+#include "input_map.h"
 
 #define SDL_MAIN_HANDLED
 #include <SDL.h>

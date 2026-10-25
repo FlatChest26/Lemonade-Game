@@ -9,29 +9,76 @@
 #include <string>
 #include <utility>
 
+#define _LG_USE_ACTION_WARNINGS
+
+#ifdef _LG_USE_ACTION_WARNINGS
+#define ACTION_CERR(...) CERR(__VA_ARGS__)
+#else
+#define ACTION_CERR(...)
+#endif // _LG_USE_ACTION_WARNINGS
+
+
+
 class Action;
 class Entity;
 class World;
 class WorldGameState;
 class TileMap;
 
-using ActionQueue = std::vector<std::unique_ptr<Action>>;
-
-struct ActionResponse
-{
-	std::string response;
-
-	operator std::string() const { return response; }
-	operator const char* () const { return response.c_str(); }
-};
+using QueuedAction = std::unique_ptr<Action>;
+using ActionQueue = std::vector<QueuedAction>;
+using ActionResponse = std::string;
 
 struct ActionResult
 {
 	bool success{ false };
 	ActionResponse response{ "" };
-	ActionQueue next_actions{};
+	ActionQueue next_actions;
 
-	constexpr bool has_next_action() const { return !next_actions.empty(); }
+	ActionResult(bool success, ActionResponse response, ActionQueue next_actions) :
+		success(success), response(response)
+	{
+		for (auto& a : next_actions)
+		{
+			add_next_action(std::move(a));
+		}
+	}
+
+	ActionResult(bool success, ActionResponse response, QueuedAction next_action) :
+		success(success), response(response)
+	{
+		add_next_action(std::move(next_action));
+	}
+
+	ActionResult(bool success, ActionQueue next_actions) :
+		success(success), response("")
+	{
+		for (auto& a : next_actions)
+		{
+			add_next_action(std::move(a));
+		}
+	}
+
+	ActionResult(bool success, QueuedAction next_action) :
+		success(success), response("")
+	{
+		add_next_action(std::move(next_action));
+	}
+
+	ActionResult(bool success, ActionResponse response) :
+		success(success), response(response)
+	{
+	}
+
+	ActionResult(bool success) :
+		success(success), response("")
+	{
+	}
+
+	constexpr bool has_next_action() const
+	{
+		return !next_actions.empty();
+	}
 
 	void add_next_action(std::unique_ptr<Action> action)
 	{
@@ -40,7 +87,7 @@ struct ActionResult
 
 	std::unique_ptr<Action> get_next_action()
 	{
-		if (has_next_action())
+		if (next_actions.front())
 		{
 			auto next_action = std::move(next_actions.front());
 			next_actions.erase(next_actions.begin());
@@ -55,20 +102,31 @@ struct ActionResult
 class Action
 {
 protected:
-	Entity* m_actor{ nullptr };
 	TimeUnit m_action_length{ TimeUnit::none() };
+	TimeUnit m_time_spent_on_action{ TimeUnit::none() };
 
 public:
-	Action(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr) :
-		m_action_length(action_length), m_actor(actor)
-	{
-	}
+	Action(const TimeUnit& action_length = TimeUnit::none()) :
+		m_action_length(action_length)
+	{}
 
 	virtual ActionResult perform();
 
-	virtual bool is_action_complete(TimeUnit time) const
+	virtual bool reset_progress(const TimeUnit& delta)
 	{
-		return time >= m_action_length;
+		m_time_spent_on_action = delta;
+		return is_action_complete();
+	}
+
+	virtual bool progress(const TimeUnit& delta)
+	{
+		m_time_spent_on_action += delta;
+		return is_action_complete();
+	}
+
+	virtual bool is_action_complete() const
+	{
+		return m_time_spent_on_action >= m_action_length;
 	}
 
 	virtual TimeUnit get_action_length() const
@@ -81,7 +139,12 @@ public:
 		return "default action";
 	}
 
-	virtual bool check_action() { return true; }
+	virtual bool check_action() const
+	{
+		return true;
+	}
+
+	virtual bool has_actor() const;
 
 	virtual Entity* get_actor() const;
 	virtual World* get_world() const;
@@ -92,8 +155,8 @@ public:
 class WaitAction : public Action
 {
 public:
-	WaitAction(const TimeUnit& action_length = TimeUnit::from_seconds(1.0), Entity* actor = nullptr) :
-		Action(action_length, actor)
+	WaitAction(const TimeUnit& action_length = TimeUnit::from_seconds(1.0)) :
+		Action(action_length)
 	{
 	}
 
@@ -105,6 +168,27 @@ public:
 	virtual std::string get_action_name() const override
 	{
 		return "wait action";
+	}
+};
+
+class EntityAction : public Action
+{
+protected:
+	Entity* m_actor;
+
+public:
+	EntityAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr) :
+		Action(action_length), m_actor(actor)
+	{
+	}
+
+	virtual bool check_action() const override;
+
+	virtual Entity* get_actor() const override;
+
+	virtual std::string get_action_name() const override
+	{
+		return "entity action";
 	}
 };
 

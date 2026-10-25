@@ -18,7 +18,7 @@ class NPCGenerator
 {
 protected:
 	AIManager* m_owner{ nullptr };
-	int m_npc_count{ 0 };
+	uint32_t m_npc_count{ 0 };
 	
 
 public:

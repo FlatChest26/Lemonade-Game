@@ -27,8 +27,28 @@ protected:
 	Position m_look_focus{ 0, 0, 0 };
 
 public:
-	virtual void render(RenderParams params) const override;
+	~PlayerLookHandler();
+
 	virtual void init() override;
+	virtual void remove() override;
+	virtual void render(RenderParams params) const override;
+	virtual void step(TimeUnit delta_time) override;
+
+protected:
+
+	// -- Input Handling -- //
+
+	OVERRIDE_HANDLER_EVENT(key_down);
+};
+
+class PlayerInventoryHandler : public PlayerInputHandler
+{
+protected:
+	int m_selected_slot{ 0 };
+
+public:
+	virtual void init() override;
+	virtual void render(RenderParams params) const override;
 	virtual void step(TimeUnit delta_time) override;
 
 protected:

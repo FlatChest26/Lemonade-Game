@@ -1,74 +1,18 @@
 #include "ai_handler.h"
-#include "direction_action.h"
 #include "game_states.h"
 #include "world_state.h"
+#include "misc_actions.h"
 
 #include "snowy_macros.h"
+
+#include "entity.h"
 
 #include <random>
 #include "snowy_rng.h"
 
-void AIBrain::step(TimeUnit time_delta)
-{
-	auto entity = get_entity();
-
-	if (!entity)
-	{
-		queue_remove();
-		return;
-	}
-
-	if (auto goal = current_behavior())
-	{
-		if (goal->perform(this, time_delta))
-		{
-			m_behavior_stack.pop_back();
-		}
-	}
-	else
-	{
-		add_behavior(std::make_unique<Behavior_Wander>(
-			2, Position(-1, -1, -1), TimeUnit::from_seconds(0.5), TimeUnit::from_seconds(4.0)
-		));
-	}
-}
-
-void AIBrain::add_behavior(std::unique_ptr<Behavior> behavior)
-{
-	if (!behavior)
-	{
-		return;
-	}
-
-	m_behavior_stack.push_back(std::move(behavior));
-}
-
-Behavior* AIBrain::current_behavior()
-{
-	if (m_behavior_stack.empty())
-	{
-		return nullptr;
-	}
-
-	return m_behavior_stack.back().get();
-}
-
-void AIBrain::cancel_behavior()
-{
-	m_behavior_stack.pop_back();
-}
-
-AIManager::AIManager(GameState* game_state, std::vector<std::unique_ptr<AIBrain>> brains) :
+AIManager::AIManager(GameState* game_state) :
 	m_game_state(game_state)
 {
-	for (auto& brain : brains)
-	{
-		if (brain)
-		{
-			m_brains.push_back(std::move(brain));
-		}
-	}
-
 	m_npc_generator = std::make_unique<NPCGenerator>(this);
 }
 
@@ -97,66 +41,14 @@ World* AIManager::get_world() const
 	return nullptr;
 }
 
-std::vector<AIBrain*> AIManager::get_brains()
+AIBrain* AIManager::create_brain()
 {
-	std::vector<AIBrain*> brains;
-
-	for (auto& brain : m_brains)
-		brains.push_back(brain.get());
-
-	return brains;
-}
-
-AIBrain* AIManager::add_brain_to_entity(Entity* entity)
-{
-	if (!entity)
-		return nullptr;
-
-	if (get_entity_brain(entity)) // Already has a brain
-		return nullptr;
-
-	auto brain = std::make_unique<AIBrain>(this, entity);
-	m_brains.push_back(std::move(brain));
-
-	return get_entity_brain(entity);
-}
-
-AIBrain* AIManager::get_entity_brain(Entity* entity)
-{
-	for (auto& brain : m_brains)
-	{
-		if (brain->get_entity() == entity)
-			return brain.get();
-	}
-
-	return nullptr;
+	auto brain = new AIBrain(this);
+	return brain;
 }
 
 void AIManager::step(TimeUnit time_delta)
 {
-	std::vector<size_t> remove_brains;
-	
-	for (size_t i = 0; i < m_brains.size(); i++)
-	{
-		auto& brain = m_brains[i];
-
-		if (brain->should_remove())
-		{
-			remove_brains.push_back(i);
-		}
-		else
-		{
-			brain->step(time_delta);
-		}
-	}
-
-	for (const auto& remove_idx : remove_brains)
-	{
-		if (remove_idx > m_brains.size() - 1)
-			continue;
-		m_brains.erase(m_brains.begin() + remove_idx);
-	}
-
 	if (m_time_until_next_NPC > TimeUnit::none())
 	{
 		m_time_until_next_NPC.subtract(time_delta);
@@ -187,16 +79,16 @@ void AIManager::step(TimeUnit time_delta)
 
 		for (;spawn_count > 0; spawn_count--)
 		{
-			Coord x = (spawn_count % m_sidewalk_width);
-			Coord y = (spawn_count / m_sidewalk_width);
+			Coord x = ((spawn_count - 1) % m_sidewalk_width);
+			Coord y = ((spawn_count - 1) / m_sidewalk_width);
 
 			auto npc = world->add_entity_at(std::unique_ptr<Entity>(m_npc_generator->generate_npc()), m_sidewalk_start + Position(x, y, 0));
 
 			if (npc)
 			{
-				auto npc_brain = add_brain_to_entity(npc);
-				npc_brain->add_behavior(std::move(std::make_unique<Behavior_MoveTo>(m_sidewalk_end + Position(x, 0, 0))));
+				auto brain = npc->add_brain(create_brain());
 				npc->change_gait_type("STROLL");
+				brain->add_behavior(std::make_unique<Behavior_MoveTo>(m_sidewalk_end + Position(x, 0, 0)));
 			}
 		}
 	}

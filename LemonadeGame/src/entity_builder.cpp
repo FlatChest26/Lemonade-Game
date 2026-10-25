@@ -4,7 +4,7 @@
 
 Entity* EntityBuilder::create_creature(CreatureInitializer init)
 {
-	auto new_creature = new Entity(nullptr);
+	auto new_creature = new Entity();
 
 	// Soul
 	new_creature->add_soul(init.soul);
@@ -20,6 +20,7 @@ Entity* EntityBuilder::create_creature(CreatureInitializer init)
 	new_creature->add_flag(EntityFlag::CAN_BE_HELD);
 	new_creature->add_flag(EntityFlag::ANIMATE);
 	new_creature->add_flag(EntityFlag::IS_ALIVE);
+	new_creature->add_flag(EntityFlag::CAN_DO_ACTIONS);
 
 	// Species
 	if (init.species)
@@ -51,15 +52,17 @@ Entity* EntityBuilder::create_creature(CreatureInitializer init)
 
 Entity* EntityBuilder::create_item(ItemInitializer init)
 {
-	auto new_item = new Entity(nullptr);
+	auto new_item = new Entity();
 
 	new_item->add_flag(EntityFlag::IS_ITEM);
 	new_item->add_flag(EntityFlag::FREE_TO_MOVE);
-	new_item->add_flag(EntityFlag::NEVER_COLLIDE);
+	new_item->add_flag(EntityFlag::CAN_COLLIDE);
 	new_item->add_flag(EntityFlag::INANIMATE);
 	new_item->add_flag(EntityFlag::CAN_FALL);
-	new_item->add_flag(EntityFlag::CAN_HOLD_ITEMS);
+	//new_item->add_flag(EntityFlag::CAN_HOLD_ITEMS);
 	new_item->add_flag(EntityFlag::CAN_BE_HELD);
+
+	new_item->set_item_def(init.item_definition);
 
 	return new_item;
 }

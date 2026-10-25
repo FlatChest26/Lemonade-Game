@@ -14,6 +14,7 @@
 #include "tile_type.h"
 #include "color.h"
 #include "name_set.h"
+#include "item_def.h"
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -28,6 +29,7 @@ namespace RawMaster
 	using BodyPartTypeDB = snowy::SingletonDatabase<Ref<BodyPartType>>;
 	using BodyModDB = snowy::SingletonDatabase<Ref<BodyMod>>;
 	using SpeciesDB = snowy::SingletonDatabase<Ref<Species>>;
+	using ItemDefsDB = snowy::SingletonDatabase<Ref<ItemDefinition>>;
 
 	inline std::vector<std::string> VALID_TYPES
 	{
@@ -38,6 +40,7 @@ namespace RawMaster
 		"species",
 		"color",
 		"name_set",
+		"item_definition",
 	};
 
 	static void initialize_databases()
@@ -98,9 +101,9 @@ namespace RawMaster
 			{ "BoyPussy",		std::make_shared<BodyMod>(body_mod::BoyPussy)		},
 			{ "HeadDetails",	std::make_shared<BodyMod>(body_mod::HeadDetails)	},
 		});
-	}
 
-	
+		ItemDefsDB::init();
+	}
 
 	static void load_colors(std::vector<json> json)
 	{
@@ -209,6 +212,9 @@ namespace RawMaster
 
 		COUT("Loading tile types\n");
 		load_raw_type<TileType>(raw_data["tile_type"]);
+
+		COUT("Loading item definitions\n");
+		load_raw_type<ItemDefinition>(raw_data["item_definition"]);
 
 		COUT("Loading body part types\n");
 		load_raw_type<BodyPartType>(raw_data["body_part_type"]);

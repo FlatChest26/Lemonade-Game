@@ -1,0 +1,9 @@
+[
+  {
+    "type": "item_definition",
+    "ID": "DILDO",
+    "noun": { "singular": "dildo", "plural": "dildoes" },
+    "renderable": { "glyph": "!", "fg": "purple", "bg": "black" },
+    "description": "This wobbly thing goes up somewhere fierce!"
+  }
+]

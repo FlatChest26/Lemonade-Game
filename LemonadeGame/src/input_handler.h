@@ -9,6 +9,11 @@
 
 #include "action.h"
 
+#include "keybinds.h"
+
+#include "snowy_ui.h"
+
+
 #define DEF_HANDLER_EVENT(x) virtual InputResult ev_##x( SDL_Event event )
 #define OVERRIDE_HANDLER_EVENT(x) virtual InputResult ev_##x( SDL_Event event ) override
 
@@ -82,6 +87,7 @@ class InputHandler
 
 protected:
 	GameState* m_game_state{ nullptr };
+	std::unique_ptr<ui::UINode> m_ui_root{ nullptr };
 
 	InputResult dispatch(SDL_Event event)
 	{
@@ -131,6 +137,8 @@ public:
 	World* get_world() const;
 	Camera* get_camera() const;
 
+	ui::UINode* get_ui_root() const { return m_ui_root.get(); }
+
 	virtual void set_game_state(GameState* game_state);
 
 	virtual constexpr bool allow_input_pass_through() const { return false; }
@@ -141,6 +149,7 @@ public:
 	virtual InputResult handle_event(SDL_Event event) { return dispatch(event); }
 
 	virtual void init() {}
+	virtual void remove() {}
 	virtual void update(double delta_time) {}
 	virtual void step(TimeUnit delta_time) {}
 	virtual void render(RenderParams params) const {}

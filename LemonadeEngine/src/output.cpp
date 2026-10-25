@@ -51,7 +51,7 @@ namespace output
 			params.argv = argv;
 
 			params.sdl_window_flags = SDL_WINDOW_RESIZABLE;
-			if (settings::FULLSCREEN) params.sdl_window_flags |= SDL_WINDOW_FULLSCREEN;
+			if (init::FULLSCREEN) params.sdl_window_flags |= SDL_WINDOW_FULLSCREEN;
 
 			// Renderer Type
 
@@ -65,21 +65,21 @@ namespace output
 				{ "OPENGL2", TCOD_RENDERER_OPENGL2 }
 			};
 
-			auto renderer_type = renderer_types.find(settings::RENDERER);
+			auto renderer_type = renderer_types.find(init::RENDERER);
 			if (renderer_type != renderer_types.end()) params.renderer_type = renderer_type->second;
 
 			// Screen Resolution
-			params.pixel_width = settings::SCREEN_WIDTH;
-			params.pixel_height = settings::SCREEN_HEIGHT;
+			params.pixel_width = init::SCREEN_WIDTH;
+			params.pixel_height = init::SCREEN_HEIGHT;
 
 			// Tileset
-			auto tileset = tcod::load_tilesheet(FilePath{ settings::TILESET }, { 16, 16 }, tcod::CHARMAP_CP437);
+			auto tileset = tcod::load_tilesheet(FilePath{ files::graphics_directory / init::TILESET }, {16, 16}, tcod::CHARMAP_CP437);
 			params.tileset = tileset.get();
 
 			// Console
-			if (settings::USE_CONSOLE_SIZE)
+			if (init::USE_CONSOLE_SIZE)
 			{
-				auto console = tcod::Console{ settings::CONSOLE_WIDTH, settings::CONSOLE_HEIGHT };
+				auto console = tcod::Console{ init::CONSOLE_WIDTH, init::CONSOLE_HEIGHT };
 				params.pixel_width = tileset.get_tile_width() * console.get_width();
 				params.pixel_height = tileset.get_tile_height() * console.get_height();
 				_output = std::make_unique<SAIOutput>(params, console);

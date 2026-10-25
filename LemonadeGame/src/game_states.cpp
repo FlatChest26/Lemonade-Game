@@ -36,7 +36,9 @@ InputResult GameState::handle_event(SDL_Event event)
 		auto result = input_handler->handle_event(event);
 
 		if (result.type != InputResult::Type::None)
+		{
 			return result;
+		}
 
 		if (!input_handler->allow_input_pass_through())
 		{
@@ -58,21 +60,20 @@ void GameState::handle_input_result(InputResult result)
 	case InputResult::Type::Pop_InputHandler:
 	{
 		pop_input_handler();
-
 		return;
 	}
 	case InputResult::Type::Push_InputHandler:
 	{
 		push_input_handler(result.next_input_handler);
-
 		return;
 	}
 	case InputResult::Type::Reset_InputHandler:
 	{
 		reset_input_handlers(result.next_input_handler);
-
 		return;
 	}
+	default:
+		return;
 	}
 }
 
@@ -83,13 +84,17 @@ void GameState::pop_input_handler()
 		return;
 	}
 
+	get_current_input_handler()->remove();
+	get_current_input_handler()->set_game_state(nullptr);
 	m_input_handlers.pop_back();
 }
 
 void GameState::push_input_handler(InputHandler* input_handler)
 {
 	if (!input_handler)
+	{
 		return;
+	}
 
 	auto new_input_handler = std::unique_ptr<InputHandler>(input_handler);
 	m_input_handlers.push_back(std::move(new_input_handler));

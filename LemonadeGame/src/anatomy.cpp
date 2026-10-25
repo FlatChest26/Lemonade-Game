@@ -11,21 +11,23 @@ Anatomy::Anatomy(RawMaster::Ref<BodyPlan> bd_plan, std::vector<RawMaster::Ref<Bo
 
 	for (auto& bdm : bd_mods)
 	{
+		m_height *= bdm->multiply_height;
+		m_height *= bdm->modify_size;
+		m_height += bdm->add_height;
+
 		if (bdm->set_height > 0_ft)
 		{
 			m_height = bdm->set_height;
 		}
 
-		m_height += bdm->add_height;
-		m_height *= bdm->multiply_height;
+		m_weight *= bdm->multiply_weight;
+		m_weight *= bdm->modify_size;
+		m_weight += bdm->add_weight;
 
 		if (bdm->set_weight > 0_lb)
 		{
 			m_weight = bdm->set_weight;
 		}
-
-		m_weight += bdm->add_weight;
-		m_weight *= bdm->multiply_weight;
 
 		for (auto& bp : bdm->add_parts)
 		{
@@ -49,11 +51,21 @@ Anatomy::Anatomy(RawMaster::Ref<BodyPlan> bd_plan, std::vector<RawMaster::Ref<Bo
 		add_body_connection(bc);
 	}
 
+	for (auto& bc : bd_plan->body_relations)
+	{
+		add_body_relation(bc);
+	}
+
 	for (auto& bdm : bd_mods)
 	{
 		for (auto& bc : bdm->add_connections)
 		{
 			add_body_connection(bc);
+		}
+
+		for (auto& bc : bdm->add_relations)
+		{
+			add_body_relation(bc);
 		}
 	}
 }

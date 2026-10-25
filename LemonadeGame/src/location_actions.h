@@ -8,14 +8,14 @@
 
 class Tile;
 
-class ActionWithLocation : public Action
+class ActionWithLocation : public EntityAction
 {
 protected:
 	Coord m_loc_x{ 0 }, m_loc_y{ 0 }, m_loc_z{ 0 };
 
 public:
 	ActionWithLocation(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, const Coord& loc_x = 0, const Coord& loc_y = 0, const Coord& loc_z = 0) :
-		Action(action_length, actor), m_loc_x(loc_x), m_loc_y(loc_y), m_loc_z(loc_z)
+		EntityAction(action_length, actor), m_loc_x(loc_x), m_loc_y(loc_y), m_loc_z(loc_z)
 	{
 	}
 	ActionWithLocation(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, const Position& location = Position(0, 0, 0)) :
@@ -31,10 +31,11 @@ public:
 	Position location() const { return Position(m_loc_x, m_loc_y, m_loc_z); }
 
 	Tile* get_tile_at_dest();
+	const Tile* get_tile_at_dest() const;
 
 	// -- Misc -- //
 
-	virtual bool check_action() override;
+	virtual bool check_action() const override;
 };
 
 class TransformAction : public ActionWithLocation
@@ -52,7 +53,9 @@ public:
 	{
 	}
 
+	virtual bool check_action() const override;
 	virtual ActionResult perform();
+	virtual std::string get_action_name() const override { return "transform action"; }
 };
 
 class OpenAction : public TransformAction
@@ -67,7 +70,8 @@ public:
 	{
 	}
 
-	virtual bool check_action() override;
+	virtual bool check_action() const override;
+	virtual std::string get_action_name() const override { return "open action"; }
 };
 
 class CloseAction : public TransformAction
@@ -82,7 +86,8 @@ public:
 	{
 	}
 
-	virtual bool check_action() override;
+	virtual bool check_action() const override;
+	virtual std::string get_action_name() const override { return "close action"; }
 };
 
 #endif // !LEMONADE_GAME_SRC_LOCATION_ACTIONS_H

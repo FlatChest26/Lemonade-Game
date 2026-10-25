@@ -2,7 +2,7 @@
   {
     "type": "body_mod",
     "ID": "CatFeatures",
-    "add_parts": [ { "body_part_type": "BP_TAIL", "ID": "BP_TAIL", "body_position": "BACK" } ],
+    "add_parts": [ { "bp_type": "BP_TAIL", "ID": "BP_TAIL", "position": "BACK" } ],
     "add_connections": [ { "parent": "BP_LOWERBODY", "child": "BP_TAIL", "relative_position": "BEHIND" } ]
   }
 ]

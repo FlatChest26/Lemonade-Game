@@ -30,6 +30,13 @@ namespace RawMaster
 	}
 
 	template<typename T>
+	inline bool has(const RawID& id)
+	{
+		using TDB = snowy::SingletonDatabase<Ref<T>>;
+		return TDB::has(id);
+	}
+
+	template<typename T>
 	inline std::vector<RawID> get_ids()
 	{
 		using TDB = snowy::SingletonDatabase<Ref<T>>;

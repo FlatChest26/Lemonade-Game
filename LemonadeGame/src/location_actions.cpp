@@ -5,32 +5,64 @@
 
 using namespace std;
 
-bool ActionWithLocation::check_action()
+bool ActionWithLocation::check_action() const
 {
-	return get_tile_map() != nullptr;
+	if (!EntityAction::check_action())
+		return false;
+
+	if (get_tile_map() == nullptr)
+	{
+		ACTION_CERR("tile_map is null!");
+		return false;
+	}
+
+	return true;
 }
 
 Tile* ActionWithLocation::get_tile_at_dest()
 {
 	if (auto tm = get_tile_map())
+	{
 		return tm->get_tile(m_loc_x, m_loc_y, m_loc_z);
+	}
+
 	return nullptr;
+}
+
+const Tile* ActionWithLocation::get_tile_at_dest() const
+{
+	if (auto tm = get_tile_map())
+	{
+		return tm->get_tile(m_loc_x, m_loc_y, m_loc_z);
+	}
+
+	return nullptr;
+}
+
+bool TransformAction::check_action() const
+{
+	if (!ActionWithLocation::check_action())
+		return false;
+
+	auto tile_map = get_tile_map();
+	if (!tile_map)
+	{
+		ACTION_CERR("tile_map is null!");
+		return false;
+	}
+
+	if (!tile_map->in_bounds(location()))
+	{
+		ACTION_CERR("no tile at destination!");
+		return false;
+	}
+
+	return true;
 }
 
 ActionResult TransformAction::perform()
 {
 	auto tile_map = get_tile_map();
-	if (!tile_map)
-	{
-		CERR("tile_map is null!");
-		return ActionResult(false);
-	}
-
-	if (!tile_map->in_bounds(location()))
-	{
-		CERR("no tile at destination!");
-		return ActionResult(false);
-	}
 
 	auto transformed_tile = RawMaster::get<TileType>(get_tile_at_dest()->get_type()->get_transform_ID());
 	bool will_be_blocked = !(transformed_tile->tile_flags() & TileType::Flag::IS_WALKABLE);
@@ -55,7 +87,7 @@ ActionResult TransformAction::perform()
 
 		if (will_be_blocked)
 		{
-			auto entities = tile_map->get_world()->get_entities_at(loc);
+			auto entities = get_world()->get_entities_at(loc);
 
 			if (!entities.empty())
 			{
@@ -66,7 +98,7 @@ ActionResult TransformAction::perform()
 
 				if (is_blocked != entities.end())
 				{
-					return ActionResult(false);
+					return ActionResult(false, "Thunk!");
 				}
 			}
 		}
@@ -114,7 +146,7 @@ ActionResult TransformAction::perform()
 	return ActionResult(true);
 }
 
-bool OpenAction::check_action()
+bool OpenAction::check_action() const
 {
 	if (!ActionWithLocation::check_action())
 		return false;
@@ -125,7 +157,7 @@ bool OpenAction::check_action()
 	return true;
 }
 
-bool CloseAction::check_action()
+bool CloseAction::check_action() const
 {
 	if (!ActionWithLocation::check_action())
 		return false;

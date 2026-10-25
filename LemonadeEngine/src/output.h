@@ -11,6 +11,7 @@
 #include "color.h"
 
 #define DEFAULT_BKGND_FLAG TCOD_BKGND_DEFAULT
+#define DEFAULT_RECT_FRAME { 218, 196, 191, 179, ' ', 179, 192, 196, 217 }
 
 namespace output
 {

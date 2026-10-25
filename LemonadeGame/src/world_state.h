@@ -10,6 +10,8 @@
 
 #include "ai_handler.h"
 #include "npc_generator.h"
+#include "game_log.h"
+#include "sidebar.h"
 
 enum class TickSpeed : uint32_t
 {
@@ -27,13 +29,13 @@ private:
 	std::unique_ptr<World> m_world;
 	std::unique_ptr<Camera> m_camera;
 	std::unique_ptr<AIManager> m_ai_manager;
+	std::unique_ptr<GameLog> m_log;
+	std::unique_ptr<Sidebar> m_sidebar;
 
-	Entity* m_player;
-	Position m_camera_focus;
+	Entity* m_player{ nullptr };
+	std::unique_ptr<Position> m_camera_focus{ nullptr };
 
 	TickSpeed m_tick_speed = TickSpeed::TURN_BASED;
-
-	std::string m_last_msg;
 
 public:
 	WorldGameState();
@@ -44,6 +46,9 @@ public:
 	World* get_world() const { return m_world.get(); }
 	Camera* get_camera() const { return m_camera.get(); }
 	AIManager* get_ai_manager() const { return m_ai_manager.get(); }
+
+	GameLog* get_log() const { return m_log.get(); }
+	Sidebar* get_sidebar() const { return m_sidebar.get(); }
 
 	constexpr TickSpeed get_tick_speed() const { return m_tick_speed; }
 	void set_tick_speed(TickSpeed tick_speed) { m_tick_speed = tick_speed; }
@@ -63,13 +68,33 @@ public:
 
 	void step(TimeUnit time_delta);
 
-	void update_camera(const Position& pos = Position{ 0, 0, 0 });
+	void set_camera_focus(Position pos)
+	{
+		if (m_camera_focus)
+		{
+			*m_camera_focus = pos;
+		}
+		else
+		{
+			m_camera_focus.reset(new Position(pos));
+		}
+	}
+
+	void remove_camera_focus()
+	{
+		if (m_camera_focus)
+		{
+			m_camera_focus.reset();
+		}
+	}
+
+	void update_camera();
 
 	virtual void handle_action(std::unique_ptr<Action> action) override;
 
 	virtual void handle_input_result(InputResult result) override;
 
-	void game_message(std::string msg);
+	void game_message(GameMessage msg);
 };
 
 #endif // !LEMONADE_GAME_SRC_WORLD_STATE_H

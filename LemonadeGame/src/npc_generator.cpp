@@ -62,13 +62,19 @@ Entity* NPCGenerator::generate_npc()
 
 	for (const auto& species_id : RawMaster::get_ids<Species>())
 	{
-		double frequency = RawMaster::get<Species>(species_id)->frequency;
-		ValidSpecies.emplace_back(frequency, species_id);
+		auto species_def = RawMaster::get<Species>(species_id);
+		if (species_def->does_not_exist())
+			continue;
+		
+		ValidSpecies.emplace_back(species_def->frequency, species_id);
 	}
 
 	WeightedVector<snowy::StringID> ValidColors;
 	for (const auto& color_id : RawMaster::get_color_ids())
 	{
+		if (color_id == "black")
+			continue;
+
 		ValidColors.emplace_back(1.0, color_id);
 	}
 
@@ -81,8 +87,8 @@ Entity* NPCGenerator::generate_npc()
 	static WeightedVector<RawMaster::RawID> ValidBodyMods{
 		{ 10.0f, "FemaleParts"	},
 		{ 10.0f, "MaleParts"	},
-		{ 2.0f,  "GirlCock"		},
-		{ 2.0f,  "BoyPussy"		},
+		{ 5.0f,  "GirlCock"		},
+		{ 5.0f,  "BoyPussy"		},
 	};
 	
 	// Generate random species
@@ -148,12 +154,12 @@ Entity* NPCGenerator::generate_npc()
 	 
 	// Make NPC
 	auto npc = EntityBuilder::create_creature({
-		.soul = new CreatureSoul({
+		.soul = new CreatureSoul{
 			.ID = "NPC_" + std::to_string(m_npc_count),
 			.name = random_name,
 			.gender = random_gender,
 			.color = random_color,
-		}),
+		},
 		.species = random_species,
 		.lifespan = random_lifespan,
 		.current_age = random_age,
@@ -162,12 +168,14 @@ Entity* NPCGenerator::generate_npc()
 
 	m_npc_count++;
 
+	/* 
 	COUT("Spawned in NPC: " << npc->ID());
 	COUT("\tName: " << npc->full_name());
 	COUT("\tGender: " << npc->get_soul()->gender_noun());
 	COUT("\tSpecies: " << npc->get_species()->noun);
 	COUT("\tAge: " << npc->get_living()->get_age());
 	COUT("\tLifespan: " << npc->get_living()->get_lifespan());
+	*/
 
 	return npc;
 }

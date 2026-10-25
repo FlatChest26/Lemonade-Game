@@ -27,6 +27,7 @@ struct BodyPartPlan
 
 	std::string prefix{ "" };
 
+	static std::shared_ptr<RawObjectChecker> get_checker();
 	static BodyPartPlan from_json(const json& j);
 };
 
@@ -36,6 +37,7 @@ struct BodyConnectionPlan
 	ThingID child;
 	BodyPartRelativePosition relative_position{ BodyPartRelativePosition::AROUND };
 
+	static std::shared_ptr<RawObjectChecker> get_checker();
 	static BodyConnectionPlan from_json(const json& j);
 };
 
@@ -50,6 +52,7 @@ struct BodyPlan
 	std::vector<BodyConnectionPlan> body_connections;
 	std::vector<BodyConnectionPlan> body_relations;
 
+	static std::shared_ptr<RawObjectChecker> get_checker();
 	static BodyPlan from_json(const json& j);
 };
 
@@ -118,6 +121,8 @@ struct BodyMod
 {
 	snowy::StringID ID;
 
+	double modify_size{ 1.0 };
+
 	units::Length set_height{ -1 };
 	units::Length add_height{ 0 };
 	double multiply_height{ 1.0 };
@@ -133,7 +138,7 @@ struct BodyMod
 	std::vector<BodyConnectionPlan> add_connections;
 	std::vector<BodyConnectionPlan> add_relations;
 
-
+	static std::shared_ptr<RawObjectChecker> get_checker();
 	static BodyMod from_json(const json& j);
 };
 

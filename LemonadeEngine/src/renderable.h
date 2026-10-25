@@ -7,6 +7,7 @@
 #include <tuple>
 
 #include "color.h"
+#include "raw_object_checker.h"
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -82,8 +83,28 @@ struct Renderable
 		return as_tuple();
 	}
 
+	static std::shared_ptr<RawObjectChecker> get_checker()
+	{
+		static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
+
+		checker->set_type_name("renderable");
+
+		checker->add_property("glyph",	RawValueType::RAW_Char,		true);
+		checker->add_property("fg",		RawValueType::RAW_Custom,	false);
+		checker->add_property("bg",		RawValueType::RAW_Custom,	false);
+
+		return checker;
+	}
+
 	static Renderable from_json(const json& j)
 	{
+		auto checker = Renderable::get_checker();
+
+		if (!checker->check_json(j, true))
+		{
+			return {'?', DEFAULT_FG_COLOR, DEFAULT_BG_COLOR };
+		}
+
 		Renderable r;
 
 		if (j.contains("glyph"))
@@ -103,7 +124,6 @@ struct Renderable
 			else
 			{
 				CERR("Invalid glyph type in JSON: " << j.at("glyph"));
-				r.glyph = DEFAULT_GLPYH;
 			}
 		}
 

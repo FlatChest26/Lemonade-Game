@@ -9,7 +9,7 @@
 
 using ThingID = std::string;
 
-class CreatureSoul;
+struct CreatureSoul;
 class TileType;
 class BodyPart;
 

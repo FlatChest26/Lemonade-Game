@@ -1,0 +1,19 @@
+[
+  {
+    "type": "species",
+    "ID": "ANGEL",
+    "noun": { "singular": "angel", "plural": "angels", "always_plural": false },
+    "adjective": "angelic",
+    "renderable": { "glyph": 142, "fg": "yellow", "bg": "0x000000" },
+    "//": "Ä",
+    "default_body_plan": "GenericBody",
+    "body_mods": [ "DemonParts", "HeadDetails" ],
+    "description": "An angel person.",
+    "frequency": 2.0,
+    "lifespan": { "min": 80, "max": 120 },
+    "child_age": 12,
+    "adult_age": 18,
+    "mature_age": 20,
+    "flags": [ "DOES_NOT_EXIST" ]
+  }
+]

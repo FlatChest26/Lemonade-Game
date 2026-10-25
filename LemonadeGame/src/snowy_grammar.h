@@ -9,45 +9,50 @@
 #include "snowy_macros.h"
 #include "snowy_database.h"
 
+#include "raw_object_checker.h"
+
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
 #include "enum_traits.h"
 
-template<typename T, typename Predicate>
-inline std::string english_list(T list, Predicate to_str)
+namespace snowy::grammar
 {
-	std::string final_list = "";
-
-	size_t i = 0;
-
-	for (const auto& item : list)
+	template<typename T, typename Predicate>
+	inline std::string english_list(T list, Predicate to_str)
 	{
-		final_list += to_str(item);
+		std::string final_list = "";
 
-		if (i == list.size() - 1)
+		size_t i = 0;
+
+		for (const auto& item : list)
 		{
-		}
-		else if (list.size() > 2)
-		{
-			if (i == list.size() - 2)
+			final_list += to_str(item);
+
+			if (i == list.size() - 1)
 			{
-				final_list += ", and ";
 			}
-			else
+			else if (list.size() > 2)
 			{
-				final_list += ", ";
+				if (i == list.size() - 2)
+				{
+					final_list += ", and ";
+				}
+				else
+				{
+					final_list += ", ";
+				}
 			}
-		}
-		else if (i == list.size() - 2)
-		{
-			final_list += " and ";
+			else if (i == list.size() - 2)
+			{
+				final_list += " and ";
+			}
+
+			i++;
 		}
 
-		i++;
+		return final_list;
 	}
-
-	return final_list;
 }
 
 inline constexpr std::string capitalize(std::string str)
@@ -72,7 +77,8 @@ namespace snowy::grammar
 	inline std::string an(std::string noun) { return a(noun); }
 	inline std::string An(std::string noun) { return A(noun); }
 
-	
+	extern std::string the(std::string noun);
+	inline std::string The(std::string noun) { return capitalize(the(noun)); }
 }
 
 struct Noun
@@ -86,47 +92,44 @@ struct Noun
 
 	constexpr bool empty() const { return singular[0] == '\0' && plural[0] == '\0'; }
 
+	static std::shared_ptr<RawObjectChecker> get_checker()
+	{
+		static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
+
+		checker->set_type_name("noun");
+
+		checker->add_property("singular",		RawValueType::RAW_String,	true);
+		checker->add_property("plural",			RawValueType::RAW_String,	false);
+		checker->add_property("always_plural",	RawValueType::RAW_Bool,		false);
+
+		return checker;
+	}
+
 	static Noun from_json(const json& j)
 	{
+		auto checker = Noun::get_checker();
+
+		if (!checker->check_json(j, true))
+		{
+			return {};
+		}
+
 		Noun n;
 
-		if (j.contains("singular"))
+		n.singular = j.at("singular").get<std::string>();
+
+		if (checker->is_valid_property("plural", j))
 		{
-			if (!j.at("singular").is_string())
-			{
-				CERR("Invalid 'singular' field in noun JSON object: " << j);
-				n.singular = "<invalid noun>";
-			}
-			else
-			{
-				n.singular = j.at("singular").get<std::string>();
-			}
+			n.plural = j.at("plural").get<std::string>();
+		}
+		else
+		{
+			n.plural = n.singular + "s";
 		}
 
-		if (j.contains("plural"))
+		if (checker->is_valid_property("always_plural", j))
 		{
-			if (!j.at("plural").is_string())
-			{
-				CERR("Invalid 'plural' field in noun JSON object: " << j);
-				n.plural = "<invalid noun>";
-			}
-			else
-			{
-				n.plural = j.at("plural").get<std::string>();
-			}
-		}
-
-		if (j.contains("always_plural"))
-		{
-			if (!j.at("always_plural").is_boolean())
-			{
-				CERR("Invalid 'always_plural' field in noun JSON object: " << j);
-				n.always_plural = false;
-			}
-			else
-			{
-				n.always_plural = j.at("always_plural").get<bool>();
-			}
+			n.always_plural = j.at("always_plural").get<bool>();
 		}
 
 		return n;
@@ -140,11 +143,9 @@ namespace snowy::grammar
 
 	inline std::string an(Noun noun, bool plural = false) { return a(noun, plural); }
 	inline std::string An(Noun noun, bool plural = false) { return A(noun, plural); }
-}
 
-namespace std
-{
-	inline constexpr string to_string(Noun noun) { return noun.singular; }
+	extern std::string the(Noun noun, bool plural = false);
+	inline std::string The(Noun noun, bool plural = false) { return capitalize(the(noun, plural)); }
 }
 
 struct Name
@@ -212,11 +213,29 @@ struct Name
 		}
 		return n;
 	}
-
 };
+
+#include <variant>
+using GrammarNoun = std::variant<Noun, std::string>; // std::string means its a PROPER NOUN for now! (fml)
+
+namespace snowy::grammar
+{
+	extern bool is_proper(GrammarNoun noun);
+	extern bool is_plural(GrammarNoun noun);
+
+	extern std::string a(GrammarNoun noun, bool plural = false);
+	inline std::string A(GrammarNoun noun, bool plural = false) { return capitalize(a(noun, plural)); }
+
+	inline std::string an(GrammarNoun noun, bool plural = false) { return a(noun, plural); }
+	inline std::string An(GrammarNoun noun, bool plural = false) { return A(noun, plural); }
+
+	extern std::string the(GrammarNoun noun, bool plural = false);
+	inline std::string The(GrammarNoun noun, bool plural = false) { return capitalize(the(noun, plural)); }
+}
 
 namespace std
 {
+	inline constexpr string to_string(Noun noun) { return noun.singular; }
 	inline constexpr string to_string(Name name) { return name.full_name; }
 }
 

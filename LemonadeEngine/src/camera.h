@@ -38,11 +38,7 @@ public:
 
 	Position get_screen(Coord x, Coord y, Coord z) const
 	{
-		return Position(
-			(x - get_x1()) + (int)((output::get_console_width() - width()) / 2),
-			(y - get_y1()) + (int)((output::get_console_height() - height()) / 2),
-			-(z + 1 - get_z2())
-		);
+		return Position((x - get_x1()), (y - get_y1()), -(z + 1 - get_z2()));
 	}
 
 	Position get_screen(Position p) const { return get_screen(p.x, p.y, p.z); }
