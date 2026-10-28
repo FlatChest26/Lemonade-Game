@@ -151,8 +151,8 @@ public:
 	virtual void init() {}
 	virtual void remove() {}
 	virtual void update(double delta_time) {}
-	virtual void step(TimeUnit delta_time) {}
-	virtual void render(RenderParams params) const {}
+	virtual void step(const TimeUnit& delta_time) {}
+	virtual void render(const RenderParams& params) const {}
 
 protected:
 	DEF_HANDLER_EVENT(quit) { return InputResult(); }

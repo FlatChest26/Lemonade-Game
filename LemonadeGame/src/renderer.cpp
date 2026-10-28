@@ -67,7 +67,7 @@ TileMap* WorldRenderer::get_tile_map() const
 	return nullptr;
 }
 
-void WorldRenderer::render(RenderParams params) const
+void WorldRenderer::render(const RenderParams& params) const
 {
 	if (!params.render_world)
 	{
@@ -85,129 +85,90 @@ void WorldRenderer::render(RenderParams params) const
 	}
 }
 
-void WorldRenderer::render_entities(RenderParams params) const
+void WorldRenderer::render_entities(const RenderParams& params) const
 {
-	for (const auto entity : get_world()->get_entities())
+	for (const auto entity : get_world()->get_entities(
+		EntityFilter
+		{ 
+			.ignore_held = true, 
+			.ignore_flags = EntityFlag::IS_HIDDEN | EntityFlag::IS_FLASHING
+		}
+	))
 	{
 		render_entity(params, entity);
 	}
 }
 
-void WorldRenderer::render_entity(RenderParams params, const Entity* entity) const
+void WorldRenderer::render_entity(const RenderParams& params, const Entity* entity) const
 {
+	if (!entity)
+		return;
+
 	if (!entity->has_movable())
-	{
 		return;
-	}
-
-	if (entity->is_hidden() || entity->is_flashing())
-	{
-		return;
-	}
-
-	if (entity->is_being_held())
-	{
-		return;
-	}
 
 	if (params.use_fov && !entity->is_visible_to_player())
+		return;
+
+	if (params.camera && !params.camera->in_view(entity->get_movable()->get_transform()))
+		return;
+
+	auto world = get_world();
+
+	if (!world)
 	{
+		CERR("No world found in renderer.");
 		return;
 	}
 
-	auto tile_map = get_tile_map();
+	Position camera_offset = Position(0, 0, 0);
 
-	int world_x, world_y, world_z;
-	std::tie(world_x, world_y, world_z) = entity->get_movable()->pos().as_tuple();
-
-	int draw_x{ world_x }, draw_y{ world_y }, depth{ 0 };
-
-	if (auto& camera = params.camera)
+	if (params.camera)
 	{
-		if (!camera->in_view(world_x, world_y, world_z))
-		{
-			return;
-		}
-
-		std::tie(draw_x, draw_y, depth) = camera->get_screen(world_x, world_y, world_z).as_tuple();
+		camera_offset = params.camera->get_screen(0, 0, 0);
 	}
 
-	if (params.use_fov)
+	for (const auto& offset : entity->get_movable()->get_offsets()) // In the case of drawing an entity larger than 1x1x1
 	{
-		if (!tile_map->is_visible(world_x, world_y, world_z) && entity->has_been_seen_by_player())
-		{
-			std::tie(world_x, world_y, world_z) = entity->get_last_seen_location().as_tuple();
-		}
-	}
+		Position world_position = entity->get_movable()->pos() + offset;
 
-	glyph_t draw_glyph{};
-	color_t draw_fg{};
-	color_t draw_bg{};
+		int draw_x = world_position.x + camera_offset.x;
+		int draw_y = world_position.y + camera_offset.y;
+		int depth = world_position.z + camera_offset.z;
 
-	for (const auto& [offset_x, offset_y, offset_z] : entity->get_movable()->get_offsets()) // In the case of drawing an entity larger than 1x1x1
-	{
-		draw_glyph = entity->glyph();
-		draw_fg = entity->fg();
-		draw_bg = entity->bg();
-
-		if (entity->is_player())
-		{
-			draw_glyph = PLAYER_CHAR;
-			draw_fg = DEFAULT_FG_COLOR;
-		}
-
-		if (params.use_fov && tile_map && !tile_map->is_visible(world_x + offset_x, world_y + offset_y, world_z + offset_z))
-		{
-			if (params.show_explored_tiles && tile_map->is_explored(world_x + offset_x, world_y + offset_y, world_z + offset_z))
-			{
-				draw_fg = explored_fg;
-			}
-			else
-			{
-				continue;
-			}
-		}
-
-		if (depth - offset_z < 0 || depth - offset_z > 1)
+		if (!params.in_world_frame(draw_x, draw_y))
 			continue;
 
-		if (depth - offset_z == 1)
-		{
-			if (auto world = get_world())
-			{
-				if (auto tile = world->get_tile(entity->get_movable()->pos()))
-				{
-					if (tile->has_ceiling())
-					{
-						continue;
-					}
-				}
-				if (auto tile_above = world->get_tile(entity->get_movable()->pos() + Position(0, 0, 1)))
-				{
-					if (tile_above->has_floor())
-					{
-						continue;
-					}
-				}
-			}
+		if (params.camera && !params.camera->in_view(world_position))
+			continue;
 
-			draw_glyph = DISTANT_DOT;
+		Renderable draw_renderable = entity->get_renderable_at(offset);
+
+		if (depth < 0)
+		{
+			if (world->get_tile(world_position)->has_ceiling()) // Check if tile has a ceiling
+				continue;
+
+			if (world->get_tile(world_position + Position(0, 0, 1))->has_floor()) // Check if above tile has floor
+				continue;
+
+			draw_renderable.glyph = DISTANT_DOT;
 		}
 
 		if (!entity->is_on_floor())
 		{
-			draw_bg = color::get("light_cyan");
+			draw_renderable.bg = color::get("col_falling");
 		}
 
 		output::put_rgb(
-			draw_x + params.world_render_frame.pos.x + params.world_render_frame.padding,
-			draw_y + params.world_render_frame.pos.y + params.world_render_frame.padding,
-			draw_glyph, draw_fg, draw_bg
+			draw_x + params.world_inner_frame_p1().x,
+			draw_y + params.world_inner_frame_p1().y,
+			draw_renderable, TCOD_BKGND_SET
 		);
 	}
 }
 
-void WorldRenderer::render_tile_map(RenderParams params) const
+void WorldRenderer::render_tile_map(const RenderParams& params) const
 {
 	auto tile_map = get_tile_map();
 
@@ -217,65 +178,57 @@ void WorldRenderer::render_tile_map(RenderParams params) const
 		return;
 	}
 
-	int draw_x{ 0 }, draw_y{ 0 }, draw_z{ 0 };
-	auto& camera = params.camera;
-
 	int layer = 0;
 
 	int view_left = 0;
-	int view_right = tile_map->get_width();
+	int view_right = static_cast<int>(tile_map->get_width());
 
 	int view_top = 0;
-	int view_bottom = tile_map->get_height();
+	int view_bottom = static_cast<int>(tile_map->get_height());
 
-	if (camera)
+	if (params.camera)
 	{
-		layer = camera->get_posz();
+		layer = params.camera->get_posz();
 
-		view_left = std::max(view_left, camera->get_x1());
-		view_right = std::min(view_right, camera->get_x2());
+		view_left = std::max(view_left, static_cast<int>(params.camera->get_x1()));
+		view_right = std::min(view_right, static_cast<int>(params.camera->get_x2()));
 
-		view_top = std::max(view_top, camera->get_y1());
-		view_bottom = std::min(view_bottom, camera->get_y2());
+		view_top = std::max(view_top, static_cast<int>(params.camera->get_y1()));
+		view_bottom = std::min(view_bottom, static_cast<int>(params.camera->get_y2()));
 	}
 
-	const Tile* draw_tile{};
+	if (view_right - view_left < 1 || view_bottom - view_top < 1)
+		return;
 
-	glyph_t draw_glyph{};
-	color_t draw_fg{};
-	color_t draw_bg{};
-
-	for (int x = view_left; x < view_right; ++x) for (int y = view_top; y < view_bottom; ++y)
+	Position camera_offset = Position(0, 0, 0);
+	
+	if (params.camera)
 	{
-		draw_tile = tile_map->get_tile(x, y, layer);
+		camera_offset = params.camera->get_screen(0, 0, 0);
+	}
 
-		draw_glyph = draw_tile->glyph();
-		draw_fg = draw_tile->fg();
-		draw_bg = draw_tile->bg();
+	for (int x = view_left; x < view_right; x++) for (int y = view_top; y < view_bottom; y++)
+	{
+		int draw_x = x + camera_offset.x;
+		int draw_y = y + camera_offset.y;
+		int depth = layer + camera_offset.z;
 
-		if (camera)
-		{
-			if (!camera->in_view(x, y, layer))
-				continue;
+		if (!params.in_world_frame(draw_x, draw_y))
+			continue;
 
-			std::tie(draw_x, draw_y, draw_z) = camera->get_screen(x, y, layer).as_tuple();
-		}
+		if (params.camera && !params.camera->in_view(x, y, layer))
+			continue;
+
+		const Tile* draw_tile = tile_map->get_tile(x, y, layer);
+		Renderable draw_renderable = draw_tile->get_renderable();
 
 		if (draw_tile->is_air())
 		{
 			auto tile_below = tile_map->get_tile(x, y, layer - 1);
 
-			if (tile_below->is_air())
+			if (!tile_below->is_air())
 			{
-				draw_glyph = 177;
-				draw_fg = color::get("light_cyan");
-				draw_bg = color::get("black");
-			}
-			else
-			{
-				draw_glyph = DISTANT_DOT;
-				draw_fg = tile_below->fg();
-				draw_bg = tile_below->bg();
+				draw_renderable = Renderable{ DISTANT_DOT, tile_below->fg(), tile_below->bg() };
 			}
 		}
 
@@ -283,18 +236,18 @@ void WorldRenderer::render_tile_map(RenderParams params) const
 		{
 			if (params.show_explored_tiles && tile_map->is_explored(x, y, layer))
 			{
-				draw_fg = explored_fg;
+				draw_renderable.fg = color::get("col_explored");
 			}
 			else
 			{
-				draw_fg = unexplored_fg;
+				continue;
 			}
 		}
 
 		output::put_rgb(
-			draw_x + params.world_render_frame.pos.x + params.world_render_frame.padding, 
-			draw_y + params.world_render_frame.pos.y + params.world_render_frame.padding,
-			draw_glyph, draw_fg, draw_bg
+			draw_x + params.world_inner_frame_p1().x,
+			draw_y + params.world_inner_frame_p1().y,
+			draw_renderable, TCOD_BKGND_SET
 		);
 	}
 }

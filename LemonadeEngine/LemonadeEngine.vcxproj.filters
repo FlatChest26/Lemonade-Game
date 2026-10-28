@@ -74,6 +74,9 @@
     <ClInclude Include="..\LemonadeGame\src\input_map.h">
       <Filter>Header Files\Include</Filter>
     </ClInclude>
+    <ClInclude Include="src\raw_object_checker.h">
+      <Filter>Header Files\Include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\output.cpp">

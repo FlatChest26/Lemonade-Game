@@ -9,9 +9,12 @@
 #include <memory>
 #include <string>
 #include "color.h"
+#include "renderable.h"
 
 #define DEFAULT_BKGND_FLAG TCOD_BKGND_DEFAULT
 #define DEFAULT_RECT_FRAME { 218, 196, 191, 179, ' ', 179, 192, 196, 217 }
+#define HORIZONTAL_BAR 196
+#define VERTICAL_BAR 179
 
 namespace output
 {
@@ -54,13 +57,13 @@ namespace output
 
 	// Printing //
 
-	extern void console_print(int x, int y, const char* fmt);
-	extern void console_print(int x, int y, std::string str);
+	extern int console_print(int x, int y, const char* fmt);
+	extern int console_print(int x, int y, std::string str);
 
-	extern void console_printf(int x, int y, const char* fmt, ...);
-	extern void console_printf(int x, int y, std::string fmt, ...);
-	extern void console_printf_ex(int x, int y, TCOD_bkgnd_flag_t flag, TCOD_alignment_t alignment, const char* fmt, ...);
-	extern void console_printf_ex(int x, int y, TCOD_bkgnd_flag_t flag, TCOD_alignment_t alignment, std::string fmt, ...);
+	extern int console_printf(int x, int y, const char* fmt, ...);
+	extern int console_printf(int x, int y, std::string fmt, ...);
+	extern int console_printf_ex(int x, int y, TCOD_bkgnd_flag_t flag, TCOD_alignment_t alignment, const char* fmt, ...);
+	extern int console_printf_ex(int x, int y, TCOD_bkgnd_flag_t flag, TCOD_alignment_t alignment, std::string fmt, ...);
 
 	extern int console_printf_rect(int x, int y, int width, int height, const char* fmt, ...);
 	extern int console_printf_rect(int x, int y, int width, int height, std::string fmt, ...);
@@ -69,13 +72,13 @@ namespace output
 
 	/*Printing RGB*/
 
-	extern void console_print_rgb(int x, int y, const color_t& fg, const color_t& bg, const char* fmt);
-	extern void console_print_rgb(int x, int y, const color_t& fg, const color_t& bg, std::string str);
+	extern int console_print_rgb(int x, int y, const color_t& fg, const color_t& bg, const char* fmt);
+	extern int console_print_rgb(int x, int y, const color_t& fg, const color_t& bg, std::string str);
 
-	extern void console_printf_rgb(int x, int y, const color_t& fg, const color_t& bg, const char* fmt, ...);
-	extern void console_printf_rgb(int x, int y, const color_t& fg, const color_t& bg, std::string fmt, ...);
-	extern void console_printf_rgb_ex(int x, int y, const color_t& fg, const color_t& bg, TCOD_bkgnd_flag_t flag, TCOD_alignment_t alignment, const char* fmt, ...);
-	extern void console_printf_rgb_ex(int x, int y, const color_t& fg, const color_t& bg, TCOD_bkgnd_flag_t flag, TCOD_alignment_t alignment, std::string fmt, ...);
+	extern int console_printf_rgb(int x, int y, const color_t& fg, const color_t& bg, const char* fmt, ...);
+	extern int console_printf_rgb(int x, int y, const color_t& fg, const color_t& bg, std::string fmt, ...);
+	extern int console_printf_rgb_ex(int x, int y, const color_t& fg, const color_t& bg, TCOD_bkgnd_flag_t flag, TCOD_alignment_t alignment, const char* fmt, ...);
+	extern int console_printf_rgb_ex(int x, int y, const color_t& fg, const color_t& bg, TCOD_bkgnd_flag_t flag, TCOD_alignment_t alignment, std::string fmt, ...);
 
 	extern int console_printf_rgb_rect(int x, int y, int width, int height, const color_t& fg, const color_t& bg, const char* fmt, ...);
 	extern int console_printf_rgb_rect(int x, int y, int width, int height, const color_t& fg, const color_t& bg, std::string fmt, ...);
@@ -99,8 +102,9 @@ namespace output
 	extern void put_char_ex(int x, int y, glyph_t glyph, color_t fg, color_t bg);
 
 	extern void put_rgb(const int& x, const int& y, const glyph_t& ch, const color_t& fg, const color_t& bg, TCOD_bkgnd_flag_t flag = DEFAULT_BKGND_FLAG);
+	extern void put_rgb(const int& x, const int& y, const Renderable& renderable, TCOD_bkgnd_flag_t flag = DEFAULT_BKGND_FLAG);
 
-	extern void draw_rect(int x, int y, int width, int height, bool clear = true, TCOD_bkgnd_flag_t flag = DEFAULT_BKGND_FLAG);
+	extern void draw_rect(int x, int y, int width, int height, const glyph_t& ch, const color_t& fg, const color_t& bg, TCOD_bkgnd_flag_t flag = DEFAULT_BKGND_FLAG);
 	extern void draw_frame_rgb(
 		int x, int y, int width, int height,
 		const color_t& fg = DEFAULT_FG_COLOR, const color_t& bg = DEFAULT_BG_COLOR,
@@ -112,6 +116,9 @@ namespace output
 		bool clear = true,
 		TCOD_bkgnd_flag_t flag = DEFAULT_BKGND_FLAG
 	);
+
+	extern void draw_horizontal_line(int x, int y, int width, const color_t& fg, const color_t& bg, TCOD_bkgnd_flag_t flag = DEFAULT_BKGND_FLAG);
+	extern void draw_vertical_line(int x, int y, int height, const color_t& fg, const color_t& bg, TCOD_bkgnd_flag_t flag = DEFAULT_BKGND_FLAG);
 
 	// Misc //
 

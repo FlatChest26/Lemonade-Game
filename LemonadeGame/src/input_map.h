@@ -6,6 +6,8 @@
 #include <SDL_events.h>
 #include <SDL_keycode.h>
 #include <unordered_map>
+#include <cctype>
+#include <algorithm>
 
 #include <string>
 #include <vector>
@@ -17,6 +19,33 @@ struct InputAction
 	SDL_KeyCode sym;
 	SDL_Keymod mod = KMOD_NONE;
 	SDL_Keymod nmod = KMOD_NONE; // mods that must be OFF
+
+
+	constexpr bool operator==(const InputAction& other) const
+	{
+		return sym == other.sym && mod == other.mod && nmod == other.nmod;
+	}
+
+	std::string to_string() const
+	{
+		std::string str = SDL_GetKeyName(sym);
+
+		std::transform(str.begin(), str.end(), str.begin(),
+			[&](unsigned char c)
+			{
+				if (mod & KMOD_SHIFT)
+				{
+					return std::toupper(c);
+				}
+				else
+				{
+					return std::tolower(c);
+				}
+			}
+		);
+
+		return str;
+	}
 };
 
 template<typename T>
@@ -40,6 +69,25 @@ private:
 	}
 
 public:
+
+	static std::string actions_to_string(ActionName name)
+	{
+		std::string final_str;
+		auto actions = get_actions(name);
+
+		for (const auto& action : actions)
+		{
+			final_str += action.to_string();
+
+			if (actions.size() > 1 && action != actions.back())
+			{
+				final_str += "/";
+			}
+		}
+
+		return final_str;
+	}
+
 	static void add_input_action(ActionName name, SDL_KeyCode sym, SDL_Keymod mod = KMOD_NONE, SDL_Keymod nmod = KMOD_NONE)
 	{
 		if (!has_action(name))

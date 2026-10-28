@@ -51,7 +51,6 @@ namespace output
 			params.argv = argv;
 
 			params.sdl_window_flags = SDL_WINDOW_RESIZABLE;
-			if (init::FULLSCREEN) params.sdl_window_flags |= SDL_WINDOW_FULLSCREEN;
 
 			// Renderer Type
 
@@ -68,26 +67,16 @@ namespace output
 			auto renderer_type = renderer_types.find(init::RENDERER);
 			if (renderer_type != renderer_types.end()) params.renderer_type = renderer_type->second;
 
-			// Screen Resolution
-			params.pixel_width = init::SCREEN_WIDTH;
-			params.pixel_height = init::SCREEN_HEIGHT;
-
 			// Tileset
 			auto tileset = tcod::load_tilesheet(FilePath{ files::graphics_directory / init::TILESET }, {16, 16}, tcod::CHARMAP_CP437);
 			params.tileset = tileset.get();
 
 			// Console
-			if (init::USE_CONSOLE_SIZE)
-			{
-				auto console = tcod::Console{ init::CONSOLE_WIDTH, init::CONSOLE_HEIGHT };
-				params.pixel_width = tileset.get_tile_width() * console.get_width();
-				params.pixel_height = tileset.get_tile_height() * console.get_height();
-				_output = std::make_unique<SAIOutput>(params, console);
-			}
-			else
-			{
-				_output = std::make_unique<SAIOutput>(params);
-			}
+			params.columns = init::CONSOLE_WIDTH;
+			params.rows = init::CONSOLE_HEIGHT;
+	
+			_output = std::make_unique<SAIOutput>(params);
+
 		}
 		catch (const std::exception& e)
 		{
@@ -238,38 +227,38 @@ namespace output // Color
 
 namespace output // Printing
 {
-	void console_print(int x, int y, const char* str)
+	int console_print(int x, int y, const char* str)
 	{
 		return console_print_rgb(x, y, DEFAULT_FG_COLOR, DEFAULT_BG_COLOR, str);
 	}
 
-	void console_print(int x, int y, std::string str)
+	int console_print(int x, int y, std::string str)
 	{
 		return console_print_rgb(x, y, DEFAULT_FG_COLOR, DEFAULT_BG_COLOR, str.c_str());
 	}
 
-	void console_printf(int x, int y, const char* fmt, ...)
+	int console_printf(int x, int y, const char* fmt, ...)
 	{
 		va_list args;
 		va_start(args, fmt);
 		return console_printf_rgb(x, y, DEFAULT_FG_COLOR, DEFAULT_BG_COLOR, fmt, args);
 	}
 
-	void console_printf(int x, int y, std::string fmt, ...)
+	int console_printf(int x, int y, std::string fmt, ...)
 	{
 		va_list args;
 		va_start(args, fmt);
 		return console_printf_rgb(x, y, DEFAULT_FG_COLOR, DEFAULT_BG_COLOR, fmt, args);
 	}
 
-	void console_printf_ex(int x, int y, TCOD_bkgnd_flag_t flag, TCOD_alignment_t alignment, const char* fmt, ...)
+	int console_printf_ex(int x, int y, TCOD_bkgnd_flag_t flag, TCOD_alignment_t alignment, const char* fmt, ...)
 	{
 		va_list args;
 		va_start(args, fmt);
 		return console_printf_rgb_ex(x, y, DEFAULT_FG_COLOR, DEFAULT_BG_COLOR, flag, alignment, fmt, args);
 	}
 
-	void console_printf_ex(int x, int y, TCOD_bkgnd_flag_t flag, TCOD_alignment_t alignment, std::string fmt, ...)
+	int console_printf_ex(int x, int y, TCOD_bkgnd_flag_t flag, TCOD_alignment_t alignment, std::string fmt, ...)
 	{
 		va_list args;
 		va_start(args, fmt);
@@ -315,23 +304,23 @@ namespace output // Printing
 		return console_printf_rect_ex(x, y, width, height, flag, alignment, fmt.c_str(), args);
 	}
 
-	void console_print_rgb(int x, int y, const color_t& fg, const color_t& bg, const char* str)
+	int console_print_rgb(int x, int y, const color_t& fg, const color_t& bg, const char* str)
 	{
 		return console_printf_rgb(x, y, fg, bg, str);
 	}
 
-	void console_print_rgb(int x, int y, const color_t& fg, const color_t& bg, std::string str)
+	int console_print_rgb(int x, int y, const color_t& fg, const color_t& bg, std::string str)
 	{
 		return console_print_rgb(x, y, fg, bg, str.c_str());
 	}
 
-	void console_printf_rgb(int x, int y, const color_t& fg, const color_t& bg, const char* fmt, ...)
+	int console_printf_rgb(int x, int y, const color_t& fg, const color_t& bg, const char* fmt, ...)
 	{
 		if (auto o = get_output())
 		{
 			va_list args;
 			va_start(args, fmt);
-			TCOD_printf_rgb(
+			return TCOD_printf_rgb(
 				o->get_console().get(),
 				TCOD_PrintParamsRGB{
 					.x = x, .y = y,
@@ -343,25 +332,24 @@ namespace output // Printing
 				fmt,
 				args
 			);
-
-			va_end(args);
 		}
+		return 0;
 	}
 
-	void console_printf_rgb(int x, int y, const color_t& fg, const color_t& bg, std::string fmt, ...)
+	int console_printf_rgb(int x, int y, const color_t& fg, const color_t& bg, std::string fmt, ...)
 	{
 		va_list args;
 		va_start(args, fmt);
 		return console_printf_rgb(x, y, fg, bg, fmt.c_str(), args);
 	}
 
-	void console_printf_rgb_ex(int x, int y, const color_t& fg, const color_t& bg, TCOD_bkgnd_flag_t flag, TCOD_alignment_t alignment, const char* fmt, ...)
+	int console_printf_rgb_ex(int x, int y, const color_t& fg, const color_t& bg, TCOD_bkgnd_flag_t flag, TCOD_alignment_t alignment, const char* fmt, ...)
 	{
 		if (auto o = get_output())
 		{
 			va_list args;
 			va_start(args, fmt);
-			TCOD_printf_rgb(
+			return TCOD_printf_rgb(
 				o->get_console().get(),
 				TCOD_PrintParamsRGB{
 					.x = x, .y = y,
@@ -372,12 +360,12 @@ namespace output // Printing
 				},
 				fmt, args
 			);
-
-			va_end(args);
 		}
+
+		return 0;
 	}
 
-	void console_printf_rgb_ex(int x, int y, const color_t& fg, const color_t& bg, TCOD_bkgnd_flag_t flag, TCOD_alignment_t alignment, std::string fmt, ...)
+	int console_printf_rgb_ex(int x, int y, const color_t& fg, const color_t& bg, TCOD_bkgnd_flag_t flag, TCOD_alignment_t alignment, std::string fmt, ...)
 	{
 		va_list args;
 		va_start(args, fmt);
@@ -479,15 +467,17 @@ namespace output // Drawing
 			set_color(x, y, fg, bg);
 		}
 	}
-	void draw_rect(int x, int y, int width, int height, bool clear, TCOD_bkgnd_flag_t flag)
+
+	void put_rgb(const int& x, const int& y, const Renderable& renderable, TCOD_bkgnd_flag_t flag)
+	{
+		put_rgb(x, y, renderable.glyph, renderable.fg, renderable.bg, flag);
+	}
+
+	void draw_rect(int x, int y, int width, int height, const glyph_t& ch, const color_t& fg, const color_t& bg, TCOD_bkgnd_flag_t flag)
 	{
 		if (auto o = get_output())
 		{
-			TCOD_console_rect(
-				o->get_console().get(),
-				x, y, width, height,
-				clear, flag
-			);
+			tcod::draw_rect(o->get_console(), { x, y, width, height }, output::from_cp437(ch), fg, bg, flag );
 		}
 	}
 	void draw_frame_rgb(
@@ -509,6 +499,21 @@ namespace output // Drawing
 				converted_decoration, fg, bg,
 				flag, clear
 			);
+		}
+	}
+	void draw_horizontal_line(int x, int y, int width, const color_t& fg, const color_t& bg, TCOD_bkgnd_flag_t flag)
+	{
+		if (auto o = get_output())
+		{
+			draw_rect(x, y, width, 1, HORIZONTAL_BAR, fg, bg, flag);
+		}
+	}
+
+	void draw_vertical_line(int x, int y, int height, const color_t& fg, const color_t& bg, TCOD_bkgnd_flag_t flag)
+	{
+		if (auto o = get_output())
+		{
+			draw_rect(x, y, 1, height, VERTICAL_BAR, fg, bg, flag);
 		}
 	}
 }

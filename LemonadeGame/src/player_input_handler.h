@@ -8,12 +8,19 @@
 #include "entity.h"
 #include "camera.h"
 
+
+class SidebarMenu_Inventory;
 class WorldGameState;
 
 class PlayerInputHandler : public InputHandler
 {
+protected:
+	SidebarMenu_Inventory* m_inventory_menu;
+
 public:
-	virtual void render(RenderParams params) const override;
+	virtual void init() override;
+	virtual void step(const TimeUnit& delta_time) override;
+	virtual void render(const RenderParams& params) const override;
 
 protected:
 	// -- Input Handling -- //
@@ -27,12 +34,9 @@ protected:
 	Position m_look_focus{ 0, 0, 0 };
 
 public:
-	~PlayerLookHandler();
-
 	virtual void init() override;
 	virtual void remove() override;
-	virtual void render(RenderParams params) const override;
-	virtual void step(TimeUnit delta_time) override;
+	virtual void render(const RenderParams& params) const override;
 
 protected:
 
@@ -43,16 +47,12 @@ protected:
 
 class PlayerInventoryHandler : public PlayerInputHandler
 {
-protected:
-	int m_selected_slot{ 0 };
-
 public:
 	virtual void init() override;
-	virtual void render(RenderParams params) const override;
-	virtual void step(TimeUnit delta_time) override;
+	virtual void remove() override;
+	virtual void step(const TimeUnit& delta_time) override;
 
 protected:
-
 	// -- Input Handling -- //
 
 	OVERRIDE_HANDLER_EVENT(key_down);

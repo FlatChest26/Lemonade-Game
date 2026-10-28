@@ -43,7 +43,7 @@ namespace Pathfinding
 			{
 				CERR("world on tile_map is null!");
 			}
-			else if (world->has_blocking_entities_at(pos, { .ignore_entities = {entity} }))
+			else if (world->has_blocking_entities_at(pos, { .ignore_entities = { entity }, .ignore_flags = EntityFlag::FREE_TO_MOVE }))
 			{
 				cost *= 1000.0f;
 			}

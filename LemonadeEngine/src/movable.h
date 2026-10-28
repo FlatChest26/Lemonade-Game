@@ -25,7 +25,7 @@ protected:
 
 public:
 	Movable() :
-		m_transform({ PositionType(), SizeType(), NORTH})
+		m_transform({ PositionType(0, 0, 0), SizeType(1, 1, 1), NORTH})
 	{
 	}
 
@@ -110,7 +110,6 @@ public:
 	/* Returns a copy of this thing's depth.*/
 	virtual LengthType get_depth() const { return m_transform.size.z; }
 
-
 	// Direction
 
 	/* Returns a reference to this thing's direction.*/
@@ -126,42 +125,41 @@ public:
 	// Transform //
 
 	/* Sets this thing's transform. */
-	template<typename T>
-	void set_transform(T t) { m_transform = static_cast<TransformType>(t); }
-	virtual void set_transform(TransformType t) { m_transform = t; }
+	template<typename T, typename K>
+	void set_transform(const Transform<T, K>& t) { m_transform = static_cast<TransformType>(t); }
 	/* Sets this thing's transform. */
 	template<typename T, typename K>
-	void set_transform(T p, K s, Direction dir = Direction::NORTH) { return set_transform(TransformType(static_cast<PositionType>(p), static_cast<SizeType>(s), dir)); }
-	virtual void set_transform(PositionType p, SizeType s, Direction dir = Direction::NORTH) { return set_transform(TransformType(p, s, dir)); }
+	void set_transform(const T& p, const K& s, const Direction& dir = Direction::NORTH) { return set_transform(TransformType(static_cast<PositionType>(p), static_cast<SizeType>(s), dir)); }
 
 	// Position
 
 	/* Sets this thing's position. */
 	template<typename T>
-	void set_position(T position) { m_transform.position = static_cast<PositionType>(position); }
-	virtual void set_position(PositionType position) { m_transform.position = position; }
+	void set_position(const Vec3D<T>& position) { m_transform.position = static_cast<PositionType>(position); }
 	/* Sets this thing's position. */
 	template<typename T>
-	void set_position(T x, T y, T z) { return set_position(PositionType(static_cast<CoordType>(x), static_cast<CoordType>(y), static_cast<CoordType>(z))); }
-	virtual void set_position(CoordType x = 0, CoordType y = 0, CoordType z = 0) { return set_position(PositionType(x, y, z)); }
-
+	void set_position(const T& x, const T& y, const T& z) { return set_position(PositionType(static_cast<CoordType>(x), static_cast<CoordType>(y), static_cast<CoordType>(z))); }
+	
 	// Size
 
 	/* Sets this thing's size. */
-	virtual void set_size(SizeType size) { m_transform.size = size; }
+	template<typename T>
+	void set_size(const Vec3D<T>& size) { m_transform.size = static_cast<SizeType>(size); }
 	/* Sets this thing's size. */
-	virtual void set_size(LengthType width = 0, LengthType height = 0, LengthType depth = 0) { return set_size(SizeType(width, height, depth)); }
+	template<typename T>
+	void set_size(const T& width, const T& height, const T& depth) { return set_size(SizeType(static_cast<LengthType>(width), static_cast<LengthType>(height), static_cast<LengthType>(depth))); }
 
 	// Direction
 
 	/* Faces this thing in the specified direction. */
-	virtual void face_direction(Direction dir) { m_transform.direction = dir; }
-	/* Faces this thing in the specified direction. */
-	virtual void face_direction(Position pos) { face_direction(transforms::pos_as_dir(pos)); }
+	virtual void face_direction(const Direction& dir) { m_transform.direction = dir; }
 	/* Faces this thing in the specified direction. */
 	template<typename T>
-	void face_direction(T x, T y, T z) { face_direction(static_cast<CoordType>(x), static_cast<CoordType>(y), static_cast<CoordType>(z)); }
-	virtual void face_direction(CoordType x = 0, CoordType y = 0, CoordType z = 0) { face_direction(transforms::pos_as_dir(x, y, z)); }
+	void face_direction(const Vec3D<T>& pos) { face_direction(transforms::pos_as_dir(static_cast<Position>(pos))); }
+
+	/* Faces this thing in the specified direction. */
+	template<typename T>
+	void face_direction(const T& x, const T& y, const T& z) { face_direction(transforms::pos_as_dir(static_cast<Coord>(x), static_cast<Coord>(y), static_cast<Coord>(z))); }
 
 public:
 
@@ -169,45 +167,49 @@ public:
 
 	/* Changes this thing's position by the specified amount. Returns true if the move is valid. */
 	template<typename T>
-	bool move(T dx, T dy, T dz)
+	bool move(const T& dx, const T& dy, const T& dz)
 	{
-		return move(static_cast<CoordType>(dx), static_cast<CoordType>(dy), static_cast<CoordType>(dz));
-	}
+		m_transform.position.x += static_cast<CoordType>(dx);
+		m_transform.position.y += static_cast<CoordType>(dy);
+		m_transform.position.z += static_cast<CoordType>(dz);
 
-	virtual bool move(CoordType dx = 0, CoordType dy = 0, CoordType dz = 0)
-	{
-		posx() += dx; posy() += dy; posz() += dz;
 		return true;
 	}
 
 	/* Changes this thing's position by the specified amount. Returns true if the move is valid. */
 	template<typename T>
-	bool move(T delta) { return move(static_cast<PositionType>(delta)); }
-	virtual bool move(PositionType delta) { return move(delta.x, delta.y, delta.z); }
+	bool move(const Vec3D<T>& delta) { return move(delta.x, delta.y, delta.z); }
+
 	/* Changes this thing's position by the specified amount. Returns true if the move is valid. */
-	virtual bool move(Direction dir, CoordType distance = 1) { return move((PositionType)transforms::dir_as_pos(dir) * distance); }
+	template<typename T>
+	bool move(const Direction& dir, const T& distance = 1) { return move(static_cast<Vec3D<T>>(transforms::dir_as_pos(dir)) * distance); }
 
 	/* Returns true if the point is inside this thing. */
-	virtual bool contains_point(int x, int y, int z) const
+	template<typename T>
+	bool contains_point(const T& x, const T& y, const T& z) const
 	{
-		return posx() <= x && x < posx() + (int)width() && posy() <= y && y < posy() + (int)height() && posz() <= z && z < posz() + (int)depth();
+		return
+			m_transform.position.x <= static_cast<CoordType>(x) && static_cast<CoordType>(x) < m_transform.position.x + static_cast<CoordType>(m_transform.size.x) &&
+			m_transform.position.y <= static_cast<CoordType>(y) && static_cast<CoordType>(y) < m_transform.position.y + static_cast<CoordType>(m_transform.size.y) &&
+			m_transform.position.z <= static_cast<CoordType>(z) && static_cast<CoordType>(z) < m_transform.position.z + static_cast<CoordType>(m_transform.size.z);
 	}
+
 	/* Returns true if the point is inside this thing. */
 	template<typename T>
-	bool contains_point(T pos) const { return contains_point(static_cast<PositionType>(pos)); }
-	virtual bool contains_point(PositionType pos) const { return contains_point(pos.x, pos.y, pos.z); }
+	bool contains_point(Vec3D<T> pos) const { return contains_point(pos.x, pos.y, pos.z); }
 
 	/* Returns the points inside this thing, with the top-left-lower corner at (0, 0, 0). */
 	virtual std::vector<Position> get_offsets() const
 	{
-		if (m_transform.size == SizeType{0, 0, 0}) return { {0, 0, 0} };
+		if (m_transform.size == SizeType{1, 1, 1}) 
+			return { {0, 0, 0} };
 
 		std::vector<Position> offsets;
-		offsets.reserve((size_t)width() * (size_t)height() * (size_t)depth());
+		offsets.reserve(static_cast<size_t>(m_transform.size.x * m_transform.size.y * m_transform.size.z));
 
-		for (int offset_z = 0; offset_z < (int)depth(); offset_z++)
-			for (int offset_y = 0; offset_y < (int)height(); offset_y++)
-				for (int offset_x = 0; offset_x < (int)width(); offset_x++)
+		for (Coord offset_z = 0; offset_z < static_cast<Coord>(m_transform.size.z); offset_z++)
+			for (Coord offset_y = 0; offset_y < static_cast<Coord>(m_transform.size.y); offset_y++)
+				for (Coord offset_x = 0; offset_x < static_cast<Coord>(m_transform.size.x); offset_x++)
 					offsets.emplace_back(offset_x, offset_y, offset_z);
 
 		return offsets;
@@ -216,15 +218,16 @@ public:
 	/* Returns the points inside this thing. */
 	virtual std::vector<Position> get_points() const
 	{
-		if (m_transform.size == SizeType{ 0, 0, 0 }) return { m_transform.position };
+		if (m_transform.size == SizeType{ 1, 1, 1 }) 
+			return { static_cast<Position>(m_transform.position) };
 
 		std::vector<Position> points;
-		points.reserve((size_t)width() * (size_t)height() * (size_t)depth());
+		points.reserve(static_cast<size_t>(m_transform.size.x * m_transform.size.y * m_transform.size.z));
 
-		for (int offset_z = 0; offset_z < (int)depth(); offset_z++)
-			for (int offset_y = 0; offset_y < (int)height(); offset_y++)
-				for (int offset_x = 0; offset_x < (int)width(); offset_x++)
-					points.emplace_back(posx() + offset_x, posy() + offset_y, posz() + offset_z);
+		for (Coord offset_z = 0; offset_z < static_cast<Coord>(m_transform.size.z); offset_z++)
+			for (Coord offset_y = 0; offset_y < static_cast<Coord>(m_transform.size.y); offset_y++)
+				for (Coord offset_x = 0; offset_x < static_cast<Coord>(m_transform.size.x); offset_x++)
+					points.emplace_back(m_transform.position.x + offset_x, m_transform.position.y + offset_y, m_transform.position.z + offset_z);
 
 		return points;
 	}

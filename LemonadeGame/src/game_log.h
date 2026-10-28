@@ -17,8 +17,13 @@ struct GameMessage
 	std::string text = "";
 	color_t fg = DEFAULT_FG_COLOR;
 	color_t bg = DEFAULT_BG_COLOR;
+	TimeUnit time_point;
 
-	TimeDate time_point;
+	int repeat_count = 1;
+
+	GameMessage(std::string msg = "", color_t fg = DEFAULT_FG_COLOR, color_t bg = DEFAULT_BG_COLOR, const TimeUnit& time_point = TimeUnit::none()) :
+		text(msg), fg(fg), bg(bg), time_point(time_point), repeat_count(1)
+	{}
 
 	bool empty() const { return text.empty(); }
 	operator std::string() const { return text; }
@@ -42,25 +47,45 @@ public:
 
 public:
 	// From most to least recent
-	GameMessage get_message(size_t idx)
+	GameMessage& get_message(size_t idx)
 	{
 		size_t index = m_messages.size() - (idx + 1);
 
 		if (index >= m_messages.size())
 		{
-			return {};
+			CERR("Out of bounds access!");
 		}
 
 		return m_messages[index];
 	}
 
-	void add_message(GameMessage msg)
+	const GameMessage& get_message(size_t idx) const
 	{
-		m_messages.push_back(msg);
+		size_t index = m_messages.size() - (idx + 1);
 
-		if (m_messages.size() >= m_history_length)
+		if (index >= m_messages.size())
 		{
-			m_messages.erase(m_messages.begin());
+			CERR("Out of bounds access!");
+		}
+
+		return m_messages[index];
+	}
+
+	void add_message(const GameMessage& msg)
+	{
+		if (m_messages.size() > 0 && get_message(0).text == msg.text)
+		{
+			auto& old_message = get_message(0);
+			old_message.repeat_count += 1;
+		}
+		else
+		{
+			m_messages.push_back(msg);
+
+			if (m_messages.size() >= m_history_length)
+			{
+				m_messages.erase(m_messages.begin());
+			}
 		}
 	}
 

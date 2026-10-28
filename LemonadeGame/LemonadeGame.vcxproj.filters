@@ -78,9 +78,6 @@
     <Filter Include="Code\Source Files\World">
       <UniqueIdentifier>{d478e81c-5dd3-4c14-9674-b44ceb8c81f9}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Code\Header Files\Utility">
-      <UniqueIdentifier>{9514f24c-e056-4cf0-ba70-6dffe1a3fbae}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\lemonade_game.h">
@@ -215,9 +212,6 @@
     <ClInclude Include="src\body_part.h">
       <Filter>Code\Header Files\Entity\Components</Filter>
     </ClInclude>
-    <ClInclude Include="src\raw_object_checker.h">
-      <Filter>Code\Header Files\Utility</Filter>
-    </ClInclude>
     <ClInclude Include="src\keybinds.h">
       <Filter>Code\Header Files\Input</Filter>
     </ClInclude>
@@ -235,6 +229,12 @@
     </ClInclude>
     <ClInclude Include="src\ai_brain.h">
       <Filter>Code\Header Files\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="src\entity_memory.h">
+      <Filter>Code\Header Files\Entity\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\entity_id.h">
+      <Filter>Code\Header Files\Entity</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -6,6 +6,14 @@
 #include "camera.h"
 #include "transforms.h"
 
+enum class UIAttachPosition
+{
+	LEFT,
+	RIGHT,
+	TOP,
+	BOTTOM
+};
+
 struct Rect2D
 {
 	Vec2D<Coord> pos{0, 0};
@@ -23,9 +31,37 @@ struct RenderParams
 	bool render_entities = true;
 	bool render_tile_map = true;
 
-	Vec2D<Coord> world_inner_frame() const
+	UIAttachPosition sidebar_position;
+	UIAttachPosition gamelog_position;
+
+	Vec2D<Coord> world_inner_frame_p1() const
 	{
-		return { world_render_frame.pos.x + world_render_frame.padding, world_render_frame.pos.y + world_render_frame.padding };
+		return world_render_frame.pos + world_render_frame.padding;
+	}
+
+	Vec2D<Coord> world_inner_frame_p2() const
+	{
+		return (world_render_frame.pos + static_cast<Vec2D<Coord>>(world_render_frame.size)) - world_render_frame.padding;
+	}
+
+	Vec2D<Coord> world_outer_frame_p1() const
+	{
+		return world_render_frame.pos;
+	}
+
+	Vec2D<Coord> world_outer_frame_p2() const
+	{
+		return (world_render_frame.pos + static_cast<Vec2D<Coord>>(world_render_frame.size));
+	}
+
+	bool in_world_frame(const Vec2D<Coord>& pos) const
+	{
+		return world_outer_frame_p1() <= pos && pos < (world_outer_frame_p2() - world_render_frame.padding * 2);
+	}
+
+	bool in_world_frame(const Coord& x, const Coord& y) const
+	{
+		return in_world_frame(Vec2D<Coord>(x, y));
 	}
 };
 

@@ -35,6 +35,8 @@ namespace MapBuilder
 		{ '^', "TILE_FENCE"					},
 		{ '/', "TILE_GLASS_DOOR"			},
 		{ 'V', "TILE_SLANTED_ROOF"			},
+		{ '_', "TILE_SIDEWALK"				},
+		{ 's', "TILE_ROAD"					},
 	};
 
 	struct ASCIIMap

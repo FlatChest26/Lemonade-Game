@@ -23,7 +23,7 @@ void WorldGameState::new_game()
 {
 	// Create World
 	m_world = std::make_unique<World>(this);
-	m_world->set_time(TimeDate{ .time_point = TimeUnit::from_hours(7.0), .day = 11, .month = 6, .year = 2025 });
+	m_world->set_time(TimeDate(TimeUnit::from_hours(7.0), 11, 6, 2025));
 
 	// Create Tile Map
 	auto tile_map = std::make_unique<TileMap>(m_world.get());
@@ -44,27 +44,32 @@ void WorldGameState::new_game()
 
 	// Create Creatures
 
-	auto Player = EntityBuilder::create_creature
-	({
-		.soul = new CreatureSoul{
-			.ID = "PLAYER",
-			.name = {"Player", "Lemonade Person"},
-			.gender = gender::NON_SPECIFIC,
-			.description = "That is you."
-		},
-		.species = RawMaster::get<Species>("HUMAN"),
-		.lifespan = static_cast<Age::age_t>(INFINITY),
-		.current_age = 18,
-		.body_mods = { RawMaster::get<BodyMod>("GirlCock")}
-	});
+	auto Player = EntityBuilder::create_creature(
+		"ENTITY_PLAYER",
+		{
+			.soul = new CreatureSoul{
+				.ID = "PLAYER",
+				.name = {"Player", "Lemonade Person"},
+				.gender = gender::NON_SPECIFIC,
+				.description = "That is you."
+			},
+			.species = RawMaster::get<Species>("HUMAN"),
+			.lifespan = static_cast<Age::age_t>(INFINITY),
+			.current_age = 18,
+			.body_mods = { RawMaster::get<BodyMod>("GirlCock")}
+		}
+	);
 
 	m_player = m_world->add_entity_at(std::unique_ptr<Entity>(Player), tile_map->get_width() - (road_width + sidewalk_width) - 5, 0, 0);
 	m_player->learn_name();
 
 
-	auto Dildo = EntityBuilder::create_item({
-		RawMaster::get<ItemDefinition>("DILDO")
-	});
+	auto Dildo = EntityBuilder::create_item(
+		"ENTITY_DILDO", 
+		{
+			.item_definition = RawMaster::get<ItemDefinition>("DILDO")
+		}
+	);
 
 	m_world->add_entity_at(std::unique_ptr<Entity>(Dildo), tile_map->get_width() - (road_width + sidewalk_width) - 5, 1, 0);
 
@@ -103,9 +108,17 @@ void WorldGameState::new_game()
 			"#.......#######+#",
 			"#.......#.......#",
 			"##+#[[[##.......#",
-			" .......#.......#",
-			" .......#.......#",
-			"        ##=====##",
+			"^.......#.......#",
+			"^.......#.......#",
+			"^..^^^^^##=====##",
+			" u u      _____  ",
+			" uuu uu uu_____  ",
+			"   uuu uuu_____  ",
+			"          _____  ",
+			"          __________________",
+			"          __________________",
+			"          __________________",
+			"          __________________",
 		}
 	};
 
@@ -156,13 +169,13 @@ void WorldGameState::new_game()
 	};
 
 	MapBuilder::make_from_ascii_map(
-		tile_map.get(), house_layout_floor1, true, Position(10, 5, 0)
+		tile_map.get(), house_layout_floor1, true, Position(10, 4, 0)
 	);
 	MapBuilder::make_from_ascii_map(
-		tile_map.get(), house_layout_floor2, true, Position(10, 5, 1)
+		tile_map.get(), house_layout_floor2, true, Position(10, 4, 1)
 	);
 	MapBuilder::make_from_ascii_map(
-		tile_map.get(), house_layout_roof, true, Position(10, 5, 2)
+		tile_map.get(), house_layout_roof, true, Position(10, 4, 2)
 	);
 
 	// Create AI Manger
@@ -256,6 +269,8 @@ void WorldGameState::render() const
 		.render_world = true,
 		.render_entities = true,
 		.render_tile_map = true,
+		.sidebar_position = UIAttachPosition::RIGHT,
+		.gamelog_position = UIAttachPosition::BOTTOM,
 	};
 
 	if (m_renderer)
@@ -345,7 +360,7 @@ void WorldGameState::update_camera()
 
 	if (game_settings.fixed_camera || !m_player)
 	{
-		Position focus = Position(m_world->get_tile_map()->get_width() / 2, m_world->get_tile_map()->get_height() / 2, 0);
+		Position focus = Position(0, 0, 0);
 
 		if (m_player)
 		{
@@ -376,6 +391,7 @@ void WorldGameState::update_camera()
 			focus = *m_camera_focus;
 		}
 
+		m_camera->set_center(focus);
 		m_camera->set_size(
 			Size
 			{
@@ -384,6 +400,7 @@ void WorldGameState::update_camera()
 				CAMERA_VIEW_DEPTH
 			}
 		);
+
 	}
 }
 
@@ -488,21 +505,19 @@ void WorldGameState::handle_input_result(InputResult result)
 
 void WorldGameState::game_message(GameMessage msg)
 {
+	if (msg.text.empty())
+		return;
+
 	if (!m_log)
 	{
 		CERR("No game log attatched to world state!");
 		return;
 	}
 
-	auto last_msg = m_log->get_message(0);
+	GameMessage new_message(msg.text, msg.fg, msg.bg, get_world()->get_time().total_time());
 
-	if (last_msg.text == msg.text)
-	{
-		return;
-	}
-
-	m_log->add_message(msg);
-	std::cout << msg.text << std::endl;
+	m_log->add_message(new_message);
+	std::cout << new_message.text << std::endl;
 
 	if (auto game = m_game)
 	{

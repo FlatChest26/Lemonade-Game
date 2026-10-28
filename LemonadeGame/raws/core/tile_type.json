@@ -3,7 +3,7 @@
     "type": "tile_type",
     "ID": "TILE_AIR",
     "noun": { "singular": "air", "plural": "air", "always_plural": true },
-    "renderable": { "glyph": " ", "fg": "light_cyan", "bg": "black" },
+    "renderable": { "glyph": 177, "fg": "light_cyan", "bg": "black" },
     "flags": [ "IS_TRANSPARENT", "IS_WALKABLE", "IS_AIR" ],
     "tags": [ "AIR" ],
     "move_cost": 1.0,
@@ -25,7 +25,7 @@
     "type": "tile_type",
     "ID": "TILE_GRAVEL",
     "noun": { "singular": "gravel", "plural": "gravel", "always_plural": true },
-    "random_glyph": [ ",", ".", "'", "`" ],
+    "random_glyph": [ "." ],
     "random_fg": [ "gray", "dark_gray", "light_gray" ],
     "random_bg": [ "black" ],
     "flags": [ "IS_TRANSPARENT", "IS_WALKABLE", "HAS_FLOOR" ],
@@ -38,7 +38,7 @@
     "ID": "TILE_PLAIN_WALL",
     "noun": { "singular": "plain wall", "plural": "plain walls", "always_plural": true },
     "wall_texture": [
-      { "glyph": "#", "fg": "white", "bg": "black" },
+      { "glyph": 111, "fg": "white", "bg": "black", "//": "o" },
       { "glyph": 201, "fg": "white", "bg": "black", "//": "╔" },
       { "glyph": 187, "fg": "white", "bg": "black", "//": "╗" },
       { "glyph": 200, "fg": "white", "bg": "black", "//": "╚" },
@@ -54,14 +54,14 @@
     "flags": [ "IS_BLOCKED", "IS_OPAQUE", "HAS_FLOOR", "HAS_CEILING" ],
     "tags": [ "WALL" ],
     "connects_to": [ "WALL" ],
-    "move_cost": 0.0,
+    "move_cost": -1.0,
     "description": "This is a plain wall."
   },
   {
     "type": "tile_type",
     "ID": "TILE_PLAIN_FLOOR",
     "noun": { "singular": "plain floor", "plural": "plain floors", "always_plural": true },
-    "renderable": { "glyph": ".", "fg": "light_gray", "bg": "black" },
+    "renderable": { "glyph": ".", "fg": "white", "bg": "black" },
     "flags": [ "IS_TRANSPARENT", "IS_WALKABLE", "HAS_FLOOR" ],
     "tags": [ "FLOOR" ],
     "move_cost": 0.8,
@@ -72,7 +72,7 @@
     "ID": "TILE_GLASS",
     "noun": { "singular": "glass", "plural": "glasses", "always_plural": true },
     "wall_texture": [
-      { "glyph": "#", "fg": "light_cyan", "bg": "black" },
+      { "glyph": 249, "fg": "light_cyan", "bg": "black", "//": "∙" },
       { "glyph": 218, "fg": "light_cyan", "bg": "black", "//": "┌" },
       { "glyph": 191, "fg": "light_cyan", "bg": "black", "//": "┐" },
       { "glyph": 192, "fg": "light_cyan", "bg": "black", "//": "└" },
@@ -88,7 +88,7 @@
     "flags": [ "IS_TRANSPARENT", "IS_BLOCKED", "HAS_FLOOR", "HAS_CEILING" ],
     "tags": [ "GLASS" ],
     "connects_to": [ "WALL", "GLASS" ],
-    "move_cost": 0.0,
+    "move_cost": -1.0,
     "description": "This is a glass wall."
   },
   {
@@ -96,7 +96,7 @@
     "ID": "TILE_WINDOW",
     "noun": { "singular": "window", "plural": "windows" },
     "wall_texture": [
-      { "glyph": "#", "fg": "light_cyan", "bg": "black" },
+      { "glyph": 249, "fg": "light_cyan", "bg": "black", "//": "∙" },
       { "glyph": 218, "fg": "light_cyan", "bg": "black", "//": "┌" },
       { "glyph": 191, "fg": "light_cyan", "bg": "black", "//": "┐" },
       { "glyph": 192, "fg": "light_cyan", "bg": "black", "//": "└" },
@@ -133,7 +133,7 @@
     "ID": "TILE_FENCE",
     "noun": { "singular": "fence", "plural": "fences" },
     "wall_texture": [
-      { "glyph": "^", "fg": "brown", "bg": "black" },
+      { "glyph": 249, "fg": "brown", "bg": "black", "//": "∙" },
       { "glyph": 218, "fg": "brown", "bg": "black", "//": "┌" },
       { "glyph": 191, "fg": "brown", "bg": "black", "//": "┐" },
       { "glyph": 192, "fg": "brown", "bg": "black", "//": "└" },
@@ -149,7 +149,7 @@
     "flags": [ "IS_TRANSPARENT", "IS_BLOCKED", "IS_HALF_TILE" ],
     "tags": [ "FENCE" ],
     "connects_to": [ "WALL", "FENCE" ],
-    "move_cost": 0.0,
+    "move_cost": -1.0,
     "description": "This is a wooden fence."
   },
   {
@@ -251,6 +251,7 @@
     "renderable": { "glyph": "X", "fg": "white", "bg": "black" },
     "flags": [ "IS_WALKABLE", "IS_TRANSPARENT", "CAN_DESCEND", "CAN_ASCEND" ],
     "tags": [ "STAIRCASE" ],
+    "move_cost": 1.0,
     "description": "This is a staircase leading up and down."
   },
   {
@@ -277,7 +278,7 @@
     "type": "tile_type",
     "ID": "TILE_ROAD",
     "noun": { "singular": "road", "plural": "roads" },
-    "renderable": { "glyph": 250, "fg": "taupe_gray", "bg": "black" },
+    "renderable": { "glyph": ".", "fg": "dark_gray", "bg": "black" },
     "flags": [ "IS_TRANSPARENT", "IS_WALKABLE", "HAS_FLOOR" ],
     "tags": [ "FLOOR" ],
     "move_cost": 8.0,

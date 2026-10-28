@@ -51,7 +51,7 @@ void AIManager::step(TimeUnit time_delta)
 {
 	if (m_time_until_next_NPC > TimeUnit::none())
 	{
-		m_time_until_next_NPC.subtract(time_delta);
+		m_time_until_next_NPC -= time_delta;
 	}
 	else
 	{

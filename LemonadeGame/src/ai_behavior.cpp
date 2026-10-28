@@ -125,7 +125,7 @@ bool Behavior_Wander::perform(AIBrain* brain, TimeUnit delta)
 
 	if (m_wait_time > TimeUnit::none())
 	{
-		m_wait_time.subtract(delta);
+		m_wait_time -= delta;
 	}
 	else
 	{

@@ -8,8 +8,8 @@
 
 #include "action.h"
 
-Entity::Entity(EntityFlag entity_flags) :
-	m_flags(entity_flags)
+Entity::Entity(EntityID ID, EntityFlag entity_flags) :
+	m_ID(ID), m_flags(entity_flags)
 {
 	on_flags_updated();
 }
@@ -408,18 +408,21 @@ void Entity::set_flag_to(EntityFlag flag, bool set_to)
 
 ThingID Entity::ID() const
 {
-	if (m_creature_soul)
-		return m_creature_soul->ID;
-	if (m_species)
-		return m_species->ID;
-	if (m_item_def)
-		return m_item_def->ID;
+	return m_ID;
+}
 
-	return "UNIDENTIFIED_ENTITY";
+Renderable Entity::get_renderable_at(Coord offset_x, Coord offset_y, Coord offset_z) const
+{
+	return renderable();
 }
 
 Renderable Entity::renderable() const
 {
+	if (is_player())
+	{
+		return Renderable{ PLAYER_CHAR, DEFAULT_FG_COLOR, color::get("black") };
+	}
+
 	Renderable renderable{ '?', color::get("white"), color::get("black") };
 
 	if (m_creature_soul)
@@ -440,6 +443,7 @@ Renderable Entity::renderable() const
 	if (is_named() && is_name_known())
 	{
 		renderable.glyph = nickname()[0];
+
 		if (m_living && m_living->is_young())
 		{
 			renderable.glyph = tolower(nickname()[0]);
@@ -759,14 +763,14 @@ bool Entity::can_see(const Entity* entity) const
 	return false;
 }
 
-
-
 bool Entity::has_seen(const Coord& x, const Coord& y, const Coord& z) const
 {
 	if (is_player())
 	{
 		if (auto tile_map = get_tile_map())
+		{
 			return tile_map->is_explored(x, y, z);
+		}
 	}
 
 	return false;
@@ -774,7 +778,7 @@ bool Entity::has_seen(const Coord& x, const Coord& y, const Coord& z) const
 
 bool Entity::operator==(const Entity& other) const
 {
-	return ID() == other.ID();
+	return m_ID == other.m_ID;
 }
 
 bool Entity::is_player() const
@@ -816,9 +820,14 @@ bool Entity::should_flash()
 		return false;
 	}
 
+	if (!has_movable())
+	{
+		return false;
+	}
+
 	if (auto world = get_world())
 	{
-		auto entities_in_tile = world->get_entities(EntityFilter{ .ignore_held = true, .required_positions = { get_movable()->pos() } });
+		auto entities_in_tile = world->get_entities(EntityFilter{ .ignore_held = true, .required_positions = { get_movable()->pos()}});
 
 		if (entities_in_tile.size() < 2)
 		{
@@ -844,31 +853,26 @@ bool Entity::should_flash()
 
 void Entity::game_message(GameMessage msg)
 {
-	if (msg.empty())
-	{
-		return;
-	}
-		
 	if (auto world_state = get_world_game_state())
 	{
 		world_state->game_message(msg);
 	}
 }
 
-Position Entity::escape_wall(Position pos) const
+Position Entity::escape_wall(const Position& pos) const
 {
 	if (!m_movable)
 		return pos;
-
-	Position valid_pos = pos;
 
 	auto check_block = [&](const Position& other_pos)
 		{
 			return get_world()->is_blocked(other_pos, this, other_pos.z - pos.z);
 		};
 
-	if (!check_block(valid_pos))
-		return valid_pos;
+	if (!check_block(pos))
+		return pos;
+
+	Position valid_pos = pos;
 
 	for (const auto& check_pos : transforms::get_surrounding_locations(pos))
 	{
@@ -879,7 +883,7 @@ Position Entity::escape_wall(Position pos) const
 	return pos;
 }
 
-void Entity::step(TimeUnit time_delta)
+void Entity::step(const TimeUnit& time_delta)
 {
 	// Try to escape wall
 
@@ -902,13 +906,13 @@ void Entity::step(TimeUnit time_delta)
 	{
 		if (m_fall_timer < TimeUnit::from_seconds(1.0))
 		{
-			m_fall_timer.add(time_delta);
+			m_fall_timer += time_delta;
 		}
 
 		if (m_fall_timer >= TimeUnit::from_seconds(1.0))
 		{
 			get_movable()->move(0, 0, -1);
-			m_fall_timer.subtract(TimeUnit::from_seconds(1.0)); // Reset the fall timer
+			m_fall_timer -= TimeUnit::from_seconds(1.0); // Reset the fall timer
 		}
 	}
 
@@ -929,16 +933,6 @@ void Entity::step(TimeUnit time_delta)
 			start_next_action();
 			continue_action(time_delta);
 		}
-	}
-
-	// Handle last seen location
-	if (is_visible_to_player())
-	{
-		m_last_seen_location = std::make_unique<Position>(get_movable()->pos());
-	}
-	else if (m_last_seen_location && get_player() && !get_player()->can_see(*m_last_seen_location))
-	{
-		m_last_seen_location.reset();
 	}
 
 	// Step AI Brain

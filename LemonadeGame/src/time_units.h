@@ -8,10 +8,6 @@
 
 using TimeUnit_t = uint64_t;
 
-template <typename T>
-concept TimeUnitsNumeric = std::is_arithmetic_v<T>;
-
-
 constexpr TimeUnit_t MILISECONDS_IN_SECOND = 1000;
 constexpr TimeUnit_t SECONDS_IN_MINUTE = 60;
 constexpr TimeUnit_t MINUTES_IN_HOUR = 60;
@@ -22,46 +18,31 @@ struct TimeUnit
 {
 	TimeUnit_t miliseconds;
 
-	double total_hours() const { return total_minutes() / MINUTES_IN_HOUR; }
-	double total_minutes() const { return total_seconds() / SECONDS_IN_MINUTE; }
-	double total_seconds() const { return total_miliseconds() / MILISECONDS_IN_SECOND; }
-	double total_miliseconds() const { return (double)miliseconds; }
-
-	TimeUnit(TimeUnit_t miliseconds = 0, double seconds = 0.0, double minutes = 0.0, double hours = 0.0) :
-		miliseconds(miliseconds + TimeUnit_t((seconds * MILISECONDS_IN_SECOND) + (minutes * SECONDS_IN_MINUTE * MILISECONDS_IN_SECOND) + (hours * MINUTES_IN_HOUR * SECONDS_IN_MINUTE * MILISECONDS_IN_SECOND)))
-	{
-	}
+	double total_hours() const { return total_minutes() / (double)MINUTES_IN_HOUR; }
+	double total_minutes() const { return total_seconds() / (double)SECONDS_IN_MINUTE; }
+	double total_seconds() const { return (double)miliseconds / (double)MILISECONDS_IN_SECOND; }
+	
+	constexpr TimeUnit(const TimeUnit_t& miliseconds = 0) :
+		miliseconds(miliseconds)
+	{}
 
 	// -- Static Constructors -- //
 
 	static TimeUnit none() { return TimeUnit(0); }
 
-	static TimeUnit from_miliseconds(double miliseconds) { return TimeUnit(static_cast<TimeUnit_t>(miliseconds)); }
-	static TimeUnit from_miliseconds(TimeUnit_t miliseconds) { return TimeUnit(miliseconds); }
+	static TimeUnit from_miliseconds(const double& miliseconds) { return TimeUnit(static_cast<TimeUnit_t>(miliseconds)); }
+	static TimeUnit from_miliseconds(const TimeUnit_t& miliseconds) { return TimeUnit(miliseconds); }
 
-	static TimeUnit from_seconds(double seconds) { return TimeUnit(static_cast<TimeUnit_t>(seconds * MILISECONDS_IN_SECOND)); }
-	static TimeUnit from_seconds(TimeUnit_t seconds) { return TimeUnit(seconds * MILISECONDS_IN_SECOND); }
+	static TimeUnit from_seconds(const double& seconds) { return TimeUnit(static_cast<TimeUnit_t>(seconds * (double)MILISECONDS_IN_SECOND)); }
+	static TimeUnit from_seconds(const TimeUnit_t& seconds) { return TimeUnit(seconds * MILISECONDS_IN_SECOND); }
 
-	static TimeUnit from_minutes(double minutes) { return TimeUnit(static_cast<TimeUnit_t>(minutes * SECONDS_IN_MINUTE * MILISECONDS_IN_SECOND)); }
-	static TimeUnit from_minutes(TimeUnit_t minutes) { return TimeUnit(minutes * SECONDS_IN_MINUTE * MILISECONDS_IN_SECOND); }
+	static TimeUnit from_minutes(const double& minutes) { return TimeUnit(static_cast<TimeUnit_t>(minutes * (double)SECONDS_IN_MINUTE * (double)MILISECONDS_IN_SECOND)); }
+	static TimeUnit from_minutes(const TimeUnit_t& minutes) { return TimeUnit(minutes * SECONDS_IN_MINUTE * MILISECONDS_IN_SECOND); }
 
-	static TimeUnit from_hours(double hours) { return TimeUnit(static_cast<TimeUnit_t>(hours * MINUTES_IN_HOUR * SECONDS_IN_MINUTE * MILISECONDS_IN_SECOND)); }
-	static TimeUnit from_hours(TimeUnit_t hours) { return TimeUnit(hours * MINUTES_IN_HOUR * SECONDS_IN_MINUTE * MILISECONDS_IN_SECOND); }
+	static TimeUnit from_hours(const double& hours) { return TimeUnit(static_cast<TimeUnit_t>(hours * (double)MINUTES_IN_HOUR * (double)SECONDS_IN_MINUTE * (double)MILISECONDS_IN_SECOND)); }
+	static TimeUnit from_hours(const TimeUnit_t& hours) { return TimeUnit(hours * MINUTES_IN_HOUR * SECONDS_IN_MINUTE * MILISECONDS_IN_SECOND); }
 
 	// -- Utilities -- //
-
-	void add(TimeUnit other)
-	{
-		miliseconds += other.miliseconds;
-	}
-
-	void subtract(TimeUnit other)
-	{
-		if (other.miliseconds > miliseconds)
-			miliseconds = 0;
-		else
-			miliseconds -= other.miliseconds;
-	}
 
 	std::string str_24_hr() const
 	{
@@ -102,16 +83,14 @@ struct TimeUnit
 		return miliseconds;
 	}
 
+	constexpr operator double() const
+	{
+		return static_cast<double>(miliseconds);
+	}
+
 	constexpr TimeUnit& operator=(const TimeUnit& other)
 	{
 		miliseconds = other.miliseconds;
-		return *this;
-	}
-
-	template<TimeUnitsNumeric U>
-	constexpr TimeUnit& operator=(const U& other)
-	{
-		miliseconds = static_cast<U>(other);
 		return *this;
 	}
 
@@ -121,23 +100,17 @@ struct TimeUnit
 		return *this;
 	}
 
-	template<TimeUnitsNumeric T>
-	constexpr TimeUnit& operator+=(const T& other) const
-	{
-		miliseconds += static_cast<TimeUnit_t>(other);
-		return *this;
-	}
-
 	constexpr TimeUnit& operator-=(const TimeUnit& other)
 	{
-		miliseconds -= other.miliseconds;
-		return *this;
-	}
+		if (miliseconds < other.miliseconds)
+		{
+			miliseconds = 0;
+		}
+		else
+		{
+			miliseconds -= other.miliseconds;
+		}
 
-	template<TimeUnitsNumeric T>
-	constexpr TimeUnit& operator-=(const T& other) const
-	{
-		miliseconds -= static_cast<TimeUnit_t>(other);
 		return *this;
 	}
 
@@ -147,23 +120,9 @@ struct TimeUnit
 		return *this;
 	}
 
-	template<TimeUnitsNumeric T>
-	constexpr TimeUnit& operator*=(const T& other) const
-	{
-		miliseconds *= other;
-		return *this;
-	}
-
 	constexpr TimeUnit& operator/=(const TimeUnit& other)
 	{
 		miliseconds /= other.miliseconds;
-		return *this;
-	}
-
-	template<TimeUnitsNumeric T>
-	constexpr TimeUnit& operator/=(const T& other) const
-	{
-		miliseconds /= other;
 		return *this;
 	}
 
@@ -174,21 +133,9 @@ struct TimeUnit
 		return miliseconds == other.miliseconds;
 	}
 
-	template<TimeUnitsNumeric T>
-	constexpr bool operator==(const T& other) const
-	{
-		return miliseconds == static_cast<TimeUnit_t>(other);
-	}
-
 	constexpr bool operator!=(const TimeUnit& other) const
 	{
 		return miliseconds != other.miliseconds;
-	}
-
-	template<TimeUnitsNumeric T>
-	constexpr bool operator!=(const T& other) const
-	{
-		return miliseconds != static_cast<TimeUnit_t>(other);
 	}
 
 	constexpr bool operator>(const TimeUnit& other) const
@@ -196,21 +143,9 @@ struct TimeUnit
 		return miliseconds > other.miliseconds;
 	}
 
-	template<TimeUnitsNumeric T>
-	constexpr bool operator>(const T& other) const
-	{
-		return miliseconds > static_cast<TimeUnit_t>(other);
-	}
-
 	constexpr bool operator>=(const TimeUnit& other) const
 	{
 		return miliseconds >= other.miliseconds;
-	}
-
-	template<TimeUnitsNumeric T>
-	constexpr bool operator>=(const T & other) const
-	{
-		return miliseconds >= static_cast<TimeUnit_t>(other);
 	}
 
 	constexpr bool operator<(const TimeUnit& other) const
@@ -218,21 +153,9 @@ struct TimeUnit
 		return miliseconds < other.miliseconds;
 	}
 
-	template<TimeUnitsNumeric T>
-	constexpr bool operator<(const T& other) const
-	{
-		return miliseconds < static_cast<TimeUnit_t>(other);
-	}
-
 	constexpr bool operator<=(const TimeUnit& other) const
 	{
 		return miliseconds <= other.miliseconds;
-	}
-
-	template<TimeUnitsNumeric T>
-	constexpr bool operator<=(const T& other) const
-	{
-		return miliseconds <= static_cast<TimeUnit_t>(other);
 	}
 
 	TimeUnit operator+(const TimeUnit& other) const
@@ -240,29 +163,24 @@ struct TimeUnit
 		return TimeUnit(miliseconds + other.miliseconds);
 	}
 
-	template<TimeUnitsNumeric T>
-	constexpr TimeUnit operator+(const T& other) const
-	{
-		return TimeUnit(miliseconds + other);
-	}
-
 	TimeUnit operator-(const TimeUnit& other) const
 	{
-		return TimeUnit(miliseconds - other.miliseconds);
-	}
-
-	template<TimeUnitsNumeric T>
-	constexpr TimeUnit operator-(const T& other) const
-	{
-		return TimeUnit(miliseconds - other);
-	}
+		if (miliseconds < other.miliseconds)
+		{
+			return 0;
+		}
+		else
+		{
+			return TimeUnit(miliseconds - other.miliseconds);
+		}
+}
 
 	TimeUnit operator*(const TimeUnit& other) const
 	{
 		return TimeUnit(miliseconds * other.miliseconds);
 	}
 
-	template<TimeUnitsNumeric T>
+	template<typename T>
 	constexpr TimeUnit operator*(const T& other) const
 	{
 		return TimeUnit(static_cast<TimeUnit_t>(miliseconds * other));
@@ -273,7 +191,7 @@ struct TimeUnit
 		return TimeUnit(miliseconds / other.miliseconds);
 	}
 
-	template<TimeUnitsNumeric T>
+	template<typename T>
 	constexpr TimeUnit operator/(const T& other) const
 	{
 		return TimeUnit(static_cast<TimeUnit_t>(miliseconds / other));
@@ -284,7 +202,7 @@ struct Month
 {
 	std::string name;
 	std::string abbrv;
-	uint32_t length;
+	TimeUnit_t length;
 };
 
 inline const Month ALL_MONTHS[MONTHS_IN_YEAR] =
@@ -303,68 +221,94 @@ inline const Month ALL_MONTHS[MONTHS_IN_YEAR] =
 	{ "December",	"Dec",	31},
 };
 
-inline constexpr uint32_t get_days_in_month(int month)
+inline constexpr TimeUnit_t get_days_in_month(const TimeUnit_t& month)
 {
 	return ALL_MONTHS[month].length;
 }
 
-inline constexpr std::string get_month_name(int month)
+inline constexpr std::string get_month_name(const TimeUnit_t& month)
 {
 	return ALL_MONTHS[month].name;
 }
 
-inline constexpr std::string get_month_abbreviation(int month)
+inline constexpr std::string get_month_abbreviation(const TimeUnit_t& month)
 {
 	return ALL_MONTHS[month].abbrv;
 }
 
-struct TimeDate
+class TimeDate
 {
-	TimeUnit time_point;
-	uint32_t day;
-	uint32_t month;
-	uint32_t year;
+protected:
+	TimeUnit m_time;
+	TimeUnit_t m_day;
+	TimeUnit_t m_month;
+	TimeUnit_t m_year;
 
-	void add(TimeUnit time_delta)
+public:
+
+	TimeDate(const TimeUnit& time = TimeUnit::none(), const TimeUnit_t& day = 1, const TimeUnit_t& month = 1, const TimeUnit_t& year = 1) :
+		m_time(time), m_day(day), m_month(month), m_year(year)
 	{
-		time_point.add(time_delta);
-		fix_time();
 	}
 
-	void fix_time()
+	TimeUnit_t day() const { return m_day; }
+	TimeUnit_t month() const { return m_month; }
+	TimeUnit_t year() const { return m_year; }
+
+	void add(const TimeUnit& time_delta)
 	{
-		while ((TimeUnit_t)time_point.total_hours() >= HOURS_IN_DAY)
+		TimeUnit clock = clock_time();
+
+		m_time += time_delta;
+		clock += time_delta;
+
+		while (clock.total_hours() >= (double)HOURS_IN_DAY)
 		{
-			time_point.miliseconds -= (HOURS_IN_DAY * MINUTES_IN_HOUR * SECONDS_IN_MINUTE * MILISECONDS_IN_SECOND);
-			day++;
+			clock -= (HOURS_IN_DAY * MINUTES_IN_HOUR * SECONDS_IN_MINUTE * MILISECONDS_IN_SECOND);
+			m_day++;
 		}
 
-		while (day >= get_days_in_month(month))
+		while (m_day >= get_days_in_month(m_month))
 		{
-			day -= get_days_in_month(month);
-			month++;
+			m_day -= get_days_in_month(m_month);
+			m_month++;
 		}
 
-		while (month >= MONTHS_IN_YEAR)
+		while (m_month >= MONTHS_IN_YEAR)
 		{
-			month -= MONTHS_IN_YEAR;
-			year++;
+			m_month -= MONTHS_IN_YEAR;
+			m_year++;
 		}
+	}
+	
+	TimeUnit& total_time()
+	{
+		return m_time;
+	}
+
+	const TimeUnit& total_time() const
+	{
+		return m_time;
+	}
+
+	TimeUnit clock_time() const
+	{
+		return TimeUnit::from_miliseconds(m_time.miliseconds % (HOURS_IN_DAY * MINUTES_IN_HOUR * SECONDS_IN_MINUTE * MILISECONDS_IN_SECOND));
 	}
 
 	std::string str_month_day_year() const
 	{
-		return std::to_string(month) + "/" + std::to_string(day) + "/" + std::to_string(year);
+		return std::to_string(m_month) + "/" + std::to_string(m_day) + "/" + std::to_string(m_year);
 	}
 
 	std::string str_day_month_year() const
 	{
-		return std::to_string(month) + "/" + std::to_string(day) + "/" + std::to_string(year);
+		return std::to_string(m_month) + "/" + std::to_string(m_day) + "/" + std::to_string(m_year);
 	}
 
 	std::string str_fancy(bool abbreviate_month = false) const
 	{
-		return (abbreviate_month ? get_month_name(month) : get_month_abbreviation(month)) + " " + std::to_string(day) + ", " + std::to_string(year);
+		return (abbreviate_month ? get_month_name(m_month) : get_month_abbreviation(m_month)) + " " + std::to_string(m_day) + ", " + std::to_string(m_year);
 	}
 };
 

@@ -164,6 +164,8 @@
     <ClInclude Include="src\entity.h" />
     <ClInclude Include="src\entity_builder.h" />
     <ClInclude Include="src\entity_filter.h" />
+    <ClInclude Include="src\entity_id.h" />
+    <ClInclude Include="src\entity_memory.h" />
     <ClInclude Include="src\fov.h" />
     <ClInclude Include="src\gait.h" />
     <ClInclude Include="src\game.h" />
@@ -184,7 +186,6 @@
     <ClInclude Include="src\pathfinding.h" />
     <ClInclude Include="src\player_input_handler.h" />
     <ClInclude Include="src\raw_master.h" />
-    <ClInclude Include="src\raw_object_checker.h" />
     <ClInclude Include="src\renderer.h" />
     <ClInclude Include="src\render_params.h" />
     <ClInclude Include="src\sidebar.h" />

@@ -26,7 +26,7 @@ public:
 public:
 	// -- Utilities -- //
 
-	virtual void render(RenderParams params = {}) const = 0;
+	virtual void render(const RenderParams& params) const = 0;
 };
 
 // Renders things in thew world
@@ -48,14 +48,14 @@ public:
 public:
 	// -- Utilities -- //
 
-	virtual void render(RenderParams params = {}) const;
+	virtual void render(const RenderParams& params) const;
 
 protected:
 	// -- Render Functions -- //
-	virtual void render_entities(RenderParams params = {}) const;
-	virtual void render_entity(RenderParams params = {}, const Entity* entity = nullptr) const;
+	virtual void render_entities(const RenderParams& params) const;
+	virtual void render_entity(const RenderParams& params, const Entity* entity = nullptr) const;
 
-	virtual void render_tile_map(RenderParams params = {}) const;
+	virtual void render_tile_map(const RenderParams& params) const;
 };
 
 #endif // !LEMONADE_GAME_SRC_RENDERER_H

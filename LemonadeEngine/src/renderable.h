@@ -12,12 +12,8 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
-inline constexpr glyph_t DISTANT_DOT = 250;
+inline constexpr glyph_t DISTANT_DOT = 249;
 inline constexpr glyph_t PLAYER_CHAR = '@';
-
-inline const color_t falling_bg = color::get("light_cyan");
-inline const color_t explored_fg = { 50, 45, 40 };
-inline const color_t unexplored_fg = { 0, 0, 0 };
 
 typedef	std::tuple<glyph_t, color_t, color_t> TupleRenderable;
 

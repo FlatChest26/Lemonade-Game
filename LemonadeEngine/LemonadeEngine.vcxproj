@@ -149,6 +149,7 @@
     <ClInclude Include="src\lemonade_engine_data.h" />
     <ClInclude Include="src\movable.h" />
     <ClInclude Include="src\output.h" />
+    <ClInclude Include="src\raw_object_checker.h" />
     <ClInclude Include="src\renderable.h" />
     <ClInclude Include="src\snowy_database.h" />
     <ClInclude Include="src\snowy_macros.h" />

@@ -156,13 +156,13 @@ public:
 public:
 	// Addition //
 
-	constexpr Vec2DType operator+(const Vec2DType& other)
+	constexpr Vec2DType operator+(const Vec2DType& other) const
 	{
 		return  { x + other.x, y + other.y };
 	}
 
 	template<typename T, typename U>
-	constexpr Vec2D<T> operator+(const U& other)
+	constexpr Vec2D<T> operator+(const U& other) const
 	{
 		return  { x + static_cast<T>(other), y + static_cast<T>(other) };
 	}
@@ -188,13 +188,13 @@ public:
 public:
 	// Subtraction //
 
-	constexpr Vec2DType operator-(const Vec2DType& other)
+	constexpr Vec2DType operator-(const Vec2DType& other) const
 	{
 		return  { x - other.x, y - other.y };
 	}
 
 	template<typename T, typename U>
-	constexpr Vec2D<T> operator-(const U& other)
+	constexpr Vec2D<T> operator-(const U& other) const
 	{
 		return  { x - static_cast<T>(other), y - static_cast<T>(other) };
 	}
@@ -220,13 +220,13 @@ public:
 public:
 	// Multiplication //
 
-	constexpr Vec2DType operator*(const Vec2DType& other)
+	constexpr Vec2DType operator*(const Vec2DType& other) const
 	{
 		return  { x * other.x, y * other.y };
 	}
 
 	template<typename T, typename U>
-	constexpr Vec2D<T> operator*(const U& other)
+	constexpr Vec2D<T> operator*(const U& other) const
 	{
 		return  { x * static_cast<T>(other), y * static_cast<T>(other) };
 	}
@@ -252,13 +252,13 @@ public:
 public:
 	// Division / //
 
-	constexpr Vec2DType operator/(const Vec2DType& other)
+	constexpr Vec2DType operator/(const Vec2DType& other) const
 	{
 		return  { x / other.x, y / other.y };
 	}
 
 	template<typename T, typename U>
-	constexpr Vec2D<T> operator/(const U& other)
+	constexpr Vec2D<T> operator/(const U& other) const
 	{
 		return  { x / static_cast<T>(other), y / static_cast<T>(other) };
 	}
@@ -284,7 +284,7 @@ public:
 public:
 	// Modulus % //
 
-	constexpr Vec2DType operator%(const Vec2DType& other)
+	constexpr Vec2DType operator%(const Vec2DType& other) const
 	{
 		return Vec2DType{
 			static_cast<IntType>(static_cast<int>(x) % static_cast<int>(other.x)),
@@ -293,7 +293,7 @@ public:
 	}
 
 	template<typename T, typename U>
-	constexpr Vec2D<T> operator%(const U& other)
+	constexpr Vec2D<T> operator%(const U& other) const
 	{
 		return Vec2D<T>{
 			static_cast<T>(static_cast<int>(x) % static_cast<int>(other.x)),
@@ -323,28 +323,28 @@ public:
 public:
 	// Comparison //
 
-	constexpr bool operator<(const Vec2DType& other)
+	constexpr bool operator<(const Vec2DType& other) const
 	{
 		return  x < other.x && y < other.y;
 	}
 
-	constexpr bool operator<=(const Vec2DType& other)
+	constexpr bool operator<=(const Vec2DType& other) const
 	{
 		return x <= other.x && y <= other.y;
 	}
 
-	constexpr bool operator>(const Vec2DType& other)
+	constexpr bool operator>(const Vec2DType& other) const
 	{
 		return  x > other.x && y > other.y;
 	}
 
-	constexpr bool operator>=(const Vec2DType& other)
+	constexpr bool operator>=(const Vec2DType& other) const
 	{
 		return x >= other.x && y >= other.y;
 	}
 
 	template<typename T>
-	constexpr operator Vec2D<T>()
+	constexpr operator Vec2D<T>() const
 	{
 		return Vec2D<T>(static_cast<T>(x), static_cast<T>(y));
 	}
@@ -530,13 +530,13 @@ public:
 public:
 	// Addition //
 
-	constexpr Vec3DType operator+(const Vec3DType& other)
+	constexpr Vec3DType operator+(const Vec3DType& other) const
 	{
 		return  { x + other.x, y + other.y, z + other.z };
 	}
 
 	template<typename T, typename U>
-	constexpr Vec3D<T> operator+(const U& other)
+	constexpr Vec3D<T> operator+(const U& other) const
 	{
 		return  { x + static_cast<T>(other), y + static_cast<T>(other), z + static_cast<T>(other) };
 	}
@@ -563,13 +563,13 @@ public:
 public:
 	// Subtraction //
 
-	constexpr Vec3DType operator-(const Vec3DType& other)
+	constexpr Vec3DType operator-(const Vec3DType& other) const
 	{
 		return  { x - other.x, y - other.y, z - other.z };
 	}
 
 	template<typename T, typename U>
-	constexpr Vec3D<T> operator-(const U& other)
+	constexpr Vec3D<T> operator-(const U& other) const
 	{
 		return  { x - static_cast<T>(other), y - static_cast<T>(other), z - static_cast<T>(other) };
 	}
@@ -596,13 +596,13 @@ public:
 public:
 	// Multiplication //
 
-	constexpr Vec3DType operator*(const Vec3DType& other)
+	constexpr Vec3DType operator*(const Vec3DType& other) const
 	{
 		return  { x * other.x, y * other.y, z * other.z };
 	}
 
 	template<typename T, typename U>
-	constexpr Vec3D<T> operator*(const U& other)
+	constexpr Vec3D<T> operator*(const U& other) const
 	{
 		return  { x * static_cast<T>(other), y * static_cast<T>(other), z * static_cast<T>(other) };
 	}
@@ -629,13 +629,13 @@ public:
 public:
 	// Division / //
 
-	constexpr Vec3DType operator/(const Vec3DType& other)
+	constexpr Vec3DType operator/(const Vec3DType& other) const
 	{
 		return  { x / other.x, y / other.y, z / other.z };
 	}
 
 	template<typename T, typename U>
-	constexpr Vec3D<T> operator/(const U& other)
+	constexpr Vec3D<T> operator/(const U& other) const
 	{
 		return  { x / static_cast<T>(other), y / static_cast<T>(other), z / static_cast<T>(other) };
 	}
@@ -662,7 +662,7 @@ public:
 public:
 	// Modulus % //
 
-	constexpr Vec3DType operator%(const Vec3DType& other)
+	constexpr Vec3DType operator%(const Vec3DType& other) const
 	{
 		return Vec3DType{ 
 			static_cast<IntType>(static_cast<int>(x) % static_cast<int>(other.x)),
@@ -672,7 +672,7 @@ public:
 	}
 
 	template<typename T, typename U>
-	constexpr Vec3D<T> operator%(const U& other)
+	constexpr Vec3D<T> operator%(const U& other) const
 	{
 		return Vec3D<T>{
 			static_cast<T>(static_cast<int>(x) % static_cast<int>(other.x)),
@@ -705,22 +705,22 @@ public:
 public:
 	// Comparison //
 
-	constexpr bool operator<(const Vec3DType& other)
+	constexpr bool operator<(const Vec3DType& other) const
 	{
 		return  x < other.x && y < other.y && z < other.z;
 	}
 
-	constexpr bool operator<=(const Vec3DType& other)
+	constexpr bool operator<=(const Vec3DType& other) const
 	{
 		return x <= other.x && y <= other.y && z <= other.z;
 	}
 
-	constexpr bool operator>(const Vec3DType& other)
+	constexpr bool operator>(const Vec3DType& other) const
 	{
 		return  x > other.x && y > other.y && z > other.z;
 	}
 
-	constexpr bool operator>=(const Vec3DType& other)
+	constexpr bool operator>=(const Vec3DType& other) const
 	{
 		return x >= other.x && y >= other.y && z >= other.z;
 	}
@@ -728,7 +728,7 @@ public:
 public:
 
 	template<typename T>
-	constexpr operator Vec3D<T>()
+	constexpr operator Vec3D<T>() const
 	{
 		return Vec3D<T>(static_cast<T>(x), static_cast<T>(y), static_cast<T>(z));
 	}

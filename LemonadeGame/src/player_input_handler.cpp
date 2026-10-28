@@ -189,45 +189,50 @@ InputResult PlayerInputHandler::ev_key_down(SDL_Event event)
 	return InputResult();
 }
 
+void PlayerInputHandler::init()
+{
+	auto sidebar = get_world_state()->get_sidebar();
 
-void PlayerInputHandler::render(RenderParams params) const
+	if (!sidebar)
+	{
+		CERR("No sidebar on world state!");
+		return;
+	}
+
+	if (!sidebar->has_menu("GAME_INFO_SIDEBAR"))
+	{
+		sidebar->add_menu("GAME_INFO_SIDEBAR", std::make_unique<SidebarMenu_GameInfo>());
+	}
+
+	if (!sidebar->has_menu("INVENTORY_SIDEBAR"))
+	{
+		m_inventory_menu = (SidebarMenu_Inventory*)sidebar->add_menu("INVENTORY_SIDEBAR", std::make_unique<SidebarMenu_Inventory>());
+		m_inventory_menu->pin();
+	}
+	else
+	{
+		m_inventory_menu = (SidebarMenu_Inventory*)sidebar->get_menu("INVENTORY_SIDEBAR");
+	}
+}
+
+void PlayerInputHandler::step(const TimeUnit& delta_time)
+{
+}
+
+void PlayerInputHandler::render(const RenderParams& params) const
 {
 	output::draw_frame_rgb(
-		0, 0, params.camera->get_width() + 2, params.camera->get_height() + 2,
+		params.world_render_frame.pos.x, params.world_render_frame.pos.y, 
+		params.world_render_frame.pos.x + params.world_render_frame.size.x,
+		params.world_render_frame.pos.y + params.world_render_frame.size.y,
 		color::get("white"), color::get("black"), DEFAULT_RECT_FRAME, false, TCOD_BKGND_SET
 	);
-
-	if (auto world_state = get_world_state())
-	{
-		switch (world_state->get_tick_speed())
-		{
-		case TickSpeed::TURN_BASED:
-			output::console_printf_ex(0, 0, DEFAULT_BKGND_FLAG, TCOD_alignment_t::TCOD_RIGHT, "Game Speed: Turn-based");
-			break;
-		case TickSpeed::REAL_TIME:
-			output::console_printf_ex(0, 0, DEFAULT_BKGND_FLAG, TCOD_alignment_t::TCOD_RIGHT, "Game Speed: x1");
-			break;
-		case TickSpeed::REAL_TIME_2X:
-			output::console_printf_ex(0, 0, DEFAULT_BKGND_FLAG, TCOD_alignment_t::TCOD_RIGHT, "Game Speed: x2");
-			break;
-		case TickSpeed::REAL_TIME_4X:
-			output::console_printf_ex(0, 0, DEFAULT_BKGND_FLAG, TCOD_alignment_t::TCOD_RIGHT, "Game Speed: x4");
-			break;
-		case TickSpeed::REAL_TIME_8X:
-			output::console_printf_ex(0, 0, DEFAULT_BKGND_FLAG, TCOD_alignment_t::TCOD_RIGHT, "Game Speed: x8");
-			break;
-		}
-	}
-
-	if (auto world = get_world())
-	{
-		output::console_printf_ex(0, 1, DEFAULT_BKGND_FLAG, TCOD_alignment_t::TCOD_RIGHT, world->get_time().time_point.str_12_hr());
-		output::console_printf_ex(0, 2, DEFAULT_BKGND_FLAG, TCOD_alignment_t::TCOD_RIGHT, world->get_time().str_fancy(true));
-	}
 }
 
 void PlayerLookHandler::init()
 {
+	PlayerInputHandler::init();
+
 	auto player = get_player();
 
 	if (!player)
@@ -254,14 +259,6 @@ void PlayerLookHandler::remove()
 	}
 }
 
-void PlayerLookHandler::step(TimeUnit delta_time)
-{
-	if (auto world_state = get_world_state())
-	{
-		world_state->set_camera_focus(m_look_focus);
-	}
-}
-
 InputResult PlayerLookHandler::ev_key_down(SDL_Event event)
 {
 	auto player = get_player();
@@ -277,6 +274,7 @@ InputResult PlayerLookHandler::ev_key_down(SDL_Event event)
 		m_look_focus.x = std::clamp(m_look_focus.x, 0, (Coord)get_world()->get_tile_map()->get_width());
 		m_look_focus.y = std::clamp(m_look_focus.y, 0, (Coord)get_world()->get_tile_map()->get_height());
 		m_look_focus.z = std::clamp(m_look_focus.z, 0, (Coord)get_world()->get_tile_map()->get_depth());
+		world_state->set_camera_focus(m_look_focus);
 
 		return InputResult(InputResult::Type::Action);
 	}
@@ -322,7 +320,7 @@ InputResult PlayerLookHandler::ev_key_down(SDL_Event event)
 	return InputResult();
 }
 
-void PlayerLookHandler::render(RenderParams params) const
+void PlayerLookHandler::render(const RenderParams& params) const
 {
 	auto tile = get_world()->get_tile(m_look_focus);
 
@@ -358,13 +356,13 @@ void PlayerLookHandler::render(RenderParams params) const
 		}
 	}
 
-	output::set_fg(draw_x + params.world_inner_frame().x, draw_y + params.world_inner_frame().x, draw_fg);
-	output::set_bg(draw_x + params.world_inner_frame().x, draw_y + params.world_inner_frame().y, draw_bg);
+	output::set_fg(draw_x + params.world_inner_frame_p1().x, draw_y + params.world_inner_frame_p1().x, draw_fg);
+	output::set_bg(draw_x + params.world_inner_frame_p1().x, draw_y + params.world_inner_frame_p1().y, draw_bg);
 
 	// Write info at look focus
 
-	int write_x = params.world_inner_frame().x;
-	int write_y = params.world_inner_frame().y;
+	int write_x = params.world_inner_frame_p1().x;
+	int write_y = params.world_inner_frame_p1().y;
 
 	if (tile->get_type())
 	{
@@ -392,12 +390,30 @@ void PlayerLookHandler::render(RenderParams params) const
 
 void PlayerInventoryHandler::init()
 {
+	PlayerInputHandler::init();
+
 	if (!get_player()->get_inventory())
 	{
 		CERR("Player has no inventory!");
 	}
 
-	m_selected_slot = -1;
+	if (get_player()->get_inventory()->empty())
+	{
+		m_inventory_menu->selected_slot = -1;
+	}
+	else if (m_inventory_menu->selected_slot == -1)
+	{
+		m_inventory_menu->selected_slot = 1;
+	}
+
+	m_inventory_menu->focus();
+	m_inventory_menu->uncollapse();
+}
+
+void PlayerInventoryHandler::remove()
+{
+	m_inventory_menu->unfocus();
+	m_inventory_menu->collapse();
 }
 
 InputResult PlayerInventoryHandler::ev_key_down(SDL_Event event)
@@ -414,29 +430,29 @@ InputResult PlayerInventoryHandler::ev_key_down(SDL_Event event)
 	{
 		if (inventory->empty())
 		{
-			m_selected_slot = -1;
+			m_inventory_menu->selected_slot = -1;
 		}
 		else
 		{
-			m_selected_slot += 1;
-			m_selected_slot = m_selected_slot % inventory->get_item_count();
+			m_inventory_menu->selected_slot += 1;
+			m_inventory_menu->selected_slot = m_inventory_menu->selected_slot % inventory->get_item_count();
 		}
 	}
 	else if (InputMap::is_action_pressed(Keybind::MenuDown, event))
 	{
 		if (inventory->empty())
 		{
-			m_selected_slot = -1;
+			m_inventory_menu->selected_slot = -1;
 		}
 		else
 		{
-			m_selected_slot -= 1;
-			m_selected_slot = m_selected_slot % inventory->get_item_count();
+			m_inventory_menu->selected_slot -= 1;
+			m_inventory_menu->selected_slot = m_inventory_menu->selected_slot % inventory->get_item_count();
 		}
 	}
 	else if (InputMap::is_action_pressed(Keybind::Drop, event))
 	{
-		auto selected_item = inventory->get_item(m_selected_slot);
+		auto selected_item = inventory->get_item(m_inventory_menu->selected_slot);
 		
 		if (selected_item)
 		{
@@ -445,7 +461,7 @@ InputResult PlayerInventoryHandler::ev_key_down(SDL_Event event)
 	}
 	else if (InputMap::is_action_pressed(Keybind::Examine, event))
 	{
-		auto selected_item = inventory->get_item(m_selected_slot);
+		auto selected_item = inventory->get_item(m_inventory_menu->selected_slot);
 		if (selected_item)
 		{
 			get_world_state()->game_message(GameMessage(selected_item->description()));
@@ -473,72 +489,24 @@ InputResult PlayerInventoryHandler::ev_key_down(SDL_Event event)
 		world_state->set_tick_speed(TickSpeed::REAL_TIME_4X);
 		return InputResult();
 	}
+	else if (InputMap::is_action_pressed(Keybind::PinSidebarMenu, event))
+	{
+		m_inventory_menu->set_pinned(!m_inventory_menu->is_pinned());
+		return InputResult();
+	}
 
 	return InputResult();
 }
 
-using InventoryListTuple = std::tuple<std::string, color_t, color_t, bool>;
-
-void PlayerInventoryHandler::render(RenderParams params) const
+void PlayerInventoryHandler::step(const TimeUnit& delta_time)
 {
-	auto player = get_player();
-	auto inventory = player->get_inventory();
+	PlayerInputHandler::step(delta_time);
 
-	int panel_width = (int)(std::string("Inventory").size() + 6);
-	int panel_height = (int)std::max(size_t(4), inventory->get_item_count());
-
-	std::vector<InventoryListTuple> inventory_list;
-
-	if (inventory->get_item_count() < 1)
-	{
-		inventory_list.push_back(std::tuple("Empty", color::get("white"), color::get("black"), false));
-	}
-	else
-	{
-		int slot = 0;
-		for (const auto& item : inventory->get_items())
-		{
-			inventory_list.push_back(std::tuple(snowy::grammar::a(item->display_noun()), item->fg(), item->bg(), m_selected_slot == slot));
-			slot++;
-		}
-	}
-
-	for (const auto& inv_list_item : inventory_list)
-	{
-		panel_width = (int)std::max(size_t(panel_width), std::get<0>(inv_list_item).size() + 2);
-	}
-
-	int panel_x = (params.camera->get_width() / 2) - (panel_width / 2) + params.world_inner_frame().x;
-	int panel_y = (params.camera->get_height() / 2) - (panel_height / 2) + params.world_inner_frame().y;
-
-	color_t fg = color::get("white");
-	color_t bg = color::get("black");
-
-	output::draw_frame_rgb(panel_x, panel_y, panel_width, panel_height, fg, bg, DEFAULT_RECT_FRAME, true, TCOD_BKGND_SET);
-	output::console_printf_rgb_rect_ex(panel_x, panel_y, panel_width, 1, bg, fg, TCOD_BKGND_SET, TCOD_alignment_t::TCOD_CENTER, "Inventory");
-
-	int draw_x = panel_x + 1;
-	int draw_y = panel_y + 2;
-
-	for (const auto& inv_list_item : inventory_list)
-	{
-		bool selected = std::get<3>(inv_list_item);
-		color_t fg = selected ? std::get<2>(inv_list_item) : std::get<1>(inv_list_item);
-		color_t bg = selected ? std::get<1>(inv_list_item) : std::get<2>(inv_list_item);
-
-		draw_y += output::console_printf_rgb_rect_ex(
-			draw_x, draw_y, panel_width - 2, panel_height - 2, fg, bg, TCOD_BKGND_SET, TCOD_CENTER, std::get<0>(inv_list_item)
-		);
-	}
-}
-
-void PlayerInventoryHandler::step(TimeUnit delta_time)
-{
 	auto player = get_player();
 	auto inventory = player->get_inventory();
 
 	if (inventory->empty())
 	{
-		m_selected_slot = -1;
+		m_inventory_menu->selected_slot = -1;
 	}
 }

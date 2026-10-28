@@ -659,6 +659,11 @@
   },
   {
     "type": "color",
+    "ID": "col_falling",
+    "color": "#00FFFF"
+  },
+  {
+    "type": "color",
     "ID": "col_explored",
     "color": "#322D28"
   },

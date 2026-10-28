@@ -107,4 +107,5 @@ void keybinds::initialize()
 	InputMap::add_input_action(Keybind::SetToRealTime2xSpeed,	SDLK_F3, KMOD_NONE, KMOD_SHIFT);
 	InputMap::add_input_action(Keybind::SetToRealTime4xSpeed,	SDLK_F4, KMOD_NONE, KMOD_SHIFT);
 
+	InputMap::add_input_action(Keybind::PinSidebarMenu,	SDLK_EQUALS, KMOD_SHIFT, KMOD_NONE);
 }

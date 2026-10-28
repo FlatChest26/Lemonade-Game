@@ -72,7 +72,7 @@ Entity* NPCGenerator::generate_npc()
 	WeightedVector<snowy::StringID> ValidColors;
 	for (const auto& color_id : RawMaster::get_color_ids())
 	{
-		if (color_id == "black")
+		if (color_id == "black" || color_id == "pitch_black")
 			continue;
 
 		ValidColors.emplace_back(1.0, color_id);
@@ -153,18 +153,21 @@ Entity* NPCGenerator::generate_npc()
 	random_body_mods.push_back(RawMaster::get<BodyMod>(get_weighted_random(ValidBodyMods, snowy::rng::generator)));
 	 
 	// Make NPC
-	auto npc = EntityBuilder::create_creature({
-		.soul = new CreatureSoul{
-			.ID = "NPC_" + std::to_string(m_npc_count),
-			.name = random_name,
-			.gender = random_gender,
-			.color = random_color,
-		},
-		.species = random_species,
-		.lifespan = random_lifespan,
-		.current_age = random_age,
-		.body_mods = random_body_mods
-	});
+	auto npc = EntityBuilder::create_creature(
+		"NPC_" + std::to_string(m_npc_count),
+		{
+			.soul = new CreatureSoul{
+				.ID = "NPC_SOUL_" + std::to_string(m_npc_count),
+				.name = random_name,
+				.gender = random_gender,
+				.color = random_color,
+			},
+			.species = random_species,
+			.lifespan = random_lifespan,
+			.current_age = random_age,
+			.body_mods = random_body_mods
+		}
+	);
 
 	m_npc_count++;
 

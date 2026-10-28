@@ -178,7 +178,7 @@ ActionResult MovementAction::perform()
 		}
 	}
 
-	m_actor->get_movable()->set_position(Position(final_x, final_y, final_z));
+	m_actor->get_movable()->set_position(final_x, final_y, final_z);
 
 	return ActionResult(true);
 }

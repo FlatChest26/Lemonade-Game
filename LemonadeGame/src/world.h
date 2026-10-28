@@ -3,7 +3,7 @@
 #ifndef LEMONADE_GAME_SRC_WORLD_H
 #define LEMONADE_GAME_SRC_WORLD_H
 
-#include "render_params.h"
+#include "entity_id.h"
 
 #include "entity.h"
 #include "time_units.h"
@@ -11,6 +11,8 @@
 #include "game_states.h"
 
 #include "entity_filter.h"
+
+#include <unordered_map>
 
 class Game;
 class WorldGameState;
@@ -22,19 +24,13 @@ class World : public std::enable_shared_from_this<World>
 private:
 	GameState* m_game_state;
 
-	std::vector<std::unique_ptr<Entity>> m_entities;
+	std::unordered_map<EntityID, std::unique_ptr<Entity>> m_entities;
 	std::unique_ptr<TileMap> m_tile_map;
 
 	// By default, starts at 12:00 PM on June 11, 2025
-	TimeDate m_current_time = TimeDate
-	{
-		.time_point = TimeUnit::from_hours(12.0),
-		.day = 11,
-		.month = 6,
-		.year = 2025
-	};
+	TimeDate m_current_time = TimeDate(TimeUnit::from_hours(12.0), 11, 6, 2025);
 
-	double time_progress_rate = 20.0f;
+	double m_time_progress_rate = 20.0f;
 
 public:
 	World(GameState* game_state = {});
@@ -55,12 +51,21 @@ public:
 	void set_time(const TimeDate& time) { m_current_time = time; }
 	void add_time(TimeUnit time_delta) { m_current_time.add(time_delta); }
 
+	double get_time_progress_rate() const { return m_time_progress_rate; }
+
 public:
 	// -- Entity Utilities -- //
 	
 	// Sets the given entity to be removed on the next frame.
 	void queue_remove_entity(Entity* entity);
+	void queue_remove_entity(EntityID ID);
 	
+	bool has_entity(EntityID ID) const;
+
+	EntityID get_entity_ID(Entity* entity) const;
+	Entity* get_entity(EntityID ID);
+	const Entity* get_entity(EntityID ID) const;
+
 	// Adds an entity to the world. Returns a pointer to the entity if successful.
 	Entity* add_entity(std::unique_ptr<Entity> entity);
 
@@ -133,7 +138,7 @@ public:
 public:
 	// -- Game Loop -- //
 
-	void step(TimeUnit time_delta); // Tick the world's time forward
+	void step(const TimeUnit& time_delta); // Tick the world's time forward
 
 protected:
 	void prepare_remove_entity(Entity* entity) const;

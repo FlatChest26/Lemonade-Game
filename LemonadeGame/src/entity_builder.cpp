@@ -2,9 +2,9 @@
 #include "anatomy.h"
 #include "gait.h"
 
-Entity* EntityBuilder::create_creature(CreatureInitializer init)
+Entity* EntityBuilder::create_creature(EntityID ID, CreatureInitializer init)
 {
-	auto new_creature = new Entity();
+	auto new_creature = new Entity(ID);
 
 	// Soul
 	new_creature->add_soul(init.soul);
@@ -12,7 +12,7 @@ Entity* EntityBuilder::create_creature(CreatureInitializer init)
 	// Flags
 	new_creature->add_flag(EntityFlag::IS_CREATURE); 
 	new_creature->add_flag(EntityFlag::FREE_TO_MOVE);
-	//new_creature->add_flag(EntityFlag::IS_BLOCKING);
+	// new_creature->add_flag(EntityFlag::IS_BLOCKING);
 	new_creature->add_flag(EntityFlag::CAN_COLLIDE);
 	new_creature->add_flag(EntityFlag::CAN_FALL);
 	new_creature->add_flag(EntityFlag::HAS_FOV);
@@ -41,7 +41,7 @@ Entity* EntityBuilder::create_creature(CreatureInitializer init)
 
 	if (!init.species)
 	{
-		CERR("Creature: " << new_creature->full_name() << " has no species assigned!");
+		CERR("Creature: " << ID << " has no species assigned!");
 	}
 
 	// Lifespan
@@ -50,9 +50,9 @@ Entity* EntityBuilder::create_creature(CreatureInitializer init)
 	return new_creature;
 }
 
-Entity* EntityBuilder::create_item(ItemInitializer init)
+Entity* EntityBuilder::create_item(EntityID ID, ItemInitializer init)
 {
-	auto new_item = new Entity();
+	auto new_item = new Entity(ID);
 
 	new_item->add_flag(EntityFlag::IS_ITEM);
 	new_item->add_flag(EntityFlag::FREE_TO_MOVE);

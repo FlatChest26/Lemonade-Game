@@ -45,7 +45,7 @@ std::vector<Entity*> World::get_entities()
 {
 	std::vector<Entity*> entities;
 
-	for (auto& entity : m_entities)
+	for (auto& [ID, entity] : m_entities)
 	{
 		entities.push_back(entity.get());
 	}
@@ -57,7 +57,7 @@ std::vector<const Entity*> World::get_entities() const
 {
 	std::vector<const Entity*> entities;
 
-	for (auto& entity : m_entities)
+	for (auto& [ID, entity] : m_entities)
 	{
 		entities.push_back(entity.get());
 	}
@@ -67,13 +67,54 @@ std::vector<const Entity*> World::get_entities() const
 
 void World::queue_remove_entity(Entity* entity)
 {
-	for (auto& check_entity : m_entities)
+	queue_remove_entity(get_entity_ID(entity));
+}
+
+void World::queue_remove_entity(EntityID ID)
+{
+	if (has_entity(ID))
 	{
-		if (check_entity->ID() == entity->ID())
+		auto entity = get_entity(ID);
+		entity->queue_remove();
+	}
+}
+
+bool World::has_entity(EntityID ID) const
+{
+	return m_entities.find(ID) != m_entities.end();
+}
+
+EntityID World::get_entity_ID(Entity* entity) const
+{
+	for (const auto& [check_ID, check_entity] : m_entities)
+	{
+		if (*check_entity == *entity)
 		{
-			check_entity->queue_remove();
+			return check_ID;
 		}
 	}
+
+	return EntityID();
+}
+
+Entity* World::get_entity(EntityID ID)
+{
+	if (has_entity(ID))
+	{
+		return m_entities[ID].get();
+	}
+
+	return nullptr;
+}
+
+const Entity* World::get_entity(EntityID ID) const
+{
+	if (m_entities.find(ID) != m_entities.end())
+	{
+		return m_entities.at(ID).get();
+	}
+
+	return nullptr;
 }
 
 Entity* World::add_entity(std::unique_ptr<Entity> entity)
@@ -81,10 +122,17 @@ Entity* World::add_entity(std::unique_ptr<Entity> entity)
 	if (m_entities.size() >= MAX_ENTITY_COUNT)
 		return nullptr;
 
-	m_entities.push_back(std::move(entity));
-	m_entities.back()->set_location(this);
+	EntityID entity_ID = entity->ID();
 
-	return m_entities.back().get();
+	if (has_entity(entity_ID))
+	{
+		return nullptr;
+	}
+
+	m_entities[entity_ID] = std::move(entity);
+	m_entities[entity_ID]->set_location(this);
+
+	return m_entities[entity_ID].get();
 }
 
 Entity* World::add_entity_at(std::unique_ptr<Entity> entity, const Coord& x, const Coord& y, const Coord& z)
@@ -175,15 +223,15 @@ bool World::has_entities(const EntityFilter& filter) const
 {
 	return std::any_of(
 		m_entities.begin(), m_entities.end(),
-		[&filter](const auto& entity)
+		[&filter](const auto& pair)
 		{
-			if (entity->should_remove())
+			if (pair.second->should_remove())
 				return false;
 
-			if (filter.should_ignore(entity.get()))
+			if (filter.should_ignore(pair.second.get()))
 				return false;
 
-			if (!filter.is_required(entity.get()))
+			if (!filter.is_required(pair.second.get()))
 				return false;
 
 			return true;
@@ -195,15 +243,15 @@ int World::count_entities(const EntityFilter& filter) const
 {
 	auto count = std::count_if(
 		m_entities.begin(), m_entities.end(),
-		[&filter](const auto& entity)
+		[&filter](const auto& pair)
 		{
-			if (entity->should_remove())
+			if (pair.second->should_remove())
 				return false;
 
-			if (filter.should_ignore(entity.get()))
+			if (filter.should_ignore(pair.second.get()))
 				return false;
 
-			if (!filter.is_required(entity.get()))
+			if (!filter.is_required(pair.second.get()))
 				return false;
 
 			return true;
@@ -319,32 +367,34 @@ void World::prepare_remove_entity(Entity* entity)  const
 	}
 }
 
-void World::step(TimeUnit time_delta)
+void World::step(const TimeUnit& time_delta)
 {
-	std::vector<size_t> remove_entities;
+	std::vector<EntityID> remove_entities;
 
-	for (size_t i = 0; i < m_entities.size(); i++)
+	for (const auto& [ID, entity] : m_entities)
 	{
-		auto& entity = m_entities[i];
-
 		if (entity->should_remove())
 		{
-			remove_entities.push_back(i);
-		}
-		else
-		{
-			entity->step(time_delta);
+			remove_entities.push_back(ID);
 		}
 	}
 
 	for (const auto& remove_idx : remove_entities)
 	{
-		if (remove_idx < 0 || remove_idx >= m_entities.size())
+		if (!has_entity(remove_idx))
 			continue;
 
 		prepare_remove_entity(m_entities[remove_idx].get());
-		m_entities.erase(m_entities.begin() + remove_idx);
+		m_entities.erase(remove_idx);
 	}
 
-	m_current_time.add(time_delta * time_progress_rate);
+	for (const auto& [ID, entity] : m_entities)
+	{
+		if (!entity->should_remove())
+		{
+			entity->step(time_delta);
+		}
+	}
+
+	m_current_time.add(time_delta * m_time_progress_rate);
 }

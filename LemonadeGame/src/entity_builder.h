@@ -21,7 +21,7 @@ namespace EntityBuilder
 		std::vector<RawMaster::Ref<BodyMod>> body_mods;
 	};
 
-	Entity* create_creature(CreatureInitializer init);
+	Entity* create_creature(EntityID ID, CreatureInitializer init);
 
 
 	struct ItemInitializer
@@ -29,7 +29,7 @@ namespace EntityBuilder
 		RawMaster::Ref<ItemDefinition> item_definition{ nullptr };
 	};
 
-	Entity* create_item(ItemInitializer init);
+	Entity* create_item(EntityID ID, ItemInitializer init);
 }
 
 

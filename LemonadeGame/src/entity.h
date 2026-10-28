@@ -25,6 +25,8 @@
 #include "raw_master.h"
 #include "item_def.h"
 #include "ai_brain.h"
+#include "entity_memory.h"
+#include "entity_id.h"
 
 #include <variant>
 #include <vector>
@@ -97,17 +99,18 @@ struct ActionUser
 	std::unique_ptr<Action> current_action{ nullptr };
 };
 
-
 /* An entity represents any "thing" which has a position in the world. */
 class Entity : public std::enable_shared_from_this<Entity>
 {
 protected:
+
+	EntityID m_ID;
+
 	EntityFlag m_flags;
 	EntityLocation m_location; // What stores the entity. Usually the world but can also be another entity.
 	bool m_known_name{ false }; // Whether the player knows this entity's name
 	bool m_should_remove{ false }; // Whether the entity should be removed on the next frame.
 
-	std::unique_ptr<Position> m_last_seen_location{ nullptr }; // Will be nullptr if the entity hasn't been seen
 	TimeUnit m_fall_timer = TimeUnit::none(); // Used to simulate falling over discrete time steps.
 
 	// Components //
@@ -124,6 +127,8 @@ protected:
 	std::unique_ptr<Living> m_living{ nullptr };
 	std::unique_ptr<AIBrain> m_brain{ nullptr };
 
+	std::vector<EntityMemory> m_memories;
+
 public:
 	// -- Virtual Variables -- //
 
@@ -136,7 +141,7 @@ public:
 	virtual size_t max_actions_queued() const; // How many actions this entity can queue at once
 
 public:
-	Entity(EntityFlag entity_flags = EntityFlag::NONE);
+	Entity(EntityID ID, EntityFlag entity_flags = EntityFlag::NONE);
 	~Entity();
 
 public:
@@ -159,6 +164,8 @@ public:
 
 	void queue_remove() { m_should_remove = true; }
 	bool should_remove() const { return m_should_remove; }
+
+	virtual EntityID ID() const;
 
 public: 
 	// Actions
@@ -239,18 +246,6 @@ public:
 	virtual bool has_movable() const { return m_movable != nullptr; }
 	// Sets this entity's `Movable` component to the input.
 	virtual void set_movable(const TileTransform& transform) { m_movable = std::make_unique<TileMovable>(transform); }
-
-	// Last seen location //
-	
-	// Returns the last seen location of this entity. Will be out of bounds if the entity hasn't been seen!
-	virtual Position get_last_seen_location() const
-	{
-		if (m_last_seen_location) return *m_last_seen_location;
-		return {-1, -1, -1};
-	}
-
-	// Returns true if the entity has been seen by the player before.
-	virtual bool has_been_seen_by_player() const { return m_last_seen_location != nullptr; }
 
 	// Species //
 
@@ -361,7 +356,12 @@ public:
 public:
 	// Thing //
 
-	virtual ThingID ID() const;
+	
+
+	// For entities larger than 1x1x1, return the renderable at that coordinate, relative to the entity's position.
+	virtual Renderable get_renderable_at(Coord offset_x, Coord offset_y, Coord offset_z) const;
+	// For entities larger than 1x1x1, return the renderable at that coordinate, relative to the entity's position.
+	virtual Renderable get_renderable_at(Position offset) const { return get_renderable_at(offset.x, offset.y, offset.z); }
 
 	virtual Renderable renderable() const;
 	virtual glyph_t glyph() const { return renderable().glyph; }
@@ -522,7 +522,7 @@ public:
 
 	bool operator==(const Entity& other) const;
 
-	virtual Position escape_wall(Position pos) const;
+	virtual Position escape_wall(const Position& pos) const;
 
 	virtual bool is_player() const;
 	virtual bool is_visible_to_player() const;
@@ -537,7 +537,7 @@ public:
 public:
 	// -- Game Loop -- //
 
-	virtual void step(TimeUnit time_delta);
+	virtual void step(const TimeUnit& time_delta);
 };
 
 
