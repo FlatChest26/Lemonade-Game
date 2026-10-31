@@ -70,7 +70,7 @@ BodyPartType BodyPartType::from_json(const json& j)
 		if (!AllBodyPartCategories.contains(cat_name))
 		{
 			CERR(cat_name << " is not a valid body part category!");
-			bp.category = BodyPartType::Category::OTHER;
+			bp.category = BodyPartCategory::OTHER;
 		}
 		else
 		{

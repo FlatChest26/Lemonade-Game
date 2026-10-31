@@ -7,40 +7,46 @@ std::shared_ptr<RawObjectChecker> Species::get_checker()
 
 	checker->set_type_name("species");
 
-	checker->add_property("ID",					RawValueType::RAW_String, true);
-	checker->add_property("noun",				RawValueType::RAW_Custom, true, Noun::get_checker());
-	checker->add_property("renderable",			RawValueType::RAW_Custom, true, Renderable::get_checker());
+	checker->add_property("ID", RawValueType::RAW_String, true);
+	checker->add_property("noun", RawValueType::RAW_Custom, true, Noun::get_checker());
+	checker->add_property("renderable", RawValueType::RAW_Custom, true, Renderable::get_checker());
 
-	checker->add_property("adjective",			RawValueType::RAW_String, false);
-	checker->add_property("gendered_nouns",		RawValueType::RAW_Object, false);
-	checker->add_property("default_body_plan",	RawValueType::RAW_String, false);
-	checker->add_property("body_mods",			RawValueType::RAW_Array,  false);
-	checker->add_property("description",		RawValueType::RAW_String, false);
+	checker->add_property("adjective", RawValueType::RAW_String, false);
+	checker->add_property("gendered_nouns", RawValueType::RAW_Object, false);
+	checker->add_property("default_body_plan", RawValueType::RAW_String, false);
+	checker->add_property("body_mods", RawValueType::RAW_Array, false);
+	checker->add_property("description", RawValueType::RAW_String, false);
 
-	checker->add_property("lifespan_min",		RawValueType::RAW_Custom, false);
-	checker->add_property("lifespan_max",		RawValueType::RAW_Custom, false);
-	checker->add_property("lifespan",			RawValueType::RAW_Object, false);
+	checker->add_property("lifespan_min", RawValueType::RAW_Custom, false);
+	checker->add_property("lifespan_max", RawValueType::RAW_Custom, false);
 
-	checker->add_property("child_age",			RawValueType::RAW_Custom, false);
-	checker->add_property("adult_age",			RawValueType::RAW_Custom, false);
-	checker->add_property("mature_age",			RawValueType::RAW_Custom, false);
+	checker->add_property("lifespan", RawValueType::RAW_Object, false);
 
-	checker->add_property("frequency",			RawValueType::RAW_Number, false);
-	checker->add_property("flags",				RawValueType::RAW_Array,  false);
+	checker->add_property("child_age", RawValueType::RAW_Custom, false);
+	checker->add_property("adult_age", RawValueType::RAW_Custom, false);
+	checker->add_property("mature_age", RawValueType::RAW_Custom, false);
 
-	checker->add_property("copy_from",			RawValueType::RAW_String,  false);
+	checker->add_property("life_stages", RawValueType::RAW_Object, false);
 
-	checker->add_property("remove_flags",		RawValueType::RAW_Array,  false);
-	checker->add_property("add_flags",			RawValueType::RAW_Array,  false);
+	checker->add_property("frequency", RawValueType::RAW_Number, false);
+	checker->add_property("flags", RawValueType::RAW_Array, false);
+
+	checker->add_property("copy_from", RawValueType::RAW_String, false);
+
+	checker->add_property("remove_flags", RawValueType::RAW_Array, false);
+	checker->add_property("add_flags", RawValueType::RAW_Array, false);
+
+	checker->add_property("common_genders", RawValueType::RAW_Array, false);
+	checker->add_property("add_common_genders", RawValueType::RAW_Array, false);
+	checker->add_property("remove_common_genders", RawValueType::RAW_Array, false);
 
 	return checker;
 }
 
-
 Species Species::from_json(const json& j)
 {
 	auto checker = Species::get_checker();
-	
+
 	if (!checker->check_json(j, true))
 	{
 		return {};
@@ -65,14 +71,10 @@ Species Species::from_json(const json& j)
 	s.ID = j.at("ID").get<std::string>();
 	s.noun = Noun::from_json(j.at("noun"));
 	s.renderable = Renderable::from_json(j.at("renderable"));
-	
+
 	if (checker->is_valid_property("adjective", j))
 	{
 		s.adjective = j.at("adjective").get<std::string>();
-	}
-	else
-	{
-		s.adjective = s.noun.singular;
 	}
 
 	if (checker->is_valid_property("gendered_nouns", j))
@@ -114,10 +116,6 @@ Species Species::from_json(const json& j)
 	{
 		s.default_body_plan = RawMaster::get<BodyPlan>(j.at("default_body_plan").get<std::string>());
 	}
-	else
-	{
-		s.default_body_plan = RawMaster::get<BodyPlan>("GenericBody");
-	}
 
 	if (checker->is_valid_property("body_mods", j))
 	{
@@ -135,7 +133,6 @@ Species Species::from_json(const json& j)
 			{
 				CERR("Unrecognized body mod in: " << j);
 			}
-
 		}
 	}
 
@@ -182,15 +179,31 @@ Species Species::from_json(const json& j)
 		s.mature_age = Age::from_json(j.at("mature_age"));
 	}
 
+	if (checker->is_valid_property("life_stages", j))
+	{
+		auto life_stages_json = j.at("life_stages");
+
+		if (life_stages_json.contains("child"))
+		{
+			s.child_age = Age::from_json(life_stages_json.at("child"));
+		}
+
+		if (life_stages_json.contains("adult"))
+		{
+			s.adult_age = Age::from_json(life_stages_json.at("adult"));
+		}
+
+		if (life_stages_json.contains("mature"))
+		{
+			s.mature_age = Age::from_json(life_stages_json.at("mature"));
+		}
+	}
+
+
 	if (checker->is_valid_property("frequency", j))
 	{
 		s.frequency = j.at("frequency").get<double>();
 	}
-	else
-	{
-		s.frequency = 0.0;
-	}
-
 
 	auto flag_func = [&](json flag_name, bool add)
 		{
@@ -258,6 +271,85 @@ Species Species::from_json(const json& j)
 		}
 	}
 
+	auto gender_func = [&](json gender_json, bool add)
+		{
+			if (add)
+			{
+				if (gender_json.is_string())
+				{
+					auto gender_type = gender_json.get<std::string>();
+					if (AllGenderTypes.find(gender_type) == AllGenderTypes.end())
+					{
+						CERR(gender_type << " is not a valid gender type!");
+						return false;
+					}
+
+					s.common_genders[AllGenderTypes.at(gender_type)] = 1.0;
+				}
+
+				if (gender_json.is_object())
+				{
+					auto gender_type = gender_json.at("type").get<std::string>();
+					auto frequency = gender_json.at("frequency").get<double>();
+
+					if (AllGenderTypes.find(gender_type) == AllGenderTypes.end())
+					{
+						CERR(gender_type << " is not a valid gender type!");
+						return false;
+					}
+
+					s.common_genders[AllGenderTypes.at(gender_type)] = frequency;
+				}
+			}
+			else
+			{
+				if (gender_json.is_string())
+				{
+					auto gender_type = gender_json.get<std::string>();
+
+					if (AllGenderTypes.find(gender_type) == AllGenderTypes.end())
+					{
+						CERR(gender_type << " is not a valid gender type!");
+						return false;
+					}
+
+					s.common_genders.erase(AllGenderTypes.at(gender_type));
+				}
+			}
+
+			return true;
+		};
+
+	if (checker->is_valid_property("common_genders", j))
+	{
+		s.common_genders.clear();
+
+		for (const auto& gender_json : j.at("common_genders"))
+		{
+			gender_func(gender_json, true);
+		}
+	}
+
+	if (checker->is_valid_property("add_common_genders", j))
+	{
+		for (const auto& gender_json : j.at("add_common_genders"))
+		{
+			gender_func(gender_json, true);
+		}
+	}
+
+	if (checker->is_valid_property("remove_common_genders", j))
+	{
+		for (const auto& gender_json : j.at("remove_common_genders"))
+		{
+			gender_func(gender_json, false);
+		}
+	}
+
+	if (s.adjective.empty())
+	{
+		s.adjective = s.noun.singular;
+	}
+
 	return s;
 }
-

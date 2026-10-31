@@ -17,6 +17,12 @@ bool Behavior_MoveTo::perform(AIBrain* brain, TimeUnit delta)
 		return true;
 	}
 
+	if (!entity->has_movable())
+	{
+		CERR("entity has no movable! " << entity->ID());
+		return true;
+	}
+
 	if (entity->get_movable()->pos() == m_move_to)
 	{
 		//CERR("entity is already at m_move_to!");
@@ -45,13 +51,12 @@ bool Behavior_MoveTo::perform(AIBrain* brain, TimeUnit delta)
 		return true;
 	}
 
-	//if (world->is_blocked(m_move_to, entity, m_move_to.z - entity->get_movable()->posz()))
-	//{
-	//	CERR("Move to location is blocked!");
-	//	return true;
-	//}
+	if (entity->has_current_action())
+	{
+		return false;
+	}
 
-	if (m_path.empty() || entity->get_movable()->pos() != m_current_pos)
+	if (m_path.empty() || tile_map->should_update_path() || entity->get_movable()->pos() != m_current_pos)
 	{
 		m_path.clear();
 		m_current_pos = entity->get_movable()->pos();
@@ -59,51 +64,17 @@ bool Behavior_MoveTo::perform(AIBrain* brain, TimeUnit delta)
 		m_path = Pathfinding::compute_path(entity->get_tile_map(), m_current_pos, m_move_to, entity);
 	}
 
-	if (!m_path.empty() && !entity->has_current_action())
+	if (!m_path.empty())
 	{
 		m_current_pos = m_path.back();
 		m_path.pop_back();
 
 		Position delta = m_current_pos - entity->get_movable()->pos();
-		
-		//if (entity->can_collide() && world->has_blocking_entities_at(entity->get_movable()->pos(), {.ignore_entities = {entity}}))
-		//{
-		//	Position escape_wall = entity->escape_wall(entity->get_movable()->pos());
-		//	delta = escape_wall - entity->get_movable()->pos();
 
-		//	//std::uniform_int_distribution<int> coin_flip(0, 1);
-
-		//	//bool change_x = std::abs(delta.x) == 0;
-		//	//bool change_y = std::abs(delta.y) == 0;
-
-		//	//if (!(change_x || change_y))
-		//	//{
-		//	//	change_x = coin_flip(snowy::rng::generator) == 0;
-		//	//	change_y = !change_x;
-		//	//}
-
-		//	//if (change_x)
-		//	//{
-		//	//	delta.x += coin_flip(snowy::rng::generator) == 0 ? 1 : -1;
-		//	//}
-		//	//
-		//	//if (change_y)
-		//	//{
-		//	//	delta.y += coin_flip(snowy::rng::generator) == 0 ? 1 : -1;
-		//	//}
-
-		//	m_path.clear();
-		//}
-		
 		entity->start_action(std::make_unique<BumpAction>(entity, delta.unit()));
 	}
 
-	if (m_path.empty())
-	{
-		m_attempts--;
-	}
-
-	return m_attempts < 1;
+	return m_path.empty();
 }
 
 bool Behavior_Wander::perform(AIBrain* brain, TimeUnit delta)
@@ -144,8 +115,8 @@ bool Behavior_Wander::perform(AIBrain* brain, TimeUnit delta)
 			}
 
 			wander_location = center + Position{
-				wander_distribution(snowy::rng::generator), 
-				wander_distribution(snowy::rng::generator), 
+				wander_distribution(snowy::rng::generator),
+				wander_distribution(snowy::rng::generator),
 				0
 			};
 

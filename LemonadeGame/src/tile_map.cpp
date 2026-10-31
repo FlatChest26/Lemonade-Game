@@ -29,6 +29,9 @@ TileMap::TileMap(World* world, const Length& width, const Length& height, const 
 	{
 		update_tile_at(x, y, z);
 	}
+
+	request_fov_update();
+	set_update_path(true);
 }
 
 TileMap::~TileMap()
@@ -65,38 +68,19 @@ const Tile* TileMap::get_tile(const Coord& x, const Coord& y, const Coord& z) co
 	return &m_tiles[get_index(x, y, z)];
 }
 
-
 constexpr bool TileMap::in_bounds(const Coord& x, const Coord& y, const Coord& z) const
 {
-	return 
-		0 <= x && static_cast<Length>(x) < m_width && 
+	return
+		0 <= x && static_cast<Length>(x) < m_width &&
 		0 <= y && static_cast<Length>(y) < m_height &&
 		0 <= z && static_cast<Length>(z) < m_depth;
 }
 
 constexpr size_t TileMap::get_index(const Coord& x, const Coord& y, const Coord& z) const
 {
-	return static_cast<size_t>(x) * static_cast<size_t>(get_height()) * static_cast<size_t>(get_depth()) 
+	return static_cast<size_t>(x) * static_cast<size_t>(get_height()) * static_cast<size_t>(get_depth())
 		+ static_cast<size_t>(y) * static_cast<size_t>(get_depth())
 		+ static_cast<size_t>(z);
-}
-
-double TileMap::euclidian_distance_between(Position p1, Position p2)
-{
-	return std::sqrt(
-		std::pow(static_cast<double>(p1.x) - static_cast<double>(p2.x), 2) + 
-		std::pow(static_cast<double>(p1.y) - static_cast<double>(p2.y), 2) +
-		std::pow(static_cast<double>(p1.z) - static_cast<double>(p2.z), 2)
-	);
-}
-
-double TileMap::euclidian_distance_between_squared(Position p1, Position p2)
-{
-	return
-		std::pow(static_cast<double>(p1.x) - static_cast<double>(p2.x), 2) +
-		std::pow(static_cast<double>(p1.y) - static_cast<double>(p2.y), 2) +
-		std::pow(static_cast<double>(p1.z) - static_cast<double>(p2.z), 2)
-	;
 }
 
 void TileMap::set_tile(const Coord& x, const Coord& y, const Coord& z, RawMaster::Ref<TileType> type, bool update)
@@ -120,6 +104,9 @@ void TileMap::set_tile(const Coord& x, const Coord& y, const Coord& z, RawMaster
 	{
 		update_tile_at(pos);
 	}
+
+	request_fov_update();
+	set_update_path(true);
 }
 
 void TileMap::update_tile_at(const Coord& x, const Coord& y, const Coord& z)
@@ -133,7 +120,7 @@ void TileMap::update_tile_at(const Coord& x, const Coord& y, const Coord& z)
 
 	auto tcod_map = get_tcod_map_layer((size_t)z);
 	tcod_map->setProperties(x, y, tile->is_transparent(), tile->is_walkable());
-	
+
 	// Update wall textures
 	if (tile->is_wall_texture())
 	{
@@ -184,8 +171,7 @@ void TileMap::compute_fov(const Coord& pov_x, const Coord& pov_y, const Coord& p
 		fov_mark_visible(x, y, z, false);
 	}
 
-	//FOV::compute_fov(this, pov_x, pov_y, pov_z, radius);
-	FOV::compute_fov2(this, pov_x, pov_y, pov_z, radius);
+	FOV::compute_fov(this, Position(pov_x, pov_y, pov_z), radius);
 
 	for (size_t z_layer = 0; z_layer < (size_t)get_depth(); z_layer++)
 	{
@@ -195,6 +181,8 @@ void TileMap::compute_fov(const Coord& pov_x, const Coord& pov_y, const Coord& p
 			fov_mark_visible(x, y, Coord(z_layer), tcod_map->isInFov(x, y));
 		}
 	}
+
+	m_should_update_fov = false;
 }
 
 void TileMap::fov_mark_visible(const Coord& x, const Coord& y, const Coord& z, bool visible)

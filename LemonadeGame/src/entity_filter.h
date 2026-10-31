@@ -74,7 +74,7 @@ struct EntityFilter
 	{
 		if (ignore_held)
 			return true;
-			
+
 		if (ignore_flags != EntityFlag::NONE)
 			return true;
 
@@ -99,10 +99,10 @@ struct EntityFilter
 			return true;
 
 		if (
-			!ignore_entities.empty() && std::any_of(ignore_entities.begin(), ignore_entities.end(), 
+			!ignore_entities.empty() && std::any_of(ignore_entities.begin(), ignore_entities.end(),
 				[&entity](const Entity* other)
-				{ 
-					return other == entity; 
+				{
+					return other == entity;
 				}
 			))
 		{
@@ -110,9 +110,9 @@ struct EntityFilter
 		}
 
 		if (
-			!ignore_positions.empty() && std::any_of(ignore_positions.begin(), ignore_positions.end(), 
-				[&entity](const Position& pos) 
-				{ 
+			!ignore_positions.empty() && std::any_of(ignore_positions.begin(), ignore_positions.end(),
+				[&entity](const Position& pos)
+				{
 					if (!entity->has_movable())
 						return false;
 					return entity->get_movable()->contains_point(pos);

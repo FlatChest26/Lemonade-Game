@@ -9,69 +9,50 @@
 
 using ThingID = std::string;
 
-struct CreatureSoul;
-class TileType;
-class BodyPart;
-
 /* An abstraction of a "thing" that can be represented in the game. A grammar object with some visual presence. */
 class Thing : public GrammarObject
 {
 public:
-
-	Thing() = default;
-	virtual ~Thing() {}
-
-public:
 	// -- Getters -- //
 
-	virtual ThingID ID() const { return "THING"; }
-	virtual std::string description() const { return std::string("This is ") + snowy::grammar::a(get_noun().singular); }
+	virtual std::string description() const { return std::string("This is ") + display_name(); }
 
 	// Renderable //
 
-	virtual Renderable get_renderable() const { return Renderable(); }
+	virtual Renderable renderable() const { return Renderable(); }
 
-	virtual glyph_t glyph() const { return get_renderable().glyph; }
-	virtual color_t fg() const { return get_renderable().fg; }
-	virtual color_t bg() const { return get_renderable().bg; }
-
-	// -- Type Checks -- //
-
-	virtual constexpr bool is_creature_soul() const { return false; }
-	virtual constexpr CreatureSoul* as_creature_soul() { return nullptr; }
-
-	virtual constexpr bool is_tile_type() const { return false; }
-	virtual constexpr TileType* as_tile_type() { return nullptr; }
-
-	virtual constexpr bool is_body_part() const { return false; }
-	virtual constexpr BodyPart* as_body_part() { return nullptr; }
+	virtual glyph_t glyph() const { return renderable().glyph; }
+	virtual color_t fg() const { return renderable().fg; }
+	virtual color_t bg() const { return renderable().bg; }
 
 	// Misc //
 
-	virtual std::string get_display_name() const { return full_name(); }
-	virtual operator std::string() const { return get_display_name(); }
+	virtual GrammarNoun display_noun() const { return is_named() ? full_name() : singular_noun(); }
+	virtual std::string display_name() const { return grammar::a(display_noun()); }
+
+	virtual operator std::string() const { return display_name(); }
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Thing& thing)
 {
-	return os << thing.get_display_name();
+	return os << thing.display_name();
 };
 
 inline std::wostream& operator<<(std::wostream& os, const Thing& thing)
 {
-	return os << thing.get_display_name().c_str();
+	return os << thing.display_name().c_str();
 };
 
 namespace std
 {
 	inline string to_string(const Thing& thing)
 	{
-		return thing.get_display_name();
+		return thing.display_name();
 	}
 
-	inline string to_string(Thing* thing)
+	inline string to_string(const Thing* thing)
 	{
-		return thing->get_display_name();
+		return thing->display_name();
 	}
 }
 

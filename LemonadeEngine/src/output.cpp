@@ -68,15 +68,14 @@ namespace output
 			if (renderer_type != renderer_types.end()) params.renderer_type = renderer_type->second;
 
 			// Tileset
-			auto tileset = tcod::load_tilesheet(FilePath{ files::graphics_directory / init::TILESET }, {16, 16}, tcod::CHARMAP_CP437);
+			auto tileset = tcod::load_tilesheet(FilePath{ files::graphics_directory / init::TILESET }, { 16, 16 }, tcod::CHARMAP_CP437);
 			params.tileset = tileset.get();
 
 			// Console
 			params.columns = init::CONSOLE_WIDTH;
 			params.rows = init::CONSOLE_HEIGHT;
-	
-			_output = std::make_unique<SAIOutput>(params);
 
+			_output = std::make_unique<SAIOutput>(params);
 		}
 		catch (const std::exception& e)
 		{
@@ -477,7 +476,7 @@ namespace output // Drawing
 	{
 		if (auto o = get_output())
 		{
-			tcod::draw_rect(o->get_console(), { x, y, width, height }, output::from_cp437(ch), fg, bg, flag );
+			tcod::draw_rect(o->get_console(), { x, y, width, height }, output::from_cp437(ch), fg, bg, flag);
 		}
 	}
 	void draw_frame_rgb(
@@ -538,6 +537,16 @@ namespace output // Misc
 		}
 
 		return 1;
+	}
+
+	int get_console_center_x()
+	{
+		return get_console_width() / 2;
+	}
+
+	int get_console_center_y()
+	{
+		return get_console_height() / 2;
 	}
 
 	void clear_console(const TCOD_ConsoleTile& tile)

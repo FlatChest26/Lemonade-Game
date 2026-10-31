@@ -1,7 +1,7 @@
 #include "ai_handler.h"
 #include "game_states.h"
 #include "world_state.h"
-#include "misc_actions.h"
+#include "interactions.h"
 
 #include "snowy_macros.h"
 
@@ -49,6 +49,9 @@ AIBrain* AIManager::create_brain()
 
 void AIManager::step(TimeUnit time_delta)
 {
+	if (!should_spawn_npcs())
+		return;
+
 	if (m_time_until_next_NPC > TimeUnit::none())
 	{
 		m_time_until_next_NPC -= time_delta;
@@ -60,9 +63,9 @@ void AIManager::step(TimeUnit time_delta)
 			CERR("No NPC Generator on AI Manager!");
 			return;
 		}
-		
+
 		auto world = get_world();
-			
+
 		if (!world)
 		{
 			CERR("World is null!");
@@ -82,7 +85,7 @@ void AIManager::step(TimeUnit time_delta)
 			Coord x = ((spawn_count - 1) % m_sidewalk_width);
 			Coord y = ((spawn_count - 1) / m_sidewalk_width);
 
-			auto npc = world->add_entity_at(std::unique_ptr<Entity>(m_npc_generator->generate_npc()), m_sidewalk_start + Position(x, y, 0));
+			auto npc = world->add_entity_at(m_npc_generator->generate_npc(), m_sidewalk_start + Position(x, y, 0));
 
 			if (npc)
 			{

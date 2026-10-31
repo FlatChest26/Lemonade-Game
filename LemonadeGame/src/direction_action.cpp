@@ -1,6 +1,6 @@
 #include "direction_action.h"
 #include "location_actions.h"
-#include "misc_actions.h"
+#include "interactions.h"
 
 #include "world.h"
 #include "entity.h"
@@ -48,7 +48,7 @@ ActionResult BumpAction::perform()
 
 	if (dest_tile && dest_tile->can_open())
 	{
-		return ActionResult(true, std::make_unique<OpenAction>(m_actor->speed(), m_actor, destination()));
+		return ActionResult(true, std::make_unique<OpenAction>(m_actor->move_speed(), m_actor, destination()));
 	}
 
 	if (m_actor->can_collide())
@@ -71,18 +71,17 @@ ActionResult BumpAction::perform()
 		}
 		else if (blocking_entities.size() > 0 && blocking_entities.front() != m_actor)
 		{
-			return ActionResult(true, std::make_unique<SwapPlacesAction>(m_actor->speed(), m_actor, blocking_entities.front()));
+			return ActionResult(true, std::make_unique<SwapPlacesAction>(m_actor->move_speed(), m_actor, blocking_entities.front()));
 		}
 	}
 
-	return ActionResult(true, std::make_unique<MovementAction>(m_actor->speed(), m_actor, m_dx, m_dy, m_dz));
+	return ActionResult(true, std::make_unique<MovementAction>(m_actor->move_speed(), m_actor, m_dx, m_dy, m_dz));
 }
 
 bool MovementAction::check_action() const
 {
 	if (!ActionWithDirection::check_action())
 		return false;
-
 
 	if (!m_actor->has_movable())
 	{

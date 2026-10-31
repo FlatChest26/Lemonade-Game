@@ -21,26 +21,20 @@ struct TimeUnit
 	double total_hours() const { return total_minutes() / (double)MINUTES_IN_HOUR; }
 	double total_minutes() const { return total_seconds() / (double)SECONDS_IN_MINUTE; }
 	double total_seconds() const { return (double)miliseconds / (double)MILISECONDS_IN_SECOND; }
-	
+
 	constexpr TimeUnit(const TimeUnit_t& miliseconds = 0) :
 		miliseconds(miliseconds)
-	{}
+	{
+	}
 
 	// -- Static Constructors -- //
 
 	static TimeUnit none() { return TimeUnit(0); }
 
-	static TimeUnit from_miliseconds(const double& miliseconds) { return TimeUnit(static_cast<TimeUnit_t>(miliseconds)); }
 	static TimeUnit from_miliseconds(const TimeUnit_t& miliseconds) { return TimeUnit(miliseconds); }
-
 	static TimeUnit from_seconds(const double& seconds) { return TimeUnit(static_cast<TimeUnit_t>(seconds * (double)MILISECONDS_IN_SECOND)); }
-	static TimeUnit from_seconds(const TimeUnit_t& seconds) { return TimeUnit(seconds * MILISECONDS_IN_SECOND); }
-
 	static TimeUnit from_minutes(const double& minutes) { return TimeUnit(static_cast<TimeUnit_t>(minutes * (double)SECONDS_IN_MINUTE * (double)MILISECONDS_IN_SECOND)); }
-	static TimeUnit from_minutes(const TimeUnit_t& minutes) { return TimeUnit(minutes * SECONDS_IN_MINUTE * MILISECONDS_IN_SECOND); }
-
 	static TimeUnit from_hours(const double& hours) { return TimeUnit(static_cast<TimeUnit_t>(hours * (double)MINUTES_IN_HOUR * (double)SECONDS_IN_MINUTE * (double)MILISECONDS_IN_SECOND)); }
-	static TimeUnit from_hours(const TimeUnit_t& hours) { return TimeUnit(hours * MINUTES_IN_HOUR * SECONDS_IN_MINUTE * MILISECONDS_IN_SECOND); }
 
 	// -- Utilities -- //
 
@@ -77,7 +71,7 @@ struct TimeUnit
 	}
 
 	// -- Operations -- //
-	
+
 	constexpr operator TimeUnit_t() const
 	{
 		return miliseconds;
@@ -173,7 +167,7 @@ struct TimeUnit
 		{
 			return TimeUnit(miliseconds - other.miliseconds);
 		}
-}
+	}
 
 	TimeUnit operator*(const TimeUnit& other) const
 	{
@@ -207,18 +201,18 @@ struct Month
 
 inline const Month ALL_MONTHS[MONTHS_IN_YEAR] =
 {
-	{ "January",	"Jan",	31},
-	{ "Feburary",	"Feb",	28},
-	{ "March",		"Mar",	31},
-	{ "April",		"Apr",	30},
-	{ "May",		"May",	31},
-	{ "June",		"Jun",	30},
-	{ "July",		"Jul",	31},
-	{ "August",		"Aug",	31},
-	{ "September",	"Sep",	30},
-	{ "October",	"Oct",	31},
-	{ "November",	"Nov",	30},
-	{ "December",	"Dec",	31},
+	{ "January",	"Jan",	31 },
+	{ "Feburary",	"Feb",	28 },
+	{ "March",		"Mar",	31 },
+	{ "April",		"Apr",	30 },
+	{ "May",		"May",	31 },
+	{ "June",		"Jun",	30 },
+	{ "July",		"Jul",	31 },
+	{ "August",		"Aug",	31 },
+	{ "September",	"Sep",	30 },
+	{ "October",	"Oct",	31 },
+	{ "November",	"Nov",	30 },
+	{ "December",	"Dec",	31 },
 };
 
 inline constexpr TimeUnit_t get_days_in_month(const TimeUnit_t& month)
@@ -280,7 +274,7 @@ public:
 			m_year++;
 		}
 	}
-	
+
 	TimeUnit& total_time()
 	{
 		return m_time;

@@ -33,6 +33,8 @@ private:
 	std::unique_ptr<Sidebar> m_sidebar;
 
 	Entity* m_player{ nullptr };
+	Position m_previous_player_pos;
+
 	std::unique_ptr<Position> m_camera_focus{ nullptr };
 
 	TickSpeed m_tick_speed = TickSpeed::TURN_BASED;
@@ -66,7 +68,7 @@ public:
 	virtual void update(double delta_time) override;
 	virtual void render() const override;
 
-	void step(TimeUnit time_delta);
+	void step(const TimeUnit& time_delta);
 
 	void set_camera_focus(Position pos)
 	{
@@ -90,7 +92,7 @@ public:
 
 	void update_camera();
 
-	virtual void handle_action(std::unique_ptr<Action> action) override;
+	virtual void handle_action(QueuedAction action) override;
 
 	virtual void handle_input_result(InputResult result) override;
 

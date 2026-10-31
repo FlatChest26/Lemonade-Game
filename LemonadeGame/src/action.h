@@ -4,6 +4,8 @@
 #define LEMONADE_GAME_SRC_ACTION_H
 
 #include "time_units.h"
+#include "keybinds.h"
+
 #include <memory>
 #include <vector>
 #include <string>
@@ -16,8 +18,6 @@
 #else
 #define ACTION_CERR(...)
 #endif // _LG_USE_ACTION_WARNINGS
-
-
 
 class Action;
 class Entity;
@@ -108,7 +108,8 @@ protected:
 public:
 	Action(const TimeUnit& action_length = TimeUnit::none()) :
 		m_action_length(action_length)
-	{}
+	{
+	}
 
 	virtual ActionResult perform();
 
@@ -124,29 +125,19 @@ public:
 		return is_action_complete();
 	}
 
-	virtual bool is_action_complete() const
-	{
-		return m_time_spent_on_action >= m_action_length;
-	}
+	virtual bool is_action_complete() const { return m_time_spent_on_action >= m_action_length; }
 
-	virtual TimeUnit get_action_length() const
-	{
-		return m_action_length;
-	}
+	virtual TimeUnit get_action_length() const { return m_action_length; }
 
-	virtual std::string get_action_name() const
-	{
-		return "default action";
-	}
-
-	virtual bool check_action() const
-	{
-		return true;
-	}
+	static std::string action_name() { return "<unnamed action>"; }
+	virtual bool check_action() const { return true; }
 
 	virtual bool has_actor() const;
+	virtual bool has_subject() const;
 
 	virtual Entity* get_actor() const;
+	virtual Entity* get_subject() const;
+
 	virtual World* get_world() const;
 	virtual TileMap* get_tile_map() const;
 	virtual WorldGameState* get_world_game_state() const;
@@ -160,15 +151,9 @@ public:
 	{
 	}
 
-	virtual ActionResult perform() override
-	{
-		return ActionResult(true);
-	}
+	virtual ActionResult perform() override { return ActionResult(true); }
 
-	virtual std::string get_action_name() const override
-	{
-		return "wait action";
-	}
+	static std::string action_name() { return "wait"; }
 };
 
 class EntityAction : public Action
@@ -183,13 +168,16 @@ public:
 	}
 
 	virtual bool check_action() const override;
-
 	virtual Entity* get_actor() const override;
 
-	virtual std::string get_action_name() const override
-	{
-		return "entity action";
-	}
+	static std::string action_name() { return "<unnamed entity action>"; }
+};
+
+struct PotentialAction
+{
+	std::string name;
+	Keybind input_action;
+	Action* action;
 };
 
 #endif // !LEMONADE_GAME_SRC_ACTION_H

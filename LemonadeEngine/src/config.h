@@ -45,12 +45,12 @@ namespace cfg
 		TCODParser parser{};
 		auto init_struct = parser.newStructure("init");
 
-		init_struct->addProperty("renderer",			TCOD_TYPE_STRING,	true);
-		init_struct->addProperty("console_width",		TCOD_TYPE_INT,		false);
-		init_struct->addProperty("console_height",		TCOD_TYPE_INT,		false);
-		init_struct->addProperty("tileset",				TCOD_TYPE_STRING,	true);
+		init_struct->addProperty("renderer", TCOD_TYPE_STRING, true);
+		init_struct->addProperty("console_width", TCOD_TYPE_INT, false);
+		init_struct->addProperty("console_height", TCOD_TYPE_INT, false);
+		init_struct->addProperty("tileset", TCOD_TYPE_STRING, true);
 
-		init_struct->addProperty("show_fps",			TCOD_TYPE_BOOL,		false);
+		init_struct->addProperty("show_fps", TCOD_TYPE_BOOL, false);
 
 		parser.run(filename, NULL);
 

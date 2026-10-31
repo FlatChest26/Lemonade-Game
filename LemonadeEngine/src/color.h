@@ -24,15 +24,15 @@ constexpr glyph_t DEFAULT_GLPYH = ' ';
 namespace color
 {
 	inline bool _colors_initialized = false;
-	
+
 	using ColorsDB = snowy::SingletonDatabase<color_t>;
 	static inline void initialize_db()
 	{
 		ColorsDB::init();
 		ColorsDB::add({
-			{ "black",			{ 0x00, 0x00, 0x00 } },
-			{ "white",			{ 0xFF, 0xFF, 0xFF } },
-		});
+			{ "black",{ 0x00, 0x00, 0x00 } },
+			{ "white",{ 0xFF, 0xFF, 0xFF } },
+			});
 
 		_colors_initialized = true;
 	}
@@ -118,9 +118,6 @@ namespace color
 		CERR("Invalid color JSON: " << j);
 		return DEFAULT_FG_COLOR;
 	}
-
-
-	
 }
 
 #endif // !SAI_SRC_COLORS_H

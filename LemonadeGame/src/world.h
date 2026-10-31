@@ -17,20 +17,23 @@
 class Game;
 class WorldGameState;
 
-inline constexpr size_t MAX_ENTITY_COUNT = 32;
+inline constexpr size_t MAX_ENTITY_COUNT = 64;
 
-class World : public std::enable_shared_from_this<World>
+class World
 {
 private:
 	GameState* m_game_state;
 
 	std::unordered_map<EntityID, std::unique_ptr<Entity>> m_entities;
+
+	std::vector<EntityID> m_creatures;
+	std::vector<EntityID> m_items;
+	std::vector<EntityID> m_furniture;
+
 	std::unique_ptr<TileMap> m_tile_map;
 
 	// By default, starts at 12:00 PM on June 11, 2025
 	TimeDate m_current_time = TimeDate(TimeUnit::from_hours(12.0), 11, 6, 2025);
-
-	double m_time_progress_rate = 20.0f;
 
 public:
 	World(GameState* game_state = {});
@@ -49,17 +52,15 @@ public:
 
 	TimeDate get_time() const { return m_current_time; }
 	void set_time(const TimeDate& time) { m_current_time = time; }
-	void add_time(TimeUnit time_delta) { m_current_time.add(time_delta); }
-
-	double get_time_progress_rate() const { return m_time_progress_rate; }
+	void add_time(const TimeUnit& time_delta) { m_current_time.add(time_delta); }
 
 public:
 	// -- Entity Utilities -- //
-	
+
 	// Sets the given entity to be removed on the next frame.
 	void queue_remove_entity(Entity* entity);
 	void queue_remove_entity(EntityID ID);
-	
+
 	bool has_entity(EntityID ID) const;
 
 	EntityID get_entity_ID(Entity* entity) const;
@@ -67,12 +68,12 @@ public:
 	const Entity* get_entity(EntityID ID) const;
 
 	// Adds an entity to the world. Returns a pointer to the entity if successful.
-	Entity* add_entity(std::unique_ptr<Entity> entity);
+	Entity* add_entity(Entity* entity);
 
 	// Adds an entity to the world at the given coordinates. Returns a pointer to the entity if successful.
-	Entity* add_entity_at(std::unique_ptr<Entity> entity, const Coord& x, const Coord& y, const Coord& z);
+	Entity* add_entity_at(Entity* entity, const Coord& x, const Coord& y, const Coord& z);
 	// Adds an entity to the world at the given position. Returns a pointer to the entity if successful.
-	Entity* add_entity_at(std::unique_ptr<Entity> entity, const Position& pos)
+	Entity* add_entity_at(Entity* entity, const Position& pos)
 	{
 		return add_entity_at(std::move(entity), pos.x, pos.y, pos.z);
 	}
@@ -99,7 +100,7 @@ public:
 	bool has_entities_at(const Coord& x, const Coord& y, const Coord& z, const EntityFilter& filter = { .ignore_held = true }) const;
 	bool has_entities_at(const Position& pos, const EntityFilter& filter = { .ignore_held = true }) const { return has_entities_at(pos.x, pos.y, pos.z, filter); }
 
-	bool has_blocking_entities_at(const Coord& x, const Coord& y, const Coord& z,  const EntityFilter& filter = { .ignore_held = true }) const;
+	bool has_blocking_entities_at(const Coord& x, const Coord& y, const Coord& z, const EntityFilter& filter = { .ignore_held = true }) const;
 	bool has_blocking_entities_at(const Position& pos, const EntityFilter& filter = { .ignore_held = true }) const { return has_blocking_entities_at(pos.x, pos.y, pos.z, filter); }
 
 	std::vector<Entity*> get_blocking_entities_at(const Coord& x, const Coord& y, const Coord& z, const EntityFilter& filter = { .ignore_held = true });
@@ -123,16 +124,16 @@ public:
 		return get_tile(pos.x, pos.y, pos.z);
 	}
 
-	bool is_blocked(const Coord& x, const Coord& y, const Coord& z, const Entity* fit = nullptr, const Coord& z_dir = 0);
-	bool is_blocked(const Position& pos, const Entity* fit = nullptr, const Coord& z_dir = 0)
+	bool is_blocked(const Coord& x, const Coord& y, const Coord& z, const Entity* fit = nullptr, const Coord& z_dir = 0) const;
+	bool is_blocked(const Position& pos, const Entity* fit = nullptr, const Coord& z_dir = 0) const
 	{
 		return is_blocked(pos.x, pos.y, pos.z, fit, z_dir);
 	}
 
-	bool is_opaque(const Coord& x, const Coord& y, const Coord& z, const Entity* fit = nullptr);
-	bool is_opaque(const Position& pos, const Entity* fit = nullptr)
+	bool is_opaque(const Coord& x, const Coord& y, const Coord& z, const Entity* fit = nullptr, const Coord& z_dir = 0) const;
+	bool is_opaque(const Position& pos, const Entity* fit = nullptr, const Coord& z_dir = 0) const
 	{
-		return is_opaque(pos.x, pos.y, pos.z, fit);
+		return is_opaque(pos.x, pos.y, pos.z, fit, z_dir);
 	}
 
 public:

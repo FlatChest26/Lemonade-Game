@@ -22,6 +22,13 @@
     "lifespan": { "min": 60, "max": 80 },
     "child_age": 12,
     "adult_age": 18,
-    "mature_age": 20
+    "mature_age": 20,
+    "flags": [ "PART_OF_SOCIETY" ],
+    "common_genders": [
+      { "type": "NEUTER", "frequency": 2.0 },
+      { "type": "EPICENE", "frequency": 25.0 },
+      { "type": "FEMININE", "frequency": 100.0 },
+      { "type": "MASCULINE", "frequency": 100.0 }
+    ]
   }
 ]

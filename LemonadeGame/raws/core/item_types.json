@@ -1,0 +1,26 @@
+[
+  {
+    "type": "item_definition",
+    "ID": "DILDO",
+    "noun": { "singular": "dildo", "plural": "dildoes" },
+    "renderable": { "glyph": "!", "fg": "purple", "bg": "black" },
+    "description": "That's quite lewd...",
+    "price": 80.0
+  },
+  {
+    "type": "item_definition",
+    "ID": "LEMONADE_GLASS",
+    "noun": { "singular": "glass of lemonade", "plural": "glasses of lemonade" },
+    "renderable": { "glyph": "u", "fg": "yellow", "bg": "black" },
+    "description": "A glass of a sweet, refreshing drink.",
+    "price": 1.0
+  },
+  {
+    "type": "item_definition",
+    "ID": "KNIFE",
+    "noun": { "singular": "knife", "plural": "knives" },
+    "renderable": { "glyph": "/", "fg": "silver", "bg": "black" },
+    "description": "An EVIL blade.",
+    "price": 112.0
+  }
+]

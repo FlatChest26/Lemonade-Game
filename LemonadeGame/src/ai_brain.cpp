@@ -2,7 +2,7 @@
 
 #include "game_states.h"
 #include "world_state.h"
-#include "misc_actions.h"
+#include "interactions.h"
 
 #include "snowy_macros.h"
 

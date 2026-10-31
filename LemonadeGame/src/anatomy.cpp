@@ -126,19 +126,29 @@ bool Anatomy::add_body_relation(const BodyConnectionPlan& bc_plan)
 	return true;
 }
 
-bool Anatomy::remove_body_part(BodyPartID bp_ID)
+bool Anatomy::remove_body_part(const BodyPartID& bp_ID)
 {
 	if (!has_body_part_with_id(bp_ID))
 	{
 		return false;
 	}
 
+	std::vector<size_t> remove;
+
+	size_t idx = 0;
+
 	for (auto& bp : m_body_parts)
 	{
 		if (bp->ID() == bp_ID)
 		{
-			bp.reset();
+			remove.push_back(idx);
 		}
+		idx++;
+	}
+
+	for (auto remove_index : remove)
+	{
+		m_body_parts.erase(m_body_parts.begin() + remove_index);
 	}
 
 	return true;

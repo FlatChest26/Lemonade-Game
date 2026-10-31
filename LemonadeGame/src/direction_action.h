@@ -17,7 +17,8 @@ protected:
 public:
 	ActionWithDirection(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, Coord dx = 0, Coord dy = 0, Coord dz = 0) :
 		EntityAction(action_length, actor), m_dx(dx), m_dy(dy), m_dz(dz)
-	{}
+	{
+	}
 
 	// -- Getters -- //
 
@@ -34,17 +35,20 @@ public:
 class BumpAction : public ActionWithDirection
 {
 public:
-	BumpAction(Entity* actor = nullptr, Coord dx = 0, Coord dy = 0, Coord dz = 0):
+	BumpAction(Entity* actor = nullptr, Coord dx = 0, Coord dy = 0, Coord dz = 0) :
 		ActionWithDirection(TimeUnit::none(), actor, dx, dy, dz)
-	{}
+	{
+	}
 
-	BumpAction(Entity* actor = nullptr, Position delta = {0, 0, 0}) :
+	BumpAction(Entity* actor = nullptr, Position delta = { 0, 0, 0 }) :
 		BumpAction(actor, delta.x, delta.y, delta.z)
-	{}
+	{
+	}
 
 	virtual bool check_action() const override;
 	virtual ActionResult perform() override;
-	virtual std::string get_action_name() const override { return "bump action"; }
+
+	static std::string action_name() { return "bump action"; }
 };
 
 class MovementAction : public ActionWithDirection
@@ -52,14 +56,16 @@ class MovementAction : public ActionWithDirection
 public:
 	MovementAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, Coord dx = 0, Coord dy = 0, Coord dz = 0) :
 		ActionWithDirection(action_length, actor, dx, dy, dz)
-	{}
+	{
+	}
 	MovementAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, Position delta = { 0, 0, 0 }) :
 		ActionWithDirection(action_length, actor, delta.x, delta.y, delta.z)
-	{}
+	{
+	}
 
 	virtual bool check_action() const override;
 	virtual ActionResult perform() override;
-	virtual std::string get_action_name() const override { return "movement action"; }
+	static std::string action_name() { return "movement action"; }
 };
 
 #endif // !LEMONADE_GAME_SRC_DIRECTION_ACTION_H

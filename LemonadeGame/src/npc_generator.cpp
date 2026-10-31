@@ -55,44 +55,68 @@ static T get_weighted_random(WeightedVector<T> vector, std::mt19937 generator)
 	return values[weighted_distribution(generator)];
 }
 
+namespace npc_generator
+{
+	static bool _initialized = false;
+
+	static WeightedVector<color_t> ValidColors;
+	static WeightedVector<RawMaster::Ref<Species>> ValidSpecies;
+	static WeightedVector<RawMaster::Ref<BodyMod>> ValidBodyMods;
+
+	static std::unordered_map<SpeciesID, WeightedVector<RawMaster::Ref<Gender>>> ValidSpeciesGenders;
+
+	void initialize_npc_banks()
+	{
+		if (_initialized)
+			return;
+
+		_initialized = true;
+
+		ValidBodyMods.emplace_back(10.0f, RawMaster::get<BodyMod>("FemaleParts"));
+		ValidBodyMods.emplace_back(10.0f, RawMaster::get<BodyMod>("MaleParts"));
+		ValidBodyMods.emplace_back(5.0f, RawMaster::get<BodyMod>("GirlCock"));
+		ValidBodyMods.emplace_back(5.0f, RawMaster::get<BodyMod>("BoyPussy"));
+
+		for (const auto& color_id : RawMaster::get_color_ids())
+		{
+			if (color_id == "black" || color_id == "pitch_black")
+				continue;
+
+			ValidColors.emplace_back(1.0, color::get(color_id));
+		}
+
+		for (const auto& species_id : RawMaster::get_ids<Species>())
+		{
+			auto species_def = RawMaster::get<Species>(species_id);
+			
+			if (species_def->does_not_exist())
+				continue;
+
+			ValidSpecies.emplace_back(species_def->frequency, RawMaster::get<Species>(species_id));
+
+			for (const auto& gender_id : RawMaster::get_ids<Gender>())
+			{
+				auto gender_def = RawMaster::get<Gender>(gender_id);
+
+				if (!species_def->has_common_gender_type(gender_def->gender_type))
+					continue;
+
+				ValidSpeciesGenders[species_def->ID].emplace_back(
+					species_def->get_common_gender_type_frequency(gender_def->gender_type), 
+					RawMaster::get<Gender>(gender_id)
+				);
+			}
+		}
+	}
+}
 
 Entity* NPCGenerator::generate_npc()
 {
-	WeightedVector<RawMaster::RawID> ValidSpecies;
+	// Random color
+	color_t random_color = get_weighted_random(npc_generator::ValidColors, snowy::rng::generator);
 
-	for (const auto& species_id : RawMaster::get_ids<Species>())
-	{
-		auto species_def = RawMaster::get<Species>(species_id);
-		if (species_def->does_not_exist())
-			continue;
-		
-		ValidSpecies.emplace_back(species_def->frequency, species_id);
-	}
-
-	WeightedVector<snowy::StringID> ValidColors;
-	for (const auto& color_id : RawMaster::get_color_ids())
-	{
-		if (color_id == "black" || color_id == "pitch_black")
-			continue;
-
-		ValidColors.emplace_back(1.0, color_id);
-	}
-
-	static WeightedVector<Gender> ValidGender{
-		{ 1.0f,  gender::NON_SPECIFIC }, 
-		{ 10.0f, gender::MASCULINE },
-		{ 10.0f, gender::FEMININE },
-	};
-
-	static WeightedVector<RawMaster::RawID> ValidBodyMods{
-		{ 10.0f, "FemaleParts"	},
-		{ 10.0f, "MaleParts"	},
-		{ 5.0f,  "GirlCock"		},
-		{ 5.0f,  "BoyPussy"		},
-	};
-	
 	// Generate random species
-	auto random_species = RawMaster::get<Species>(get_weighted_random(ValidSpecies, snowy::rng::generator));
+	RawMaster::Ref<Species> random_species = get_weighted_random(npc_generator::ValidSpecies, snowy::rng::generator);
 
 	// Generate random age
 	std::uniform_int_distribution<Age::age_t> lifespan_dist(random_species->lifespan_min, random_species->lifespan_max);
@@ -102,20 +126,17 @@ Entity* NPCGenerator::generate_npc()
 	Age random_age{ age_distrib(snowy::rng::generator) };
 
 	// Generate gender
-	Gender random_gender = get_weighted_random(ValidGender, snowy::rng::generator);
-
-	// Random color
-	color_t random_color = color::get(get_weighted_random(ValidColors, snowy::rng::generator));
+	RawMaster::Ref<Gender> random_gender = get_weighted_random(npc_generator::ValidSpeciesGenders[random_species->ID], snowy::rng::generator);
 
 	// Generate name
 	RawMaster::Ref<NameSet> first_name_set;
 	RawMaster::Ref<NameSet> family_name_set = RawMaster::get<NameSet>("family_name");
 
-	if (random_gender.gender_type & Gender::type::FEMININE)
+	if (random_gender->gender_type & GenderType::FEMININE)
 	{
 		first_name_set = RawMaster::get<NameSet>("female_given");
 	}
-	else if (random_gender.gender_type & Gender::type::MASCULINE)
+	else if (random_gender->gender_type & GenderType::MASCULINE)
 	{
 		first_name_set = RawMaster::get<NameSet>("male_given");
 	}
@@ -150,14 +171,14 @@ Entity* NPCGenerator::generate_npc()
 
 	// Generate body mods
 	std::vector<RawMaster::Ref<BodyMod>> random_body_mods;
-	random_body_mods.push_back(RawMaster::get<BodyMod>(get_weighted_random(ValidBodyMods, snowy::rng::generator)));
-	 
+	random_body_mods.push_back(get_weighted_random(npc_generator::ValidBodyMods, snowy::rng::generator));
+
 	// Make NPC
 	auto npc = EntityBuilder::create_creature(
 		"NPC_" + std::to_string(m_npc_count),
 		{
-			.soul = new CreatureSoul{
-				.ID = "NPC_SOUL_" + std::to_string(m_npc_count),
+			.soul = new CreatureSoul
+			{	
 				.name = random_name,
 				.gender = random_gender,
 				.color = random_color,
@@ -171,7 +192,7 @@ Entity* NPCGenerator::generate_npc()
 
 	m_npc_count++;
 
-	/* 
+	/*
 	COUT("Spawned in NPC: " << npc->ID());
 	COUT("\tName: " << npc->full_name());
 	COUT("\tGender: " << npc->get_soul()->gender_noun());

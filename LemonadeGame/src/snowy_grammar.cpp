@@ -1,6 +1,6 @@
 #include "snowy_grammar.h"
 
-namespace snowy::grammar
+namespace grammar
 {
 	std::string a(std::string noun)
 	{

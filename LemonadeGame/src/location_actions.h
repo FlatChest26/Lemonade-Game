@@ -55,7 +55,7 @@ public:
 
 	virtual bool check_action() const override;
 	virtual ActionResult perform();
-	virtual std::string get_action_name() const override { return "transform action"; }
+	static std::string action_name() { return "transform action"; }
 };
 
 class OpenAction : public TransformAction
@@ -71,7 +71,7 @@ public:
 	}
 
 	virtual bool check_action() const override;
-	virtual std::string get_action_name() const override { return "open action"; }
+	static std::string action_name() { return "open action"; }
 };
 
 class CloseAction : public TransformAction
@@ -87,7 +87,7 @@ public:
 	}
 
 	virtual bool check_action() const override;
-	virtual std::string get_action_name() const override { return "close action"; }
+	static std::string action_name() { return "close action"; }
 };
 
 #endif // !LEMONADE_GAME_SRC_LOCATION_ACTIONS_H

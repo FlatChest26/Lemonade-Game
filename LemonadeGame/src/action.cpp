@@ -21,6 +21,16 @@ Entity* Action::get_actor() const
 	return nullptr;
 }
 
+bool Action::has_subject() const
+{
+	return get_subject() != nullptr;
+}
+
+Entity* Action::get_subject() const
+{
+	return nullptr;
+}
+
 World* Action::get_world() const
 {
 	if (auto actor = get_actor())
@@ -51,7 +61,6 @@ WorldGameState* Action::get_world_game_state() const
 	return {};
 }
 
-
 bool EntityAction::check_action() const
 {
 	if (!Action::check_action())
@@ -76,5 +85,3 @@ Entity* EntityAction::get_actor() const
 {
 	return m_actor;
 }
-
-

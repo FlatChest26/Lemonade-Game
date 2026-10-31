@@ -85,9 +85,9 @@ struct Renderable
 
 		checker->set_type_name("renderable");
 
-		checker->add_property("glyph",	RawValueType::RAW_Char,		true);
-		checker->add_property("fg",		RawValueType::RAW_Custom,	false);
-		checker->add_property("bg",		RawValueType::RAW_Custom,	false);
+		checker->add_property("glyph", RawValueType::RAW_Char, true);
+		checker->add_property("fg", RawValueType::RAW_Custom, false);
+		checker->add_property("bg", RawValueType::RAW_Custom, false);
 
 		return checker;
 	}
@@ -98,7 +98,7 @@ struct Renderable
 
 		if (!checker->check_json(j, true))
 		{
-			return {'?', DEFAULT_FG_COLOR, DEFAULT_BG_COLOR };
+			return { '?', DEFAULT_FG_COLOR, DEFAULT_BG_COLOR };
 		}
 
 		Renderable r;

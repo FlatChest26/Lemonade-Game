@@ -1,0 +1,46 @@
+[
+  {
+    "type": "pronouns",
+    "ID": "it/its",
+    "subjective": "it",
+    "objective": "it",
+    "determiner": "its",
+    "independent_possessive": "its",
+    "reflexive": "itself",
+    "shortened": "it/its",
+    "acts_plural": false
+  },
+  {
+    "type": "pronouns",
+    "ID": "they/them",
+    "subjective": "they",
+    "objective": "them",
+    "determiner": "their",
+    "independent_possessive": "theirs",
+    "reflexive": "themself",
+    "shortened": "they/them",
+    "acts_plural": true
+  },
+  {
+    "type": "pronouns",
+    "ID": "she/her",
+    "subjective": "she",
+    "objective": "her",
+    "determiner": "her",
+    "independent_possessive": "hers",
+    "reflexive": "herself",
+    "shortened": "she/her",
+    "acts_plural": false
+  },
+  {
+    "type": "pronouns",
+    "ID": "he/him",
+    "subjective": "he",
+    "objective": "him",
+    "determiner": "his",
+    "independent_possessive": "his",
+    "reflexive": "himself",
+    "shortened": "he/him",
+    "acts_plural": false
+  }
+]

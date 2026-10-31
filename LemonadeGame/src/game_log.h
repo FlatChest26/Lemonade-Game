@@ -23,7 +23,8 @@ struct GameMessage
 
 	GameMessage(std::string msg = "", color_t fg = DEFAULT_FG_COLOR, color_t bg = DEFAULT_BG_COLOR, const TimeUnit& time_point = TimeUnit::none()) :
 		text(msg), fg(fg), bg(bg), time_point(time_point), repeat_count(1)
-	{}
+	{
+	}
 
 	bool empty() const { return text.empty(); }
 	operator std::string() const { return text; }
@@ -43,7 +44,6 @@ public:
 
 	WorldGameState* get_world_state() const;
 	World* get_world() const;
-
 
 public:
 	// From most to least recent
@@ -91,6 +91,5 @@ public:
 
 	void render(RenderParams params) const;
 };
-
 
 #endif // !LEMONADE_GAME_SRC_GAME_LOG_H

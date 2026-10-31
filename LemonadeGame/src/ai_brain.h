@@ -24,7 +24,8 @@ protected:
 public:
 	AIBrain(AIManager* manager = nullptr, Entity* entity = nullptr) :
 		m_manager(manager), m_entity(entity)
-	{}
+	{
+	}
 
 	~AIBrain();
 
@@ -36,7 +37,6 @@ public:
 	void add_behavior(std::unique_ptr<Behavior> behavior);
 	Behavior* current_behavior();
 	void cancel_behavior();
-
 };
 
 #endif // !LEMONADE_GAME_SRC_AI_BRAIN_H

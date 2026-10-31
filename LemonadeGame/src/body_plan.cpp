@@ -1,6 +1,5 @@
 #include "body_plan.h"
 
-
 std::shared_ptr<RawObjectChecker> BodyPlan::get_checker()
 {
 	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
@@ -79,7 +78,6 @@ BodyPlan BodyPlan::from_json(const json& j)
 	return bp;
 }
 
-
 std::shared_ptr<RawObjectChecker> BodyMod::get_checker()
 {
 	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
@@ -105,7 +103,6 @@ std::shared_ptr<RawObjectChecker> BodyMod::get_checker()
 	checker->add_property("add_connections", RawValueType::RAW_Array, false);
 	checker->add_property("add_relations", RawValueType::RAW_Array, false);
 
-
 	return checker;
 }
 
@@ -129,7 +126,6 @@ BodyMod BodyMod::from_json(const json& j)
 	{
 		b.modify_size = j.at("modify_size").get<double>();
 	}
-
 
 	if (checker->is_valid_property("set_height", j))
 	{
@@ -160,7 +156,6 @@ BodyMod BodyMod::from_json(const json& j)
 	{
 		b.multiply_weight = j.at("modify_weight").get<double>();
 	}
-
 
 	if (checker->is_valid_property("add_parts", j))
 	{
@@ -245,7 +240,6 @@ std::shared_ptr<RawObjectChecker> BodyPartPlan::get_checker()
 	checker->add_property("position", RawValueType::RAW_String, false);
 	checker->add_property("prefix", RawValueType::RAW_String, false);
 
-
 	return checker;
 }
 
@@ -260,7 +254,6 @@ BodyPartPlan BodyPartPlan::from_json(const json& j)
 
 	BodyPartPlan bpp;
 
-	
 	bpp.type = j.at("bp_type").get<std::string>();
 
 	if (checker->is_valid_property("ID", j))

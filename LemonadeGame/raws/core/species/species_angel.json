@@ -14,6 +14,12 @@
     "child_age": 12,
     "adult_age": 18,
     "mature_age": 20,
-    "flags": [ "DOES_NOT_EXIST" ]
+    "flags": [ "DOES_NOT_EXIST" ],
+    "common_genders": [
+      { "type": "NEUTER", "frequency": 2.0 },
+      { "type": "EPICENE", "frequency": 25.0 },
+      { "type": "FEMININE", "frequency": 100.0 },
+      { "type": "MASCULINE", "frequency": 100.0 }
+    ]
   }
 ]

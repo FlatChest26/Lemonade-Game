@@ -11,6 +11,8 @@ std::shared_ptr<RawObjectChecker> ItemDefinition::get_checker()
 	checker->add_property("renderable", RawValueType::RAW_Custom, true, Renderable::get_checker());
 
 	checker->add_property("description", RawValueType::RAW_String, false);
+	checker->add_property("price", RawValueType::RAW_Number, false);
+	//checker->add_property("carry_slots", RawValueType::RAW_Int, false);
 
 	return checker;
 }
@@ -33,7 +35,18 @@ ItemDefinition ItemDefinition::from_json(const json& j)
 	if (checker->is_valid_property("description", j))
 	{
 		i.description = j.at("description").get<std::string>();
+		i.description = trim(i.description);
 	}
+
+	if (checker->is_valid_property("price", j))
+	{
+		i.price = Currency::from_dollars(j.at("price").get<double>());
+	}
+
+	//if (checker->is_valid_property("carry_slots", j))
+	//{
+	//	i.carry_slots = j.at("carry_slots").get<size_t>();
+	//}
 
 	return i;
 }

@@ -1,11 +1,6 @@
 #include "game_states.h"
 #include "game.h"
 
-GameSettings& GameState::get_game_settings() const
-{
-	return m_game->get_settings();
-}
-
 void GameState::update(double delta_time)
 {
 	if (auto input_handler = get_current_input_handler())
@@ -55,25 +50,23 @@ void GameState::handle_input_result(InputResult result)
 	{
 	case InputResult::Type::None:
 	{
-		return;
+		break;
 	}
 	case InputResult::Type::Pop_InputHandler:
 	{
 		pop_input_handler();
-		return;
+		break;
 	}
 	case InputResult::Type::Push_InputHandler:
 	{
 		push_input_handler(result.next_input_handler);
-		return;
+		break;
 	}
 	case InputResult::Type::Reset_InputHandler:
 	{
 		reset_input_handlers(result.next_input_handler);
-		return;
+		break;
 	}
-	default:
-		return;
 	}
 }
 

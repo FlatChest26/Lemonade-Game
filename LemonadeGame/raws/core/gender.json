@@ -1,0 +1,40 @@
+[
+  {
+    "type": "gender",
+    "ID": "OBJECT",
+    "name": "object",
+    "pronouns": "it/its",
+    "gender_type": "NEUTER",
+    "uses_noun": false,
+    "is_plural": false
+  },
+  {
+    "type": "gender",
+    "ID": "NEUTRAL",
+    "name": "neutral",
+    "pronouns": "they/them",
+    "gender_type": "EPICENE",
+    "uses_noun": false,
+    "is_plural": false
+  },
+  {
+    "type": "gender",
+    "ID": "MASCULINE",
+    "name": "masculine",
+    "pronouns": "he/him",
+    "gender_type": "MASCULINE",
+    "nouns": { "mature": { "singular": "man", "plural": "men" }, "immature": { "singular": "boy", "plural": "boys" } },
+    "uses_noun": true,
+    "is_plural": false
+  },
+  {
+    "type": "gender",
+    "ID": "FEMININE",
+    "name": "feminine",
+    "pronouns": "she/her",
+    "gender_type": "FEMININE",
+    "nouns": { "mature": { "singular": "woman", "plural": "women" }, "immature": { "singular": "girl", "plural": "girls" } },
+    "uses_noun": true,
+    "is_plural": false
+  }
+]

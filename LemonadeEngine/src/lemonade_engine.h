@@ -19,7 +19,6 @@
 #include "output.h"
 #include "initialize.h"
 
-#include "snowy_ui.h"
 #include "camera.h"
 
 #include "lemonade_engine_data.h"

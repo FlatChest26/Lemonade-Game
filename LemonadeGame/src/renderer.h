@@ -56,6 +56,8 @@ protected:
 	virtual void render_entity(const RenderParams& params, const Entity* entity = nullptr) const;
 
 	virtual void render_tile_map(const RenderParams& params) const;
+
+	virtual void render_debug(const RenderParams& params) const;
 };
 
 #endif // !LEMONADE_GAME_SRC_RENDERER_H

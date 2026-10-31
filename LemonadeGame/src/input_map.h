@@ -20,7 +20,6 @@ struct InputAction
 	SDL_Keymod mod = KMOD_NONE;
 	SDL_Keymod nmod = KMOD_NONE; // mods that must be OFF
 
-
 	constexpr bool operator==(const InputAction& other) const
 	{
 		return sym == other.sym && mod == other.mod && nmod == other.nmod;
@@ -102,7 +101,7 @@ public:
 	{
 		get().m_input_direction[name] = direction;
 	}
-	
+
 	static std::vector<InputAction> get_actions(ActionName name)
 	{
 		if (!has_action(name))
@@ -138,7 +137,6 @@ public:
 		return input_dir;
 	}
 
-
 	static bool is_action(ActionName name, SDL_Event event)
 	{
 		if (event.type != SDL_KEYDOWN && event.type != SDL_KEYUP)
@@ -166,7 +164,7 @@ public:
 
 		return false;
 	}
-	
+
 	static bool is_action_pressed(ActionName name, SDL_Event event)
 	{
 		if (event.type != SDL_KEYDOWN)
@@ -197,6 +195,5 @@ public:
 		return is_action_released(name, event) && event.key.type == SDL_KEYUP;
 	}
 };
-
 
 #endif // !LEMONADE_ENGINE_SRC_INPUT_MAP_H

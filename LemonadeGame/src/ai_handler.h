@@ -3,7 +3,6 @@
 #ifndef LEMONADE_GAME_SRC_AI_HANDLER_H
 #define LEMONADE_GAME_SRC_AI_HANDLER_H
 
-
 #include "time_units.h"
 #include "npc_generator.h"
 
@@ -28,6 +27,8 @@ protected:
 	Position m_sidewalk_end{ 0, 0, 0 };
 	Length m_sidewalk_width{ 0 };
 
+	bool m_spawn_npcs{ true };
+
 public:
 	AIManager(GameState* game_state = {});
 public:
@@ -44,6 +45,9 @@ public:
 	Position get_sidewalk_end() const { return m_sidewalk_end; }
 	Length get_sidewalk_width() const { return m_sidewalk_width; }
 
+	bool should_spawn_npcs() const { return m_spawn_npcs; }
+	void set_spawn_npcs(bool spawn_npcs) { m_spawn_npcs = spawn_npcs; }
+	
 	AIBrain* create_brain();
 
 public:

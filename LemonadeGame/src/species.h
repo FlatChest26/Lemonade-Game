@@ -13,76 +13,79 @@
 using json = nlohmann::json;
 
 enum class SpeciesFlag : uint64_t
-{ 
+{
 	NONE = 0,
 
 	MUNDANE = 1 << 0,
 	DOES_NOT_EXIST = 1 << 1,
+	PART_OF_SOCIETY = 1 << 2,
 };
 
 IS_FLAG_ENUM(SpeciesFlag);
 
 inline std::map<std::string, SpeciesFlag> AllSpeciesFlags
 {
-	{ "NONE",				SpeciesFlag::NONE			},
-	{ "MUNDANE",			SpeciesFlag::MUNDANE		},
-	{ "DOES_NOT_EXIST",		SpeciesFlag::DOES_NOT_EXIST	},
+	{ "NONE",				SpeciesFlag::NONE				},
+	{ "MUNDANE",			SpeciesFlag::MUNDANE			},
+	{ "DOES_NOT_EXIST",		SpeciesFlag::DOES_NOT_EXIST		},
+	{ "PART_OF_SOCIETY",	SpeciesFlag::PART_OF_SOCIETY	},
 };
 
 struct GenderedNouns
 {
-	std::unordered_map<Gender::type, Noun> immature;
-	std::unordered_map<Gender::type, Noun> mature;
+	std::unordered_map<GenderType, Noun> immature;
+	std::unordered_map<GenderType, Noun> mature;
 
-	bool has_immature_gendered_noun(Gender gender) const
+	bool has_immature_gendered_noun(const GenderType& gender_type) const
 	{
 		for (auto& [type, noun] : immature)
 		{
-			if (gender.gender_type & type)
+			if (gender_type & type)
 				return true;
 		}
 
 		return false;
 	}
 
-	bool has_mature_gendered_noun(Gender gender) const
+	bool has_mature_gendered_noun(const GenderType& gender_type) const
 	{
 		for (auto& [type, noun] : mature)
 		{
-			if (gender.gender_type & type)
+			if (gender_type & type)
 				return true;
 		}
 
 		return false;
 	}
 
-	Noun get_immature_gendered_noun(Gender gender) const
+	Noun get_immature_gendered_noun(const GenderType& gender_type) const
 	{
 		for (auto& [type, noun] : immature)
 		{
-			if (gender.gender_type & type)
+			if (gender_type & type)
 				return noun;
 		}
-		
+
 		return {};
 	}
 
-	Noun get_mature_gendered_noun(Gender gender) const
+	Noun get_mature_gendered_noun(const GenderType& gender_type) const
 	{
 		for (auto& [type, noun] : mature)
 		{
-			if (gender.gender_type & type)
+			if (gender_type & type)
 				return noun;
 		}
 
 		return {};
 	}
-
 };
+
+using SpeciesID = std::string;
 
 struct Species
 {
-	std::string ID;
+	SpeciesID ID;
 	Noun noun{ "unknown creature", "unknown creatures" };
 	std::string adjective{ noun.singular };
 	GenderedNouns gendered_nouns;
@@ -107,25 +110,39 @@ struct Species
 
 	SpeciesFlag flags{ SpeciesFlag::NONE };
 
+	std::unordered_map<GenderType, double> common_genders;
+
+	bool has_common_gender_type(GenderType gender_type) const
+	{
+		return common_genders.contains(gender_type);
+	}
+
+	double get_common_gender_type_frequency(GenderType gender_type) const
+	{
+		return common_genders.at(gender_type);
+	}
+
+public:
+
+	// -- Flags -- //
+
 	bool is_mundane() const { return flags & SpeciesFlag::MUNDANE; }
 	bool does_not_exist() const { return flags & SpeciesFlag::DOES_NOT_EXIST; }
 
-
 public:
 	bool operator==(const Species& other) const { return other.ID == ID; }
-	
+
 	static std::shared_ptr<RawObjectChecker> get_checker();
 	static Species from_json(const json& j);
-
 };
 
 namespace species
 {
-	inline Species HUMAN
+	inline Species NULL_CREATURE
 	{
-		.ID = "HUMAN",
-		.noun = { "human", "humans" },
-		.renderable = {'U', color::get("cyan"), color::get("black") }
+		.ID = "NULL_CREATURE",
+		.noun = { "unknown", "unknowns" },
+		.renderable = { 001, color::get("gray"), color::get("black") },
+		.flags = SpeciesFlag::DOES_NOT_EXIST
 	};
 }
-

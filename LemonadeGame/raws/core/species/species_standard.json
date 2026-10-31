@@ -13,7 +13,13 @@
     "child_age": 12,
     "adult_age": 18,
     "mature_age": 20,
-    "flags": [ "MUNDANE" ]
+    "flags": [ "MUNDANE", "PART_OF_SOCIETY" ],
+    "common_genders": [
+      { "type": "NEUTER", "frequency": 2.0 },
+      { "type": "EPICENE", "frequency": 25.0 },
+      { "type": "FEMININE", "frequency": 100.0 },
+      { "type": "MASCULINE", "frequency": 100.0 }
+    ]
   },
   {
     "type": "species",
@@ -24,11 +30,18 @@
     "default_body_plan": "GenericBody",
     "body_mods": [ "HeadDetails", { "modify_size": 0.8 } ],
     "description": "A medium-sized humanoid creature with pointy ears.",
-    "frequency": 8.0,
+    "frequency": 5.0,
     "lifespan": { "min": 150, "max": 170 },
     "child_age": 12,
     "adult_age": 18,
-    "mature_age": 80
+    "mature_age": 80,
+    "flags": [ "PART_OF_SOCIETY" ],
+    "common_genders": [
+      { "type": "NEUTER", "frequency": 2.0 },
+      { "type": "EPICENE", "frequency": 25.0 },
+      { "type": "FEMININE", "frequency": 100.0 },
+      { "type": "MASCULINE", "frequency": 100.0 }
+    ]
   },
   {
     "type": "species",
@@ -39,10 +52,15 @@
     "default_body_plan": "GenericBody",
     "body_mods": [ "HeadDetails", { "modify_size": 0.6 } ],
     "description": "A small, hard working humanoid creature.",
-    "frequency": 8.0,
+    "frequency": 5.0,
     "lifespan": { "min": 150, "max": 170 },
-    "child_age": 12,
-    "adult_age": 18,
-    "mature_age": 80
+    "life_stages": { "child": 12, "adult": 18, "mature": 80 },
+    "flags": [ "PART_OF_SOCIETY" ],
+    "common_genders": [
+      { "type": "NEUTER", "frequency": 2.0 },
+      { "type": "EPICENE", "frequency": 25.0 },
+      { "type": "FEMININE", "frequency": 100.0 },
+      { "type": "MASCULINE", "frequency": 100.0 }
+    ]
   }
 ]

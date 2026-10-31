@@ -1,8 +1,9 @@
 #include "game_log.h"
 #include "output.h"
 #include "world_state.h"
+#include "game.h"
 
-GameLog::GameLog(WorldGameState* world_state):
+GameLog::GameLog(WorldGameState* world_state) :
 	m_world_state(world_state)
 {
 }
@@ -53,10 +54,10 @@ void GameLog::render(RenderParams params) const
 		color_t draw_fg = msg.fg;
 		color_t draw_bg = msg.bg;
 
-		if (auto world = get_world())
+		if (auto world_state = get_world_state())
 		{
-			auto elotted_time = world->get_time().total_time() - msg.time_point;
-			if (elotted_time >= TimeUnit::from_seconds(20.0) * world->get_time_progress_rate())
+			auto elotted_time = world_state->get_world()->get_time().total_time() - msg.time_point;
+			if (elotted_time >= TimeUnit::from_seconds(20.0) * GameSettings::WORLD_RELATIVE_SPEED)
 			{
 				draw_fg.r /= 2;
 				draw_fg.g /= 2;
@@ -65,7 +66,7 @@ void GameLog::render(RenderParams params) const
 		}
 
 		draw_y -= output::console_printf_rgb_rect_ex(
-			draw_x, draw_y, panel_width - 2, panel_height - 2, draw_fg, draw_bg, TCOD_BKGND_SET, TCOD_LEFT, 
+			draw_x, draw_y, panel_width - 2, panel_height - 2, draw_fg, draw_bg, TCOD_BKGND_SET, TCOD_LEFT,
 			msg.text + std::string(msg.repeat_count > 1 ? (" (x" + std::to_string(msg.repeat_count) + ")") : "")
 		);
 	}

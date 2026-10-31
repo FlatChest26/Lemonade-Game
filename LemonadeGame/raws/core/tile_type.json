@@ -4,7 +4,7 @@
     "ID": "TILE_AIR",
     "noun": { "singular": "air", "plural": "air", "always_plural": true },
     "renderable": { "glyph": 177, "fg": "light_cyan", "bg": "black" },
-    "flags": [ "IS_TRANSPARENT", "IS_WALKABLE", "IS_AIR" ],
+    "flags": [ "IS_TRANSPARENT", "IS_WALKABLE", "IS_AIR", "HAS_TRANSPARENT_FLOOR", "HAS_TRANSPARENT_CEILING" ],
     "tags": [ "AIR" ],
     "move_cost": 1.0,
     "description": "This is some air."
@@ -16,10 +16,22 @@
     "random_glyph": [ "'", "`", "\"", ";", "," ],
     "random_fg": [ "green", "fern_green", "dark_green", "light_green" ],
     "random_bg": [ "black" ],
-    "flags": [ "IS_TRANSPARENT", "IS_WALKABLE", "HAS_FLOOR" ],
-    "tags": [ "GRASS" ],
-    "move_cost": 1.2,
+    "flags": [ "IS_TRANSPARENT", "IS_WALKABLE", "HAS_FLOOR", "HAS_TRANSPARENT_CEILING" ],
+    "tags": [ "OUTDOORS_FLOOR", "GRASS" ],
+    "move_cost": 10.0,
     "description": "This is some grass."
+  },
+  {
+    "type": "tile_type",
+    "ID": "TILE_DIRT",
+    "noun": { "singular": "dirt", "plural": "dirt", "always_plural": true },
+    "random_glyph": [ "." ],
+    "random_fg": [ "dark_brown" ],
+    "random_bg": [ "black" ],
+    "flags": [ "IS_TRANSPARENT", "IS_WALKABLE", "HAS_FLOOR", "HAS_TRANSPARENT_CEILING" ],
+    "tags": [ "OUTDOORS_FLOOR", "DIRT" ],
+    "move_cost": 1.0,
+    "description": "This is some dirt."
   },
   {
     "type": "tile_type",
@@ -28,9 +40,9 @@
     "random_glyph": [ "." ],
     "random_fg": [ "gray", "dark_gray", "light_gray" ],
     "random_bg": [ "black" ],
-    "flags": [ "IS_TRANSPARENT", "IS_WALKABLE", "HAS_FLOOR" ],
-    "tags": [ "GRAVEL" ],
-    "move_cost": 0.9,
+    "flags": [ "IS_TRANSPARENT", "IS_WALKABLE", "HAS_FLOOR", "HAS_TRANSPARENT_CEILING" ],
+    "tags": [ "OUTDOORS_FLOOR", "GRAVEL" ],
+    "move_cost": 1.0,
     "description": "This is some gravel."
   },
   {
@@ -62,9 +74,9 @@
     "ID": "TILE_PLAIN_FLOOR",
     "noun": { "singular": "plain floor", "plural": "plain floors", "always_plural": true },
     "renderable": { "glyph": ".", "fg": "white", "bg": "black" },
-    "flags": [ "IS_TRANSPARENT", "IS_WALKABLE", "HAS_FLOOR" ],
+    "flags": [ "IS_TRANSPARENT", "IS_WALKABLE", "HAS_FLOOR", "HAS_TRANSPARENT_CEILING" ],
     "tags": [ "FLOOR" ],
-    "move_cost": 0.8,
+    "move_cost": 1.0,
     "description": "This is some plain floor."
   },
   {
@@ -85,7 +97,7 @@
       { "glyph": 194, "fg": "light_cyan", "bg": "black", "//": "┬" },
       { "glyph": 197, "fg": "light_cyan", "bg": "black", "//": "┼" }
     ],
-    "flags": [ "IS_TRANSPARENT", "IS_BLOCKED", "HAS_FLOOR", "HAS_CEILING" ],
+    "flags": [ "IS_TRANSPARENT", "IS_BLOCKED", "HAS_FLOOR", "HAS_CEILING", "HAS_TRANSPARENT_FLOOR", "HAS_TRANSPARENT_CEILING" ],
     "tags": [ "GLASS" ],
     "connects_to": [ "WALL", "GLASS" ],
     "move_cost": -1.0,
@@ -109,11 +121,20 @@
       { "glyph": 194, "fg": "light_cyan", "bg": "black", "//": "┬" },
       { "glyph": 197, "fg": "light_cyan", "bg": "black", "//": "┼" }
     ],
-    "flags": [ "IS_TRANSPARENT", "IS_BLOCKED", "CAN_OPEN", "OPENS_NEIGHBORS", "HAS_FLOOR", "HAS_CEILING" ],
+    "flags": [
+      "IS_TRANSPARENT",
+      "IS_BLOCKED",
+      "CAN_OPEN",
+      "OPENS_NEIGHBORS",
+      "HAS_FLOOR",
+      "HAS_CEILING",
+      "HAS_TRANSPARENT_FLOOR",
+      "HAS_TRANSPARENT_CEILING"
+    ],
     "tags": [ "WINDOW" ],
     "connects_to": [ "WALL", "WINDOW" ],
     "transforms_to": "TILE_OPEN_WINDOW",
-    "move_cost": 10.0,
+    "move_cost": 20.0,
     "description": "This is a window."
   },
   {
@@ -121,7 +142,15 @@
     "ID": "TILE_OPEN_WINDOW",
     "noun": { "singular": "open window", "plural": "open windows" },
     "renderable": { "glyph": "'", "fg": "light_cyan", "bg": "black" },
-    "flags": [ "IS_WALKABLE", "IS_TRANSPARENT", "CAN_CLOSE", "CLOSES_NEIGHBORS", "HAS_FLOOR" ],
+    "flags": [
+      "IS_WALKABLE",
+      "IS_TRANSPARENT",
+      "CAN_CLOSE",
+      "CLOSES_NEIGHBORS",
+      "HAS_FLOOR",
+      "HAS_TRANSPARENT_FLOOR",
+      "HAS_TRANSPARENT_CEILING"
+    ],
     "tags": [ "WINDOW" ],
     "connects_to": [ "WALL", "WINDOW" ],
     "transforms_to": "TILE_WINDOW",
@@ -146,7 +175,7 @@
       { "glyph": 194, "fg": "brown", "bg": "black", "//": "┬" },
       { "glyph": 197, "fg": "brown", "bg": "black", "//": "┼" }
     ],
-    "flags": [ "IS_TRANSPARENT", "IS_BLOCKED", "IS_HALF_TILE" ],
+    "flags": [ "IS_TRANSPARENT", "IS_BLOCKED", "HAS_TRANSPARENT_FLOOR", "HAS_TRANSPARENT_CEILING" ],
     "tags": [ "FENCE" ],
     "connects_to": [ "WALL", "FENCE" ],
     "move_cost": -1.0,
@@ -161,7 +190,7 @@
     "tags": [ "DOOR" ],
     "connects_to": [ "WALL", "DOOR" ],
     "transforms_to": "TILE_OPEN_DOOR",
-    "move_cost": 4.0,
+    "move_cost": 2.0,
     "description": "This is a door."
   },
   {
@@ -169,7 +198,7 @@
     "ID": "TILE_OPEN_DOOR",
     "noun": { "singular": "open door", "plural": "open doors" },
     "renderable": { "glyph": "/", "fg": "brown", "bg": "black" },
-    "flags": [ "IS_WALKABLE", "IS_TRANSPARENT", "CAN_CLOSE", "HAS_FLOOR" ],
+    "flags": [ "IS_WALKABLE", "IS_TRANSPARENT", "CAN_CLOSE", "HAS_FLOOR", "HAS_TRANSPARENT_FLOOR", "HAS_TRANSPARENT_CEILING" ],
     "tags": [ "DOOR" ],
     "connects_to": [ "WALL", "DOOR" ],
     "transforms_to": "TILE_DOOR",
@@ -181,11 +210,11 @@
     "ID": "TILE_GLASS_DOOR",
     "noun": { "singular": "glass door", "plural": "glass doors" },
     "renderable": { "glyph": "+", "fg": "light_cyan", "bg": "black" },
-    "flags": [ "IS_BLOCKED", "IS_TRANSPARENT", "CAN_OPEN", "HAS_FLOOR" ],
+    "flags": [ "IS_BLOCKED", "IS_TRANSPARENT", "CAN_OPEN", "HAS_FLOOR", "HAS_TRANSPARENT_FLOOR", "HAS_TRANSPARENT_CEILING" ],
     "tags": [ "DOOR" ],
     "connects_to": [ "WALL", "WINDOW", "DOOR" ],
     "transforms_to": "TILE_OPEN_GLASS_DOOR",
-    "move_cost": 4.0,
+    "move_cost": 2.0,
     "description": "This is a glass door."
   },
   {
@@ -193,7 +222,7 @@
     "ID": "TILE_OPEN_GLASS_DOOR",
     "noun": { "singular": "open glass door", "plural": "open glass doors" },
     "renderable": { "glyph": "/", "fg": "light_cyan", "bg": "black" },
-    "flags": [ "IS_WALKABLE", "IS_TRANSPARENT", "CAN_CLOSE", "HAS_FLOOR" ],
+    "flags": [ "IS_WALKABLE", "IS_TRANSPARENT", "CAN_CLOSE", "HAS_FLOOR", "HAS_TRANSPARENT_FLOOR", "HAS_TRANSPARENT_CEILING" ],
     "tags": [ "DOOR" ],
     "connects_to": [ "WALL", "WINDOW", "DOOR" ],
     "transforms_to": "TILE_GLASS_DOOR",
@@ -209,7 +238,7 @@
     "tags": [ "GARAGE_DOOR" ],
     "connects_to": [ "WALL", "GARAGE_DOOR" ],
     "transforms_to": "TILE_OPEN_GARAGE_DOOR",
-    "move_cost": 6.0,
+    "move_cost": 8.0,
     "description": "This is a garage door."
   },
   {
@@ -217,7 +246,15 @@
     "ID": "TILE_OPEN_GARAGE_DOOR",
     "noun": { "singular": "open garage door", "plural": "open garage doors" },
     "renderable": { "glyph": "'", "fg": "dark_gray", "bg": "black" },
-    "flags": [ "IS_WALKABLE", "IS_TRANSPARENT", "CAN_CLOSE", "CLOSES_NEIGHBORS", "HAS_FLOOR" ],
+    "flags": [
+      "IS_WALKABLE",
+      "IS_TRANSPARENT",
+      "CAN_CLOSE",
+      "CLOSES_NEIGHBORS",
+      "HAS_FLOOR",
+      "HAS_TRANSPARENT_FLOOR",
+      "HAS_TRANSPARENT_CEILING"
+    ],
     "tags": [ "GARAGE_DOOR" ],
     "connects_to": [ "WALL", "GARAGE_DOOR" ],
     "transforms_to": "TILE_GARAGE_DOOR",
@@ -229,7 +266,7 @@
     "ID": "TILE_UPWARD_STAIRCASE",
     "noun": { "singular": "upward staircase", "plural": "upward staircases" },
     "renderable": { "glyph": "<", "fg": "white", "bg": "black" },
-    "flags": [ "IS_WALKABLE", "IS_TRANSPARENT", "CAN_ASCEND", "HAS_FLOOR" ],
+    "flags": [ "IS_WALKABLE", "IS_TRANSPARENT", "CAN_ASCEND", "HAS_FLOOR", "HAS_TRANSPARENT_FLOOR", "HAS_TRANSPARENT_CEILING" ],
     "tags": [ "STAIRCASE" ],
     "move_cost": 1.0,
     "description": "This is a staircase leading upward."
@@ -239,7 +276,7 @@
     "ID": "TILE_DOWNWARD_STAIRCASE",
     "noun": { "singular": "downward staircase", "plural": "downward staircases" },
     "renderable": { "glyph": ">", "fg": "white", "bg": "black" },
-    "flags": [ "IS_WALKABLE", "IS_TRANSPARENT", "CAN_DESCEND" ],
+    "flags": [ "IS_WALKABLE", "IS_TRANSPARENT", "CAN_DESCEND", "HAS_TRANSPARENT_FLOOR", "HAS_TRANSPARENT_CEILING" ],
     "tags": [ "STAIRCASE" ],
     "move_cost": 1.0,
     "description": "This is a staircase leading downward."
@@ -249,7 +286,7 @@
     "ID": "TILE_UP_AND_DOWN_STAIRCASE",
     "noun": { "singular": "up and down staircase", "plural": "up and down staircases" },
     "renderable": { "glyph": "X", "fg": "white", "bg": "black" },
-    "flags": [ "IS_WALKABLE", "IS_TRANSPARENT", "CAN_DESCEND", "CAN_ASCEND" ],
+    "flags": [ "IS_WALKABLE", "IS_TRANSPARENT", "CAN_DESCEND", "CAN_ASCEND", "HAS_TRANSPARENT_FLOOR", "HAS_TRANSPARENT_CEILING" ],
     "tags": [ "STAIRCASE" ],
     "move_cost": 1.0,
     "description": "This is a staircase leading up and down."
@@ -259,7 +296,7 @@
     "ID": "TILE_SLANTED_ROOF",
     "noun": { "singular": "slanted roof", "plural": "slanted rooves" },
     "renderable": { "glyph": 240, "fg": "dark_red", "bg": "black" },
-    "flags": [ "IS_WALKABLE", "IS_TRANSPARENT", "HAS_FLOOR" ],
+    "flags": [ "IS_WALKABLE", "IS_TRANSPARENT", "HAS_FLOOR", "HAS_TRANSPARENT_CEILING" ],
     "tags": [ "ROOF" ],
     "move_cost": 2.0,
     "description": "This is a roof slanting downward."
@@ -269,9 +306,9 @@
     "ID": "TILE_SIDEWALK",
     "noun": { "singular": "sidewalk", "plural": "sidewalks" },
     "renderable": { "glyph": "_", "fg": "light_gray", "bg": "black" },
-    "flags": [ "IS_TRANSPARENT", "IS_WALKABLE", "HAS_FLOOR" ],
+    "flags": [ "IS_TRANSPARENT", "IS_WALKABLE", "HAS_FLOOR", "HAS_TRANSPARENT_CEILING" ],
     "tags": [ "FLOOR" ],
-    "move_cost": 0.6,
+    "move_cost": 0.5,
     "description": "This is a sidewalk."
   },
   {
@@ -279,9 +316,9 @@
     "ID": "TILE_ROAD",
     "noun": { "singular": "road", "plural": "roads" },
     "renderable": { "glyph": ".", "fg": "dark_gray", "bg": "black" },
-    "flags": [ "IS_TRANSPARENT", "IS_WALKABLE", "HAS_FLOOR" ],
+    "flags": [ "IS_TRANSPARENT", "IS_WALKABLE", "HAS_FLOOR", "HAS_TRANSPARENT_CEILING" ],
     "tags": [ "FLOOR" ],
-    "move_cost": 8.0,
+    "move_cost": 10.0,
     "description": "This is a road."
   }
 ]

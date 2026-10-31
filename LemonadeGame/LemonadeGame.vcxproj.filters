@@ -128,7 +128,7 @@
     <ClInclude Include="src\location_actions.h">
       <Filter>Code\Header Files\Actions</Filter>
     </ClInclude>
-    <ClInclude Include="src\misc_actions.h">
+    <ClInclude Include="src\interactions.h">
       <Filter>Code\Header Files\Actions</Filter>
     </ClInclude>
     <ClInclude Include="src\ai_handler.h">
@@ -230,11 +230,32 @@
     <ClInclude Include="src\ai_brain.h">
       <Filter>Code\Header Files\AI</Filter>
     </ClInclude>
-    <ClInclude Include="src\entity_memory.h">
-      <Filter>Code\Header Files\Entity\Components</Filter>
-    </ClInclude>
     <ClInclude Include="src\entity_id.h">
       <Filter>Code\Header Files\Entity</Filter>
+    </ClInclude>
+    <ClInclude Include="src\person.h">
+      <Filter>Code\Header Files\Entity\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\currency.h">
+      <Filter>Code\Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game_settings.h">
+      <Filter>Code\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\input_result.h">
+      <Filter>Code\Header Files\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="src\furniture_def.h">
+      <Filter>Code\Header Files\Entity\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\special_actions.h">
+      <Filter>Code\Header Files\Actions</Filter>
+    </ClInclude>
+    <ClInclude Include="src\line_of_sight.h">
+      <Filter>Code\Header Files\Tile Map</Filter>
+    </ClInclude>
+    <ClInclude Include="src\debug_info.h">
+      <Filter>Code\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -262,7 +283,7 @@
     <ClCompile Include="src\location_actions.cpp">
       <Filter>Code\Source Files\Actions</Filter>
     </ClCompile>
-    <ClCompile Include="src\misc_actions.cpp">
+    <ClCompile Include="src\interactions.cpp">
       <Filter>Code\Source Files\Actions</Filter>
     </ClCompile>
     <ClCompile Include="src\ai_handler.cpp">
@@ -351,6 +372,21 @@
     </ClCompile>
     <ClCompile Include="src\ai_brain.cpp">
       <Filter>Code\Source Files\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\person.cpp">
+      <Filter>Code\Source Files\Entity\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\furniture_def.cpp">
+      <Filter>Code\Source Files\Entity\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\special_actions.cpp">
+      <Filter>Code\Source Files\Actions</Filter>
+    </ClCompile>
+    <ClCompile Include="src\line_of_sight.cpp">
+      <Filter>Code\Source Files\Tile Map</Filter>
+    </ClCompile>
+    <ClCompile Include="src\debug_info.cpp">
+      <Filter>Code\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

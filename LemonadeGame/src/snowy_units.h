@@ -7,6 +7,7 @@
 
 namespace units
 {
+	using Temperature = temperature::kelvin_t;
 	using Length = length::centimeter_t;
 	using Mass = mass::gram_t;
 

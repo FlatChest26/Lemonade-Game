@@ -125,7 +125,10 @@ namespace output
 	extern int get_console_width();
 	extern int get_console_height();
 
-	extern void clear_console(const TCOD_ConsoleTile& tile = { 0x20, {255, 255, 255, 255}, {0, 0, 0, 255} });
+	extern int get_console_center_x();
+	extern int get_console_center_y();
+
+	extern void clear_console(const TCOD_ConsoleTile& tile = { 0x20,{ 255, 255, 255, 255 },{ 0, 0, 0, 255 } });
 	extern void present(tcod::Console* console = nullptr, TCOD_ViewportOptions* viewport_options = nullptr);
 }
 
@@ -140,7 +143,7 @@ private:
 		.tcod_version = TCOD_COMPILEDVERSION,
 		.keep_aspect = true,
 		.integer_scaling = true,
-		.clear_color = TCOD_ColorRGBA{0, 0, 0, 255},
+		.clear_color = TCOD_ColorRGBA{ 0, 0, 0, 255 },
 		.align_x = 0.5,
 		.align_y = 0.5
 	};

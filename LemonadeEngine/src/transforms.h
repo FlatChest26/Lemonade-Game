@@ -14,7 +14,6 @@
 
 #include "enum_traits.h"
 
-
 template <typename T>
 concept TransformsNumeric = std::is_arithmetic_v<T>;
 
@@ -78,12 +77,12 @@ public:
 
 	constexpr double length() const
 	{
-		return std::sqrt(static_cast<double>(x) * static_cast<double>(x) + static_cast<double>(y) * static_cast<double>(y));
+		return std::sqrt(std::pow(x, 2) + std::pow(y, 2));
 	}
 
 	constexpr double length_squared() const
 	{
-		return static_cast<double>(x) * static_cast<double>(x) + static_cast<double>(y) * static_cast<double>(y);
+		return double(std::pow(x, 2) + std::pow(y, 2));
 	}
 
 	constexpr Vec2DType normalized() const
@@ -91,7 +90,7 @@ public:
 		double _length = length();
 		if (_length > 0.0f)
 		{
-			return Vec2DType(static_cast<IntType>(static_cast<double>(x) / _length), static_cast<IntType>(static_cast<double>(y) / _length));
+			return Vec2DType(static_cast<IntType>(x / _length), static_cast<IntType>(y / _length));
 		}
 
 		return Vec2DType(x, y);
@@ -99,7 +98,7 @@ public:
 
 	constexpr Vec2DType unit() const
 	{
-		return Vec2DType(std::clamp(x, -1, 1), std::clamp(y, -1, 1));
+		return Vec2DType(std::clamp<IntType>(x, -1, 1), std::clamp<IntType>(y, -1, 1));
 	}
 
 public:
@@ -114,6 +113,7 @@ public:
 	{
 		return { static_cast<int32_t>(x), static_cast<int32_t>(y) };
 	}
+
 	constexpr operator Vec2D<uint32_t>() const
 	{
 		return { static_cast<uint32_t>(x), static_cast<uint32_t>(y) };
@@ -132,7 +132,7 @@ public:
 
 	constexpr bool operator!=(const Vec2DType& other) const
 	{
-		return x != other.x && y != other.y;
+		return x != other.x || y != other.y;
 	}
 
 public:
@@ -297,7 +297,7 @@ public:
 	{
 		return Vec2D<T>{
 			static_cast<T>(static_cast<int>(x) % static_cast<int>(other.x)),
-			static_cast<T>(static_cast<int>(y) % static_cast<int>(other.y)),
+				static_cast<T>(static_cast<int>(y) % static_cast<int>(other.y)),
 		};
 	}
 
@@ -325,22 +325,28 @@ public:
 
 	constexpr bool operator<(const Vec2DType& other) const
 	{
-		return  x < other.x && y < other.y;
+		if (x != other.x)
+			return x < other.x;
+
+		return y < other.y;
 	}
 
 	constexpr bool operator<=(const Vec2DType& other) const
 	{
-		return x <= other.x && y <= other.y;
+		return (*this < other) || (*this == other);
 	}
 
 	constexpr bool operator>(const Vec2DType& other) const
 	{
-		return  x > other.x && y > other.y;
+		if (x != other.x)
+			return x > other.x;
+
+		return y > other.y;
 	}
 
 	constexpr bool operator>=(const Vec2DType& other) const
 	{
-		return x >= other.x && y >= other.y;
+		return (*this > other) || (*this == other);
 	}
 
 	template<typename T>
@@ -362,22 +368,6 @@ inline float vec2d_length(const Vec2D<VEC_TYPE>& vec2d, bool squared = false)
 		return std::fabs(std::sqrtf(static_cast<float>(vec2d.x * vec2d.x) + static_cast<float>(vec2d.y * vec2d.y)));
 	}
 }
-
-namespace std 
-{
-    template<typename T>
-    struct hash<Vec2D<T>> {
-        std::size_t operator()(const Vec2D<T>& p) const noexcept {
-            // Combine the hashes of the individual members
-            std::size_t h1 = std::hash<T>{}(p.x);
-            std::size_t h2 = std::hash<T>{}(p.y);
-            
-            // Simple bit shifting to combine hashes (prevents collision for symmetric values like 2,1 and 1,2)
-            return h1 ^ (h2 << 1); 
-        }
-    };
-}
-
 
 template<TransformsNumeric T>
 struct Vec3D
@@ -444,23 +434,23 @@ public:
 
 	constexpr double length() const
 	{
-		return std::sqrt(static_cast<double>(x) * static_cast<double>(x) + static_cast<double>(y) * static_cast<double>(y) + static_cast<double>(z) * static_cast<double>(z));
+		return std::sqrt(std::pow(x, 2) + std::pow(y, 2) + std::pow(z, 2));
 	}
 
 	constexpr double length_squared() const
 	{
-		return static_cast<double>(x) * static_cast<double>(x) + static_cast<double>(y) * static_cast<double>(y) + static_cast<double>(z) * static_cast<double>(z);
+		return double(std::pow(x, 2)) + (std::pow(y, 2)) + (std::pow(z, 2));
 	}
 
 	constexpr Vec3DType normalized() const
 	{
 		double _length = length();
-		if (_length > 0.0f)
+		if (_length > DBL_EPSILON)
 		{
 			return Vec3DType(
-				static_cast<IntType>(static_cast<double>(x) / _length), 
-				static_cast<IntType>(static_cast<double>(y) / _length),
-				static_cast<IntType>(static_cast<double>(z) / _length)
+				static_cast<IntType>(x / _length),
+				static_cast<IntType>(y / _length),
+				static_cast<IntType>(z / _length)
 			);
 		}
 
@@ -469,7 +459,7 @@ public:
 
 	constexpr Vec3DType unit() const
 	{
-		return Vec3DType(std::clamp(x, -1, 1), std::clamp(y, -1, 1), std::clamp(z, -1, 1));
+		return Vec3DType(std::clamp<IntType>(x, -1, 1), std::clamp<IntType>(y, -1, 1), std::clamp<IntType>(z, -1, 1));
 	}
 
 public:
@@ -483,13 +473,25 @@ public:
 	{
 		return as_2d_tuple();
 	}
+
 	constexpr operator Vec3D<int32_t>() const
 	{
 		return { static_cast<int32_t>(x), static_cast<int32_t>(y), static_cast<int32_t>(z) };
 	}
+
 	constexpr operator Vec3D<uint32_t>() const
 	{
 		return { static_cast<uint32_t>(x), static_cast<uint32_t>(y), static_cast<uint32_t>(z) };
+	}
+
+	constexpr operator Vec3D<double>() const
+	{
+		return { static_cast<double>(x), static_cast<double>(y), static_cast<double>(z) };
+	}
+
+	constexpr operator Vec3D<float>() const
+	{
+		return { static_cast<float>(x), static_cast<float>(y), static_cast<float>(z) };
 	}
 
 public:
@@ -505,7 +507,7 @@ public:
 
 	constexpr bool operator!=(const Vec3DType& other) const
 	{
-		return x != other.x && y != other.y && z != other.z;
+		return x != other.x || y != other.y || z != other.z;
 	}
 
 public:
@@ -664,7 +666,7 @@ public:
 
 	constexpr Vec3DType operator%(const Vec3DType& other) const
 	{
-		return Vec3DType{ 
+		return Vec3DType{
 			static_cast<IntType>(static_cast<int>(x) % static_cast<int>(other.x)),
 			static_cast<IntType>(static_cast<int>(y) % static_cast<int>(other.y)),
 			static_cast<IntType>(static_cast<int>(z) % static_cast<int>(other.z))
@@ -676,8 +678,8 @@ public:
 	{
 		return Vec3D<T>{
 			static_cast<T>(static_cast<int>(x) % static_cast<int>(other.x)),
-			static_cast<T>(static_cast<int>(y) % static_cast<int>(other.y)),
-			static_cast<T>(static_cast<int>(z) % static_cast<int>(other.z)),
+				static_cast<T>(static_cast<int>(y) % static_cast<int>(other.y)),
+				static_cast<T>(static_cast<int>(z) % static_cast<int>(other.z)),
 		};
 	}
 
@@ -704,25 +706,35 @@ public:
 
 public:
 	// Comparison //
-
+	
 	constexpr bool operator<(const Vec3DType& other) const
 	{
-		return  x < other.x && y < other.y && z < other.z;
+		if (x != other.x)
+			return x < other.x;
+		if (y != other.y)
+			return y < other.y;
+
+		return z < other.z;
 	}
 
 	constexpr bool operator<=(const Vec3DType& other) const
 	{
-		return x <= other.x && y <= other.y && z <= other.z;
+		return (*this < other) || (*this == other);
 	}
 
 	constexpr bool operator>(const Vec3DType& other) const
 	{
-		return  x > other.x && y > other.y && z > other.z;
+		if (x != other.x)
+			return x > other.x;
+		if (y != other.y)
+			return y > other.y;
+
+		return z > other.z;
 	}
 
 	constexpr bool operator>=(const Vec3DType& other) const
 	{
-		return x >= other.x && y >= other.y && z >= other.z;
+		return (*this > other) || (*this == other);
 	}
 
 public:
@@ -734,52 +746,67 @@ public:
 	}
 };
 
-template <typename VEC_TYPE = int32_t>
-inline float vec3d_length(const Vec3D<VEC_TYPE>& vec3d, bool squared = false)
-{
-	if (squared)
-	{
-		return std::fabs(static_cast<float>(vec3d.x * vec3d.x) + static_cast<float>(vec3d.y * vec3d.y) + static_cast<float>(vec3d.z * vec3d.z));
-	}
-	else
-	{
-		return std::fabs(std::sqrtf(static_cast<float>(vec3d.x * vec3d.x) + static_cast<float>(vec3d.y * vec3d.y) + static_cast<float>(vec3d.z * vec3d.z)));
-	}
-}
-
-namespace std {
-	template<typename T>
-	struct hash<Vec3D<T>> 
-	{
-		std::size_t operator()(const Vec3D<T>& p) const noexcept {
-			// Combine the hashes of the individual members
-			std::size_t h1 = std::hash<T>{}(p.x);
-			std::size_t h2 = std::hash<T>{}(p.y);
-			std::size_t h3 = std::hash<T>{}(p.y);
-
-			// Simple bit shifting to combine hashes (prevents collision for symmetric values like 2,1 and 1,2)
-			return h1 ^ (h2 << 1) ^ (h3 << 2);
-		}
-	};
-}
-
-
 // Absolute coordinate. 1 Coord = 1/24 ChunkCoord.
 using Coord = int32_t;
 using CoordF = double;
 
 using Position = Vec3D<Coord>;
 using PositionF = Vec3D<CoordF>;
-using TuplePosition = std::tuple<Coord, Coord, Coord>;
-using TuplePositionF = std::tuple<CoordF, CoordF, CoordF>;
 
 using Length = uint32_t;
 using LengthF = double;
 
 using Size = Vec3D<Length>;
 using SizeF = Vec3D<LengthF>;
-using TupleSize = std::tuple<Length, Length, Length>;
-using TupleSizeF = std::tuple<LengthF, LengthF, LengthF>;
+
+using UIPosition = Vec2D<Coord>;
+using UIPositionF = Vec2D<CoordF>;
+using UISize = Vec2D<Length>;
+using UISizeF = Vec2D<LengthF>;
+
+namespace std 
+{
+	template<>
+	struct hash<UIPosition>
+	{
+		size_t operator()(const UIPosition& p) const
+		{
+			auto hash_combine = [](size_t& seed, int val)
+				{
+					std::hash<int> hasher;
+					seed ^= hasher(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+				};
+
+			size_t seed = 0;
+
+			hash_combine(seed, p.x);
+			hash_combine(seed, p.y);
+
+			return seed;
+		}
+	};
+
+	template<>
+	struct hash<Position>
+	{
+		size_t operator()(const Position& p) const
+		{
+			auto hash_combine = [](size_t& seed, int val) 
+				{
+					std::hash<int> hasher;
+					seed ^= hasher(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+				};
+
+			size_t seed = 0;
+
+			hash_combine(seed, p.x);
+			hash_combine(seed, p.y);
+			hash_combine(seed, p.z);
+
+			return seed;
+		}
+	};
+}
 
 namespace std
 {
@@ -850,35 +877,9 @@ enum Direction : uint8_t
 
 IS_FLAG_ENUM(Direction)
 
-namespace transforms
-{
-	inline constexpr Position dir_as_pos(const Direction& dir)
-	{
-		return Position{
-			(dir & WEST) ? -1 : (dir & EAST) ? 1 : 0,
-			(dir & NORTH) ? -1 : (dir & SOUTH) ? 1 : 0,
-			(dir & BELOW) ? -1 : (dir & ABOVE) ? 1 : 0
-		};
-	}
-
-	inline constexpr Direction pos_as_dir(const Position& pos)
-	{
-		return Direction{
-			(pos.x < 0) ? WEST : (pos.x > 0) ? EAST : NO_DIRECTION |
-			(pos.y < 0) ? NORTH : (pos.y > 0) ? SOUTH : NO_DIRECTION |
-			(pos.z < 0) ? BELOW : (pos.z > 0) ? ABOVE : NO_DIRECTION
-		};
-	}
-
-	inline constexpr Direction pos_as_dir(const Coord& x, const Coord& y, const Coord& z)
-	{
-		return pos_as_dir(Position(x, y, z));
-	}
-}
-
 namespace std
 {
-	inline string to_string(Direction dir)
+	inline string to_string(const Direction& dir)
 	{
 		return
 			string(dir & Direction::NORTH ? "north " : "") +
@@ -891,7 +892,7 @@ namespace std
 
 	inline ostream& operator<<(ostream& os, Direction dir)
 	{
-		return os << to_string(dir);
+		return os << (to_string(dir));
 	}
 }
 
@@ -900,8 +901,6 @@ inline constexpr PositionF DEFAULT_POSITIONF = PositionF{ 0.0, 0.0, 0.0 };
 inline constexpr Size DEFAULT_SIZE = Size{ 1, 1, 1 };
 inline constexpr SizeF DEFAULT_SIZEF = SizeF{ 1.0, 1.0, 1.0 };
 inline constexpr Direction DEFAULT_DIRECTION = NO_DIRECTION;
-
-
 
 template<typename T, typename K>
 struct Transform
@@ -945,51 +944,54 @@ public:
 	}
 };
 
+using TileTransform = Transform<Position, Size>;
+using PreciseTransform = Transform<PositionF, SizeF>;
+
 namespace transforms
 {
-	inline std::vector<Position> get_surrounding_locations(Position origin = Position(0, 0, 0), bool above = false, bool below = false)
+	inline Position dir_as_pos(const Direction& dir)
 	{
-		std::vector<Position> positions;
+		Position pos = Position(0, 0, 0);
 
-		positions.reserve(size_t(8 + (above ? 8 : 0) + (below ? 8 : 0)));
+		if (dir & EAST) pos.x = 1;
+		if (dir & WEST) pos.x = -1;
 
-		positions.push_back(origin + Position(1, 0, 0));
-		positions.push_back(origin + Position(1, 1, 0));
-		positions.push_back(origin + Position(0, 1, 0));
-		positions.push_back(origin + Position(-1, 1, 0));
-		positions.push_back(origin + Position(-1, 0, 0));
-		positions.push_back(origin + Position(-1, -1, 0));
-		positions.push_back(origin + Position(0, -1, 0));
-		positions.push_back(origin + Position(1, -1, 0));
+		if (dir & SOUTH) pos.y = 1;
+		if (dir & NORTH) pos.y = -1;
 
-		if (above)
-		{
-			positions.push_back(origin + Position(1, 0, 1));
-			positions.push_back(origin + Position(1, 1, 1));
-			positions.push_back(origin + Position(0, 1, 1));
-			positions.push_back(origin + Position(-1, 1, 1));
-			positions.push_back(origin + Position(-1, 0, 1));
-			positions.push_back(origin + Position(-1, -1, 1));
-			positions.push_back(origin + Position(0, -1, 1));
-			positions.push_back(origin + Position(1, -1, 1));
-		}
+		if (dir & ABOVE) pos.z = 1;
+		if (dir & BELOW) pos.z = -1;
 
-		if (below)
-		{
-			positions.push_back(origin + Position(1, 0, -1));
-			positions.push_back(origin + Position(1, 1, -1));
-			positions.push_back(origin + Position(0, 1, -1));
-			positions.push_back(origin + Position(-1, 1, -1));
-			positions.push_back(origin + Position(-1, 0, -1));
-			positions.push_back(origin + Position(-1, -1, -1));
-			positions.push_back(origin + Position(0, -1, -1));
-			positions.push_back(origin + Position(1, -1, -1));
-		}
-		
-		return positions;
+		return pos;
 	}
 
-	inline std::vector<Position> get_adjacent_locations(Position origin = Position(0, 0, 0), bool above = false, bool below = false)
+	inline Direction pos_as_dir(const Position& pos)
+	{
+		Direction dir = NO_DIRECTION;
+
+		if (pos.x > 0) dir |= EAST;
+		if (pos.x < 0) dir |= WEST;
+
+		if (pos.y > 0) dir |= NORTH;
+		if (pos.y < 0) dir |= SOUTH;
+
+		if (pos.z > 0) dir |= ABOVE;
+		if (pos.z < 0) dir |= BELOW;
+
+		return dir;
+	}
+
+	inline Direction pos_as_dir(const Coord& x, const Coord& y, const Coord& z)
+	{
+		return pos_as_dir(Position(x, y, z));
+	}
+
+	inline bool is_adjacent(const Position& p1, const Position& p2)
+	{
+		return (p2 - p1).length() < 1.4f;
+	}
+
+	inline std::vector<Position> get_adjacent_locations(const Position& origin = Position(0, 0, 0), bool above = false, bool below = false)
 	{
 		std::vector<Position> positions;
 
@@ -1019,7 +1021,7 @@ namespace transforms
 		return positions;
 	}
 
-	inline std::vector<Position> get_diagonal_locations(Position origin = Position(0, 0, 0), bool above = false, bool below = false)
+	inline std::vector<Position> get_diagonal_locations(const Position& origin = Position(0, 0, 0), bool above = false, bool below = false)
 	{
 		std::vector<Position> positions;
 
@@ -1045,12 +1047,23 @@ namespace transforms
 			positions.push_back(origin + Position(-1, -1, -1));
 			positions.push_back(origin + Position(1, -1, -1));
 		}
+
+		return positions;
+	}
+
+	inline std::vector<Position> get_surrounding_locations(const Position& origin = Position(0, 0, 0), bool above = false, bool below = false)
+	{
+		std::vector<Position> positions;
+
+		auto adjacent = get_adjacent_locations(origin, above, below);
+		auto diagonal = get_diagonal_locations(origin, above, below);
+
+		positions.insert(positions.end(), adjacent.begin(), adjacent.end());
+		positions.insert(positions.end(), diagonal.begin(), diagonal.end());
 
 		return positions;
 	}
 }
 
-using TileTransform = Transform<Position, Size>;
-using PreciseTransform = Transform<PositionF, SizeF>;
 
 #endif // !LEMONADE_ENGINE_SRC_TRANSFORMS_H

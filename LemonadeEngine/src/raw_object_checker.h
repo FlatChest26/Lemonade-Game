@@ -35,7 +35,8 @@ protected:
 public:
 	RawObjectChecker() :
 		m_type_name("raw value")
-	{}
+	{
+	}
 
 	void set_type_name(std::string type_name)
 	{
@@ -44,6 +45,9 @@ public:
 
 	void add_property(std::string property_name, RawValueType value_type, bool is_required = false, std::shared_ptr<RawObjectChecker> checker = nullptr)
 	{
+		if (m_values.find(property_name) != m_values.end())
+			return;
+
 		m_values[property_name] = std::tuple(value_type, is_required, checker);
 	}
 

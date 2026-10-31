@@ -1,6 +1,5 @@
 #pragma once
 
-
 #ifndef LEMONADE_GAME_SRC_GAIT_H
 #define LEMONADE_GAME_SRC_GAIT_H
 
@@ -19,8 +18,8 @@ using GaitMap = std::unordered_map<std::string, GaitType>;
 class Gait
 {
 protected:
-	GaitMap m_gaits{ };
-	std::string m_current_gait{ };
+	GaitMap m_gaits{};
+	std::string m_current_gait{};
 
 public:
 	Gait(const GaitMap& gaits, const std::string& current_gait = "") :
@@ -72,18 +71,15 @@ public:
 	}
 };
 
-
 namespace gaits
 {
 	inline std::unordered_map<std::string, GaitType> StandardGaits{
-		{ "CREEP",		{"stroll",	2.0	}		},
-		{ "STROLL",		{"stroll",	1.6	}		},
-		{ "WALK",		{"walk",	1.2, true }	},
-		{ "RUN",		{"run",		0.8	}		},
-		{ "SPRINT",		{"sprint",	0.5	}		},
+		{ "CREEP",{ "stroll",	2.0 } },
+		{ "STROLL",{ "stroll",	1.6 } },
+		{ "WALK",{ "walk",	1.2, true } },
+		{ "RUN",{ "run",		0.8 } },
+		{ "SPRINT",{ "sprint",	0.5 } },
 	};
 }
-
-
 
 #endif // !LEMONADE_GAME_SRC_GAIT_H

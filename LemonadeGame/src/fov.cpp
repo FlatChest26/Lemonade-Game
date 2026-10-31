@@ -1,14 +1,16 @@
 #include "fov.h"
 #include "tile_map.h"
 #include "snowy_macros.h"
+#include "line_of_sight.h"
+#include "world.h"
 
-namespace sym_shadowcast
+namespace sym_shadowcast2d
 {
 	static const int quadrant_table[4][4] = {
-		{ 1,  0,  0,  1},
-		{ 0,  1,  1,  0},
-		{ 0, -1, -1,  0},
-		{-1,  0,  0, -1},
+		{ 1,  0,  0,  1 },
+		{ 0,  1,  1,  0 },
+		{ 0, -1, -1,  0 },
+		{ -1,  0,  0, -1 },
 	};
 
 	struct Row
@@ -116,66 +118,261 @@ namespace sym_shadowcast
 	}
 }
 
+namespace sym_shadowcast3d
+{
+	struct Tile
+	{
+		int row;
+		int column;
+		int layer;
+	};
+
+	static int round_ties_up(double n)
+	{
+		return static_cast<int>(std::floor(n + 0.5));
+	}
+
+	static int round_ties_down(double n)
+	{
+		return static_cast<int>(std::ceil(n - 0.5));
+	}
+
+	static double slope(int depth, int column)
+	{
+		return (2.0f * double(column) - 1.0f) / (2.0f * double(depth));
+	}
+
+	struct Hextant
+	{
+		enum CardinalDirection : int
+		{
+			NORTH = 0,
+			EAST = 1,
+			SOUTH = 2,
+			WEST = 3,
+			UP = 4,
+			DOWN = 5,
+		};
+
+		Position origin;
+		CardinalDirection direction;
+
+		Position transform(Tile tile) const
+		{
+			switch (direction)
+			{
+			case CardinalDirection::NORTH:
+				return Position(origin.x + tile.column, origin.y - tile.row, origin.z + tile.layer);
+			case CardinalDirection::EAST:
+				return Position(origin.x + tile.column, origin.y + tile.row, origin.z + tile.layer);
+			case CardinalDirection::SOUTH:
+				return Position(origin.x + tile.row, origin.y + tile.column, origin.z + tile.layer);
+			case CardinalDirection::WEST:
+				return Position(origin.x - tile.row, origin.y + tile.column, origin.z + tile.layer);
+			case CardinalDirection::UP:
+				return Position(origin.x + tile.layer, origin.y - tile.column, origin.z + tile.row);
+			case CardinalDirection::DOWN:
+				return Position(origin.x + tile.layer, origin.y - tile.column, origin.z - tile.row);
+			}
+
+			CERR("Invalid direction given to hextant! " << direction);
+			return Position();
+		}
+	};
+
+	struct Plane
+	{
+		int depth;
+
+		double start_slope_layer;
+		double start_slope_column;
+		double end_slope_layer;
+		double end_slope_column;
+
+		Hextant hextant;
+
+		Plane next() const
+		{
+			return Plane
+			{
+				.depth = depth + 1,
+
+				.start_slope_layer = start_slope_layer,
+				.start_slope_column = start_slope_column,
+				.end_slope_layer = end_slope_layer,
+				.end_slope_column = end_slope_column,
+
+				.hextant = hextant
+			};
+		}
+	};
+
+	static bool is_symmetrical(const Plane& plane, Tile tile)
+	{
+		return (tile.column >= plane.depth * plane.start_slope_column) && (tile.column <= plane.depth * plane.end_slope_column) &&
+			(tile.layer >= plane.depth * plane.start_slope_layer) && (tile.layer <= plane.depth * plane.end_slope_layer);
+	}
+
+	static void scan(TileMap* tile_map, Plane plane, const Coord& radius)
+	{
+		if (radius > 0 && plane.depth > radius)
+			return;
+
+		int layer_min = round_ties_up(plane.depth * plane.start_slope_layer);
+		int layer_max = round_ties_down(plane.depth * plane.end_slope_layer);
+
+		int column_min = round_ties_up(plane.depth * plane.start_slope_column);
+		int column_max = round_ties_down(plane.depth * plane.end_slope_column);
+
+		auto world = tile_map->get_world();
+
+		auto reveal = [&](const Tile& tile)
+			{
+				Position pos = plane.hextant.transform(tile);
+				tile_map->fov_mark_visible(pos.x, pos.y, pos.z);
+			};
+
+		auto is_wall = [&](const Tile& tile)
+			{
+				Position pos = plane.hextant.transform(tile);
+				return world->is_opaque(pos, nullptr, pos.z - plane.hextant.origin.z);
+			};
+
+		auto is_floor = [&](const Tile& tile)
+			{
+				return !is_wall(tile);
+			};
+
+		for (int layer = layer_min; layer < layer_max + 1; layer++)
+		{
+			Tile prev_tile{};
+
+			for (int column = column_min; column < column_max + 1; column++)
+			{
+				Tile tile = Tile(plane.depth, column, layer);
+
+				if (is_wall(tile) || is_symmetrical(plane, tile))
+				{
+					reveal(tile);
+				}
+
+				if (is_wall(prev_tile) && is_floor(tile))
+				{
+					plane.start_slope_column = slope(plane.depth, column);
+				}
+
+				if (is_floor(prev_tile) && is_wall(tile))
+				{
+					Plane next_plane = plane.next();
+					next_plane.end_slope_column = slope(plane.depth, column);
+
+					scan(tile_map, next_plane, radius);
+				}
+
+				prev_tile = tile;
+			}
+		}
+
+		//scan(tile_map, plane.next(), radius);
+	}
+}
+
 namespace FOV
 {
-	void compute_fov(TileMap* map, int player_x, int player_y, int player_z, int radius)
+	static void compute_fov_symmetric_shadowcast2d(TileMap* tile_map, const Position& pov, const Coord& radius)
 	{
-		if (map == nullptr)
-			return;
+		using namespace sym_shadowcast2d;
 
-		if (!map->in_bounds(player_x, player_y, player_z))
-			return;
-
-		using namespace sym_shadowcast;
-
-		map->fov_mark_visible(player_x, player_y, player_z);
+		tile_map->fov_mark_visible(pov.x, pov.y, pov.z);
 		const int radius_squared = radius * radius;
 
 		for (int quadrant = 0; quadrant < 4; ++quadrant)
 		{
 			Row row =
 			{
-				.pov_x = player_x,
-				.pov_y = player_y,
-				.pov_z = player_z,
+				.pov_x = pov.x,
+				.pov_y = pov.y,
+				.pov_z = pov.z,
 				.depth = 1,
 				.slope_low = -1.0f,
 				.slope_high = 1.0f,
 				.quadrant = quadrant
 			};
 
-			scan(map, &row, radius, radius_squared);
+			scan(tile_map, &row, radius, radius_squared);
 		}
 	}
 
-	void compute_fov2(TileMap* map, int player_x, int player_y, int player_z, int radius)
+	static void compute_fov_tcod_way(TileMap* tile_map, const Position& pov, const Coord& radius)
 	{
-		if (!map)
-		{
-			CERR("map is null!");
-			return;
-		}
-
 		size_t bottom_lyr = 0;
-		size_t top_lyr = map->get_depth();
+		size_t top_lyr = tile_map->get_depth();
 
-		auto tile_below = map->get_tile(player_x, player_y, player_z - 1);
-		auto tile_above = map->get_tile(player_x, player_y, player_z + 1);
+		auto tile_below = tile_map->get_tile(pov + Position(0, 0, -1));
+		auto tile_above = tile_map->get_tile(pov + Position(0, 0, 1));
 
 		if (!tile_below || tile_below->is_opaque() || tile_below->has_ceiling())
 		{
-			bottom_lyr = size_t(player_z);
+			bottom_lyr = size_t(pov.z);
 		}
 
 		if (!tile_above || tile_above->is_opaque() || tile_above->has_floor())
 		{
-			top_lyr = size_t(player_z + 1);
+			top_lyr = size_t(pov.z + 1);
 		}
 
 		for (size_t z_layer = bottom_lyr; z_layer < top_lyr; z_layer++)
 		{
-			auto tcod_map = map->get_tcod_map_layer((size_t)z_layer);
-			tcod_map->computeFov(player_x, player_y, radius, true, FOV_SHADOW);
+			auto tcod_map = tile_map->get_tcod_map_layer((size_t)z_layer);
+			tcod_map->computeFov(pov.x, pov.y, radius, true, FOV_SHADOW);
 		}
+	}
+
+	static void compute_fov_symmetric_shadowcast3d(TileMap* tile_map, const Position& pov, const Coord& radius)
+	{
+		using namespace sym_shadowcast3d;
+
+		tile_map->fov_mark_visible(pov.x, pov.y, pov.z);
+
+		for (int hextant_num = 0; hextant_num < 6; hextant_num++)
+		{
+			Plane plane
+			{
+				.depth = 1,
+
+				.start_slope_layer = -1,
+				.start_slope_column = -1,
+
+				.end_slope_layer = 1,
+				.end_slope_column = 1,
+
+				.hextant = {
+					.origin = pov,
+					.direction = Hextant::CardinalDirection(hextant_num)
+				}
+			};
+
+			scan(tile_map, plane, radius);
+		}
+	}
+
+	void compute_fov(TileMap* tile_map, const Position& pov, const Coord& radius)
+	{
+		if (!tile_map)
+		{
+			CERR("tile_map is null!");
+			return;
+		}
+
+		if (!tile_map->in_bounds(pov))
+		{
+			CERR("pov is out of bounds!");
+			return;
+		}
+
+		compute_fov_tcod_way(tile_map, pov, radius);
+
+		// compute_fov_symmetric_shadowcast2d(tile_map, pov, radius);
+		//compute_fov_symmetric_shadowcast3d(tile_map, pov, radius);
 	}
 }

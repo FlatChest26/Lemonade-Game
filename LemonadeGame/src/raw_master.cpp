@@ -15,6 +15,8 @@
 #include "color.h"
 #include "name_set.h"
 #include "item_def.h"
+#include "furniture_def.h"
+#include "snowy_grammar.h"
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -30,6 +32,10 @@ namespace RawMaster
 	using BodyModDB = snowy::SingletonDatabase<Ref<BodyMod>>;
 	using SpeciesDB = snowy::SingletonDatabase<Ref<Species>>;
 	using ItemDefsDB = snowy::SingletonDatabase<Ref<ItemDefinition>>;
+	using FurnitureDefsDB = snowy::SingletonDatabase<Ref<FurnitureDefinition>>;
+
+	using PronounsDB = snowy::SingletonDatabase<Ref<Pronouns>>;
+	using GendersDB = snowy::SingletonDatabase<Ref<Gender>>;
 
 	inline std::vector<std::string> VALID_TYPES
 	{
@@ -41,6 +47,9 @@ namespace RawMaster
 		"color",
 		"name_set",
 		"item_definition",
+		"furniture_definition",
+		"pronouns",
+		"gender",
 	};
 
 	static void initialize_databases()
@@ -50,59 +59,64 @@ namespace RawMaster
 
 		NameSetsDB::init();
 
+		PronounsDB::init();
+		GendersDB::init();
+
 		SpeciesDB::init();
+		SpeciesDB::add({
+			{ "NULL_CREATURE", std::make_shared<Species>(species::NULL_CREATURE) }
+		});
 
 		BodyPartTypeDB::init();
 		BodyPartTypeDB::add({
-			{ "BP_HEAD",			std::make_shared<BodyPartType>(body_part::Head)			},
-			{ "BP_NECK",			std::make_shared<BodyPartType>(body_part::Neck)			},
-			{ "BP_UPPERBODY",		std::make_shared<BodyPartType>(body_part::UpperBody)	},
-			{ "BP_LOWERBODY",		std::make_shared<BodyPartType>(body_part::LowerBody)	},
-			{ "BP_UPPER_ARM",		std::make_shared<BodyPartType>(body_part::UpperArm)		},
-			{ "BP_LOWER_ARM",		std::make_shared<BodyPartType>(body_part::LowerArm)		},
-			{ "BP_HAND",			std::make_shared<BodyPartType>(body_part::Hand)			},
-			{ "BP_GROIN",			std::make_shared<BodyPartType>(body_part::Groin)		},
-			{ "BP_UPPER_LEG",		std::make_shared<BodyPartType>(body_part::UpperLeg)		},
-			{ "BP_LOWER_LEG",		std::make_shared<BodyPartType>(body_part::LowerLeg)		},
-			{ "BP_FOOT",			std::make_shared<BodyPartType>(body_part::Foot)			},
-			{ "BP_PENIS",			std::make_shared<BodyPartType>(body_part::Penis)		},
-			{ "BP_VAGINA",			std::make_shared<BodyPartType>(body_part::Vagina)		},
-			{ "BP_BREASTS",			std::make_shared<BodyPartType>(body_part::Breasts)		},
-			{ "BP_TESTICLES",		std::make_shared<BodyPartType>(body_part::Testicles)	},
-			{ "BP_BUTT",			std::make_shared<BodyPartType>(body_part::Butt)			},
-			{ "BP_ANUS",			std::make_shared<BodyPartType>(body_part::Anus)			},
-			{ "BP_EYES",			std::make_shared<BodyPartType>(body_part::Eyes)			},
-			{ "BP_MOUTH",			std::make_shared<BodyPartType>(body_part::Mouth)		},
-			{ "BP_EARS",			std::make_shared<BodyPartType>(body_part::Ears)			},
-			{ "BP_NOSE",			std::make_shared<BodyPartType>(body_part::Nose)			},
-			{ "BP_TONGUE",			std::make_shared<BodyPartType>(body_part::Tongue)		},
-			{ "BP_TAIL",			std::make_shared<BodyPartType>(body_part::Tail)			},
-			{ "BP_HORNS",			std::make_shared<BodyPartType>(body_part::Horns)		},
-
+			{ "BP_HEAD",			std::make_shared<BodyPartType>(body_part::Head) },
+			{ "BP_NECK",			std::make_shared<BodyPartType>(body_part::Neck) },
+			{ "BP_UPPERBODY",		std::make_shared<BodyPartType>(body_part::UpperBody) },
+			{ "BP_LOWERBODY",		std::make_shared<BodyPartType>(body_part::LowerBody) },
+			{ "BP_UPPER_ARM",		std::make_shared<BodyPartType>(body_part::UpperArm) },
+			{ "BP_LOWER_ARM",		std::make_shared<BodyPartType>(body_part::LowerArm) },
+			{ "BP_HAND",			std::make_shared<BodyPartType>(body_part::Hand) },
+			{ "BP_GROIN",			std::make_shared<BodyPartType>(body_part::Groin) },
+			{ "BP_UPPER_LEG",		std::make_shared<BodyPartType>(body_part::UpperLeg) },
+			{ "BP_LOWER_LEG",		std::make_shared<BodyPartType>(body_part::LowerLeg) },
+			{ "BP_FOOT",			std::make_shared<BodyPartType>(body_part::Foot) },
+			{ "BP_PENIS",			std::make_shared<BodyPartType>(body_part::Penis) },
+			{ "BP_VAGINA",			std::make_shared<BodyPartType>(body_part::Vagina) },
+			{ "BP_BREASTS",			std::make_shared<BodyPartType>(body_part::Breasts) },
+			{ "BP_TESTICLES",		std::make_shared<BodyPartType>(body_part::Testicles) },
+			{ "BP_BUTT",			std::make_shared<BodyPartType>(body_part::Butt) },
+			{ "BP_ANUS",			std::make_shared<BodyPartType>(body_part::Anus) },
+			{ "BP_EYES",			std::make_shared<BodyPartType>(body_part::Eyes) },
+			{ "BP_MOUTH",			std::make_shared<BodyPartType>(body_part::Mouth) },
+			{ "BP_EARS",			std::make_shared<BodyPartType>(body_part::Ears) },
+			{ "BP_NOSE",			std::make_shared<BodyPartType>(body_part::Nose) },
+			{ "BP_TONGUE",			std::make_shared<BodyPartType>(body_part::Tongue) },
+			{ "BP_TAIL",			std::make_shared<BodyPartType>(body_part::Tail) },
+			{ "BP_HORNS",			std::make_shared<BodyPartType>(body_part::Horns) },
 		});
 
-
 		TileTypeDB::init();
-		TileTypeDB::add({ 
-			{"TILE_VOID", std::make_shared<TileType>(tile_types::NO_TILE)} 
+		TileTypeDB::add({
+			{ "TILE_VOID", std::make_shared<TileType>(tile_types::VoidTile) }
 		});
 
 		BodyPlanDB::init();
-		BodyPlanDB::add({ 
-			{"GenericBody", std::make_shared<BodyPlan>(body_plan::GenericBody) }
+		BodyPlanDB::add({
+			{ "GenericBody", std::make_shared<BodyPlan>(body_plan::GenericBody) }
 		});
 
 		BodyModDB::init();
 		BodyModDB::add({
-			{ "DemonParts",		std::make_shared<BodyMod>(body_mod::DemonParts)		},
-			{ "FemaleParts",	std::make_shared<BodyMod>(body_mod::FemaleParts)	},
-			{ "MaleParts",		std::make_shared<BodyMod>(body_mod::MaleParts)		},
-			{ "GirlCock",		std::make_shared<BodyMod>(body_mod::GirlCock)		},
-			{ "BoyPussy",		std::make_shared<BodyMod>(body_mod::BoyPussy)		},
-			{ "HeadDetails",	std::make_shared<BodyMod>(body_mod::HeadDetails)	},
+			{ "DemonParts",		std::make_shared<BodyMod>(body_mod::DemonParts) },
+			{ "FemaleParts",	std::make_shared<BodyMod>(body_mod::FemaleParts) },
+			{ "MaleParts",		std::make_shared<BodyMod>(body_mod::MaleParts) },
+			{ "GirlCock",		std::make_shared<BodyMod>(body_mod::GirlCock) },
+			{ "BoyPussy",		std::make_shared<BodyMod>(body_mod::BoyPussy) },
+			{ "HeadDetails",	std::make_shared<BodyMod>(body_mod::HeadDetails) },
 		});
 
 		ItemDefsDB::init();
+		FurnitureDefsDB::init();
 	}
 
 	static void load_colors(std::vector<json> json)
@@ -117,13 +131,11 @@ namespace RawMaster
 
 			auto ID = json_obj.at("ID").get<std::string>();
 
-
 			color::ColorsDB::add(ID, color::from_json(json_obj.at("color")));
 
 			COUT("\tLoaded: " << ID);
 		}
 	}
-
 
 	template<typename T>
 	static void load_raw_type(std::vector<json> json)
@@ -192,6 +204,8 @@ namespace RawMaster
 
 	void load_raws()
 	{
+		_raws_loading_allowed = true;
+
 		auto core_raws = files::raws_directory / "core";
 		auto mod_raws = files::raws_directory / "mods";
 
@@ -207,6 +221,12 @@ namespace RawMaster
 		COUT("Loading colors\n");
 		load_colors(raw_data["color"]);
 
+		COUT("Loading pronouns\n");
+		load_raw_type<Pronouns>(raw_data["pronouns"]);
+
+		COUT("Loading gender\n");
+		load_raw_type<Gender>(raw_data["gender"]);
+
 		COUT("Loading name sets\n");
 		load_raw_type<NameSet>(raw_data["name_set"]);
 
@@ -215,6 +235,9 @@ namespace RawMaster
 
 		COUT("Loading item definitions\n");
 		load_raw_type<ItemDefinition>(raw_data["item_definition"]);
+
+		COUT("Loading furniture definitions\n");
+		load_raw_type<FurnitureDefinition>(raw_data["furniture_definition"]);
 
 		COUT("Loading body part types\n");
 		load_raw_type<BodyPartType>(raw_data["body_part_type"]);
@@ -227,5 +250,7 @@ namespace RawMaster
 
 		COUT("Loading species\n");
 		load_raw_type<Species>(raw_data["species"]);
+
+		_raws_loading_allowed = false;
 	}
 }

@@ -13,7 +13,6 @@ struct NameSet
 
 	static NameSet from_json(const json& j);
 
-
 	std::string get_name(size_t idx) const
 	{
 		if (0 < idx && idx < names_json.size())
@@ -24,6 +23,5 @@ struct NameSet
 		return "";
 	}
 };
-
 
 #endif // !LEMONADE_GAME_SRC_NAME_SET_H

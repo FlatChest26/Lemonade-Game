@@ -33,6 +33,9 @@ protected:
 
 	std::vector<std::unique_ptr<TCODMap>> m_tcod_map_layers{};
 
+	bool m_should_update_path{ false };
+	bool m_should_update_fov{ false };
+
 public:
 	TileMap(World* world = {}, const Length& width = DEFAULT_MAP_WIDTH, const Length& height = DEFAULT_MAP_HEIGHT, const Length& depth = DEFAULT_MAP_DEPTH);
 	~TileMap();
@@ -78,17 +81,12 @@ public:
 	// Returns the index of the tile at the given position. `index = (x * height * depth) + (y * depth) + z`
 	constexpr size_t get_index(const Position& position) const { return get_index(position.x, position.y, position.z); }
 
-	// Returns the euclidian distance between the given positions. Uses std::sqrt.
-	static double euclidian_distance_between(Position p1, Position p2);
-	// Returns the euclidian distance between the given positions without using std::sqrt (which is an expensive operation).
-	static double euclidian_distance_between_squared(Position p1, Position p2);
-
 public:
 	// -- Utilities -- //
 
-	// Sets the tile at the given coordinates to the type, and optionally updates the tiles around it. 
+	// Sets the tile at the given coordinates to the type, and optionally updates the tiles around it.
 	void set_tile(const Coord& x, const Coord& y, const Coord& z, RawMaster::Ref<TileType> type, bool update = true);
-	// Sets the tile at the given position to the type, and optionally updates the tiles around it. 
+	// Sets the tile at the given position to the type, and optionally updates the tiles around it.
 	void set_tile(const Position& pos, RawMaster::Ref<TileType> type, bool update = true) { set_tile(pos.x, pos.y, pos.z, type, update); }
 
 	// Updates the tile at the given coordinates.
@@ -114,6 +112,12 @@ public:
 	bool is_explored(const Coord& x, const Coord& y, const Coord& z) const;
 	// Returns true if the given position was once visible to a previously computed FOV.
 	bool is_explored(const Position& pos) const { return is_explored(pos.x, pos.y, pos.z); }
+
+	bool should_update_fov() const { return m_should_update_fov; }
+	void request_fov_update() { m_should_update_fov = true; }
+
+	bool should_update_path() const { return m_should_update_path; }
+	void set_update_path(bool should_update_path) { m_should_update_path = should_update_path; }
 };
 
 #endif // !LEMONADE_GAME_SRC_TILE_MAP_H

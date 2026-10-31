@@ -8,6 +8,8 @@
 
 namespace RawMaster
 {
+	inline bool _raws_loading_allowed = false;
+
 	template<typename T>
 	using Ref = std::shared_ptr<const T>;
 
@@ -27,6 +29,26 @@ namespace RawMaster
 
 		CERR("Unrecognized " << typeid(T).name() << " ID: " << id);
 		return nullptr;
+	}
+
+	template<typename T>
+	inline Ref<T> add(const RawID& id, const T& object)
+	{
+		if (!_raws_loading_allowed)
+		{
+			CERR("No loading new raws allowed!");
+			return get<T>(id);
+		}
+
+		using TDB = snowy::SingletonDatabase<Ref<T>>;
+
+		if (TDB::has(id))
+		{
+			return TDB::get(id);
+		}
+
+		TDB::add(id, std::make_shared<T>(object));
+		return TDB::get(id);
 	}
 
 	template<typename T>
@@ -51,7 +73,7 @@ namespace RawMaster
 	}
 
 	inline std::vector<RawID> get_color_ids()
-	{	
+	{
 		return color::ColorsDB::get_keys();
 	}
 };

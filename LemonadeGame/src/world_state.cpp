@@ -6,6 +6,8 @@
 #include "transforms.h"
 #include "game_states.h"
 
+#include "debug_info.h"
+
 #include "raw_master.h"
 
 #include "player_input_handler.h"
@@ -30,6 +32,8 @@ void WorldGameState::new_game()
 	Length road_width = 10;
 	Length sidewalk_width = 2;
 
+	Position lemonade_stand_pos = Position(tile_map->get_width() - (road_width + sidewalk_width) - 8, 23, 0);
+
 	// Create Camera
 	m_camera = std::make_unique<Camera>();
 
@@ -44,34 +48,116 @@ void WorldGameState::new_game()
 
 	// Create Creatures
 
-	auto Player = EntityBuilder::create_creature(
-		"ENTITY_PLAYER",
-		{
-			.soul = new CreatureSoul{
-				.ID = "PLAYER",
-				.name = {"Player", "Lemonade Person"},
-				.gender = gender::NON_SPECIFIC,
-				.description = "That is you."
-			},
-			.species = RawMaster::get<Species>("HUMAN"),
-			.lifespan = static_cast<Age::age_t>(INFINITY),
-			.current_age = 18,
-			.body_mods = { RawMaster::get<BodyMod>("GirlCock")}
-		}
+	m_player = m_world->add_entity_at(
+		EntityBuilder::create_creature(
+			"PLAYER",
+			{
+				.soul = new CreatureSoul
+				{
+					.name = { "Player", "Lemonade Person" },
+					.gender = RawMaster::get<Gender>("NEUTRAL"),
+					.description = "That is you."
+				},
+				.species = RawMaster::get<Species>("HUMAN"),
+				.lifespan = static_cast<Age::age_t>(INFINITY),
+				.current_age = 20,
+				.body_mods = { RawMaster::get<BodyMod>("GirlCock") },
+				.starting_cash = Currency::from_dollars(100),
+				.initial_stats = {
+					{ needs::AROUSAL, 3 },
+					{ needs::HUNGER, 13 },
+					{ needs::HYGIENE, 18 },
+					{ needs::FATIGUE, 12 },
+					{ needs::MOOD, 7 },
+				}
+			}
+		), 
+		lemonade_stand_pos + Position(-1, 1, 0)
 	);
 
-	m_player = m_world->add_entity_at(std::unique_ptr<Entity>(Player), tile_map->get_width() - (road_width + sidewalk_width) - 5, 0, 0);
 	m_player->learn_name();
 
-
-	auto Dildo = EntityBuilder::create_item(
-		"ENTITY_DILDO", 
-		{
-			.item_definition = RawMaster::get<ItemDefinition>("DILDO")
-		}
+	m_world->add_entity_at(
+		EntityBuilder::create_item(
+			"DILDO_1", { .item_definition = RawMaster::get<ItemDefinition>("DILDO") }
+		),
+		lemonade_stand_pos + Position(-1, 2, 0)
 	);
 
-	m_world->add_entity_at(std::unique_ptr<Entity>(Dildo), tile_map->get_width() - (road_width + sidewalk_width) - 5, 1, 0);
+
+	m_world->add_entity_at(
+		EntityBuilder::create_item(
+			"LEMONADE_GLASS_1", { .item_definition = RawMaster::get<ItemDefinition>("LEMONADE_GLASS") }
+		),
+		lemonade_stand_pos + Position(-1, 0, 0)
+	);
+
+	m_world->add_entity_at(
+		EntityBuilder::create_item(
+			"KNIFE_1", { .item_definition = RawMaster::get<ItemDefinition>("KNIFE") }
+		),
+		lemonade_stand_pos + Position(-2, 1, 0)
+	);
+
+	m_world->add_entity_at(
+		EntityBuilder::create_furniture(
+			"LEMONADE_STAND", { .furniture_definition = RawMaster::get<FurnitureDefinition>("LEMONADE_STAND") }
+		),
+		lemonade_stand_pos
+	);
+
+	m_world->add_entity_at(
+		EntityBuilder::create_furniture(
+			"BED_1", { .furniture_definition = RawMaster::get<FurnitureDefinition>("BED") }
+		),
+		25, 15, 1
+	);
+
+	m_world->add_entity_at(
+		EntityBuilder::create_furniture(
+			"BED_2", { .furniture_definition = RawMaster::get<FurnitureDefinition>("BED") }
+		),
+		25, 16, 1
+	);
+
+	m_world->add_entity_at(
+		EntityBuilder::create_furniture(
+			"BED_3", { .furniture_definition = RawMaster::get<FurnitureDefinition>("BED") }
+		),
+		14, 11, 1
+	);
+
+
+	/*
+	auto Snow = m_world->add_entity_at(
+		EntityBuilder::create_creature(
+			"SNOW",
+			{
+				.soul = new CreatureSoul
+				{
+					.name = { "Snow", "Snow Oaks" },
+					.gender = RawMaster::get<Gender>("MASCULINE"),
+					.description = "The cutest boy."
+				},
+				.species = RawMaster::get<Species>("HUMAN"),
+				.lifespan = static_cast<Age::age_t>(INFINITY),
+				.current_age = 20,
+				.body_mods = { RawMaster::get<BodyMod>("MaleParts") },
+				.starting_cash = Currency::from_dollars(250),
+				.initial_stats = {
+					{ needs::AROUSAL, 3 },
+					{ needs::HUNGER, 73 },
+					{ needs::HYGIENE, 18 },
+					{ needs::FATIGUE, 12 },
+					{ needs::MOOD, 7 },
+				}
+			}
+		), 
+		lemonade_stand_pos + Position(4, 1, 0)
+	);
+
+	Snow->learn_name();
+	*/
 
 	// Build Map
 	MapBuilder::set_floor(tile_map.get(), RawMaster::get<TileType>("TILE_GRASS"), 0);
@@ -110,9 +196,9 @@ void WorldGameState::new_game()
 			"##+#[[[##.......#",
 			"^.......#.......#",
 			"^.......#.......#",
-			"^..^^^^^##=====##",
-			" u u      _____  ",
-			" uuu uu uu_____  ",
+			"^^..^^^^##=====##",
+			"  u u     _____  ",
+			"  uu uu uu_____  ",
 			"   uuu uuu_____  ",
 			"          _____  ",
 			"          __________________",
@@ -185,11 +271,13 @@ void WorldGameState::new_game()
 	m_ai_manager->set_sidewalk_end(Position(tile_map->get_width() - (road_width + sidewalk_width), tile_map->get_height() - 1, 0));
 	m_ai_manager->set_sidewalk_width(sidewalk_width);
 
+	m_ai_manager->set_spawn_npcs(true);
+
 	// Add AI Brains
 	for (const auto& entity : m_world->get_entities(
 		EntityFilter
-		{ 
-			.ignore_entities = { m_player }, 
+		{
+			.ignore_entities = { m_player },
 			.required_flags = EntityFlag::ANIMATE
 		}
 	))
@@ -199,13 +287,15 @@ void WorldGameState::new_game()
 
 	m_world->set_tile_map(std::move(tile_map));
 
+	m_previous_player_pos = Position(-1, -1, -1);
+
 	// Create Input Handler
-	handle_input_result(InputResult{ new PlayerInputHandler() });
+	handle_input_result(InputResult{ new InputHandler_Player() });
 }
 
 void WorldGameState::update(double delta_time)
 {
-	TimeUnit base_speed = TimeUnit::from_seconds(delta_time * 6);
+	TimeUnit time_progress = TimeUnit::from_seconds(delta_time * 6.0f);
 	int step_count = 0;
 
 	switch (m_tick_speed)
@@ -232,9 +322,23 @@ void WorldGameState::update(double delta_time)
 	}
 	}
 
+	if (get_player()->has_any_action())
+	{
+		if (get_player()->has_current_action())
+		{
+			step_count = std::min(1, step_count);
+			time_progress = get_player()->get_current_action()->get_action_length();
+		}
+		else if (get_player()->has_queued_action())
+		{
+			step_count = std::min(1, step_count);
+			time_progress = get_player()->get_next_action()->get_action_length();
+		}
+	}
+
 	while (step_count > 0)
 	{
-		step(base_speed);
+		step(time_progress);
 		step_count--;
 	}
 
@@ -263,12 +367,13 @@ void WorldGameState::render() const
 	auto params = RenderParams
 	{
 		.camera = m_camera.get(),
-		.world_render_frame = { Vec2D<Coord>(0, 0), Vec2D<Length>(tile_map_width + 2, tile_map_height + 2), 1},
+		.world_render_frame = { Vec2D<Coord>(0, 0), Vec2D<Length>(tile_map_width + 2, tile_map_height + 2), 1 },
 		.use_fov = m_player != nullptr,
-		.show_explored_tiles = get_game_settings().show_explored_tiles,
+		.show_explored_tiles = GameSettings::SHOW_EXPLORED_TILES,
 		.render_world = true,
 		.render_entities = true,
 		.render_tile_map = true,
+		.render_debug = true,
 		.sidebar_position = UIAttachPosition::RIGHT,
 		.gamelog_position = UIAttachPosition::BOTTOM,
 	};
@@ -306,7 +411,7 @@ void WorldGameState::render() const
 	}
 }
 
-void WorldGameState::step(TimeUnit time_delta)
+void WorldGameState::step(const TimeUnit& time_delta)
 {
 	ASSERT(m_world, "WorldGameState::step() called but world is null");
 
@@ -317,6 +422,14 @@ void WorldGameState::step(TimeUnit time_delta)
 		m_ai_manager->step(time_delta);
 	}
 
+
+	auto tile_map = m_world->get_tile_map();
+
+	if (tile_map && tile_map->should_update_path())
+	{
+		tile_map->set_update_path(false);
+	}
+
 	if (m_player->should_remove())
 	{
 		m_player = nullptr;
@@ -324,15 +437,20 @@ void WorldGameState::step(TimeUnit time_delta)
 
 	update_camera();
 
-	if (m_player)
+	if (m_player && tile_map)
 	{
-		// Update FOV for player
-		if (m_player->has_field_of_view())
+		if (m_previous_player_pos != m_player->get_movable()->pos())
 		{
-			if (auto tile_map = m_world->get_tile_map())
-			{
-				tile_map->compute_fov(m_player->get_movable()->posx(), m_player->get_movable()->posy(), m_player->get_movable()->posz(), m_player->view_range());
-			}
+			tile_map->request_fov_update();
+			m_previous_player_pos = m_player->get_movable()->pos();
+		}
+
+		// Update FOV for player
+		if (m_player->has_field_of_view() && tile_map->should_update_fov())
+		{
+			tile_map->compute_fov(
+				m_player->get_movable()->posx(), m_player->get_movable()->posy(), m_player->get_movable()->posz(), m_player->view_range()
+			);
 		}
 	}
 
@@ -347,6 +465,8 @@ void WorldGameState::step(TimeUnit time_delta)
 	}
 
 	//COUT("Simulation stepped by " << time_delta.total_seconds() << " seconds");
+
+	
 }
 
 void WorldGameState::update_camera()
@@ -356,9 +476,7 @@ void WorldGameState::update_camera()
 		return;
 	}
 
-	auto game_settings = get_game_settings();
-
-	if (game_settings.fixed_camera || !m_player)
+	if (GameSettings::FIXED_CAMERA || !m_player)
 	{
 		Position focus = Position(0, 0, 0);
 
@@ -395,18 +513,17 @@ void WorldGameState::update_camera()
 		m_camera->set_size(
 			Size
 			{
-				(Length)floor(output::get_console_width()),
-				(Length)floor(output::get_console_height()),
+				m_world->get_tile_map()->get_width(),
+				m_world->get_tile_map()->get_height(),
 				CAMERA_VIEW_DEPTH
 			}
 		);
-
 	}
 }
 
 #include "snowy_macros.h"
 
-void WorldGameState::handle_action(std::unique_ptr<Action> action)
+void WorldGameState::handle_action(QueuedAction action)
 {
 	if (action == nullptr)
 	{
@@ -457,48 +574,36 @@ void WorldGameState::handle_action(std::unique_ptr<Action> action)
 
 void WorldGameState::handle_input_result(InputResult result)
 {
-	bool can_instant_act = get_game_settings().instant_actions || get_tick_speed() == TickSpeed::TURN_BASED;
-
-	if (result.type == InputResult::Type::Action)
+	if (result.type == InputResult::Type::Action && result.next_action && result.next_action->check_action())
 	{
-		if (result.next_action && result.next_action->check_action())
+		QueuedAction new_action = std::move(result.next_action);
+
+		if (new_action->has_actor())
 		{
-			std::unique_ptr<Action> new_action = std::move(result.next_action);
+			auto actor = new_action->get_actor();
+			auto action_length = new_action->get_action_length();
 
-			if (new_action->has_actor())
+			actor->start_action(std::move(new_action));
+
+			if (actor == m_player)
 			{
-				auto actor = new_action->get_actor();
-				auto action_length = new_action->get_action_length();
-
-				if (actor == m_player && !can_instant_act)
-				{
-					actor->start_action(std::move(new_action));
-				}
-				else
-				{
-					actor->queue_action(std::move(new_action));
-				}
-
-				if (actor == m_player && can_instant_act)
-				{
-					step(action_length);
-				}
-			}
-			else
-			{
-				auto action_length = new_action->get_action_length();
 				step(action_length);
-				handle_action(std::move(new_action));
 			}
 		}
 		else
 		{
-			step(TimeUnit::none());
+			auto action_length = new_action->get_action_length();
+			step(action_length);
+			handle_action(std::move(new_action));
 		}
 	}
 	else
 	{
-		GameState::handle_input_result(std::move(result));
+		if (result.type != InputResult::Type::Action)
+		{
+			GameState::handle_input_result(std::move(result));
+		}
+
 		step(TimeUnit::none());
 	}
 }

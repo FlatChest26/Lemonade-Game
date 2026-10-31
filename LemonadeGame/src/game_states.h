@@ -9,12 +9,12 @@
 #include "render_params.h"
 #include "renderer.h"
 #include "snowy_macros.h"
+#include "game_settings.h"
 
 #include <memory>
 #include <utility>
 
 class WorldGameState;
-struct GameSettings;
 
 class GameState : public std::enable_shared_from_this<GameState>
 {
@@ -31,7 +31,6 @@ public:
 	// -- Getters -- //
 
 	Game* get_game() const { return m_game; }
-	GameSettings& get_game_settings() const;
 
 	Renderer* get_renderer() const { return m_renderer.get(); }
 

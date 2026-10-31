@@ -7,6 +7,8 @@
 
 enum class Keybind : uint64_t
 {
+	None,
+
 	Quit,
 
 	MenuUp,
@@ -56,6 +58,8 @@ enum class Keybind : uint64_t
 	Examine,
 	Grab,
 	Drop,
+	Interact,
+	Sleep,
 
 	SetToTurnBasedSpeed,
 	SetToRealTimeSpeed,

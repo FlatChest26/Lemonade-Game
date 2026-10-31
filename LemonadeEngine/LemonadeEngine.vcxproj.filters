@@ -12,9 +12,6 @@
     <Filter Include="Header Files\Include">
       <UniqueIdentifier>{007aec86-2896-4c91-9041-8a6aa7627d92}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\UI">
-      <UniqueIdentifier>{a6f1a86a-e809-44da-84c0-0024d3752bd8}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Data">
       <UniqueIdentifier>{b24efd2d-6478-4023-9664-b11b8a6b4838}</UniqueIdentifier>
     </Filter>
@@ -43,9 +40,6 @@
     </ClInclude>
     <ClInclude Include="src\initialize.h">
       <Filter>Header Files\Include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\snowy_ui.h">
-      <Filter>Header Files\UI</Filter>
     </ClInclude>
     <ClInclude Include="src\color.h">
       <Filter>Header Files\Data</Filter>

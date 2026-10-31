@@ -16,8 +16,8 @@ enum class UIAttachPosition
 
 struct Rect2D
 {
-	Vec2D<Coord> pos{0, 0};
-	Vec2D<Length> size{48, 32};
+	UIPosition pos{ 0, 0 };
+	UISize size{ 48, 32 };
 	Coord padding = 1;
 };
 
@@ -31,37 +31,50 @@ struct RenderParams
 	bool render_entities = true;
 	bool render_tile_map = true;
 
+	bool render_debug = false;
+
 	UIAttachPosition sidebar_position;
 	UIAttachPosition gamelog_position;
 
-	Vec2D<Coord> world_inner_frame_p1() const
+	UIPosition world_inner_frame_p1() const
 	{
 		return world_render_frame.pos + world_render_frame.padding;
 	}
 
-	Vec2D<Coord> world_inner_frame_p2() const
+	UIPosition world_inner_frame_p2() const
 	{
-		return (world_render_frame.pos + static_cast<Vec2D<Coord>>(world_render_frame.size)) - world_render_frame.padding;
+		return (world_render_frame.pos + static_cast<UIPosition>(world_render_frame.size)) - world_render_frame.padding;
 	}
 
-	Vec2D<Coord> world_outer_frame_p1() const
+	UIPosition world_outer_frame_p1() const
 	{
 		return world_render_frame.pos;
 	}
 
-	Vec2D<Coord> world_outer_frame_p2() const
+	UIPosition world_outer_frame_p2() const
 	{
-		return (world_render_frame.pos + static_cast<Vec2D<Coord>>(world_render_frame.size));
+		return (world_render_frame.pos + static_cast<UIPosition>(world_render_frame.size));
 	}
 
-	bool in_world_frame(const Vec2D<Coord>& pos) const
+	UISize world_inner_frame_size() const
+	{
+		return world_render_frame.size - (world_render_frame.padding * 2);
+	}
+
+	UISize world_outer_frame_size() const
+	{
+		return world_render_frame.size;
+	}
+
+
+	bool in_world_frame(const UIPosition& pos) const
 	{
 		return world_outer_frame_p1() <= pos && pos < (world_outer_frame_p2() - world_render_frame.padding * 2);
 	}
 
 	bool in_world_frame(const Coord& x, const Coord& y) const
 	{
-		return in_world_frame(Vec2D<Coord>(x, y));
+		return in_world_frame(UIPosition(x, y));
 	}
 };
 

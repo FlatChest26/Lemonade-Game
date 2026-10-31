@@ -7,6 +7,8 @@
 #include "camera.h"
 #include "tile_map.h"
 
+#include "debug_info.h"
+
 Renderer::Renderer(GameState* game_state) :
 	m_game_state(game_state)
 {
@@ -79,6 +81,13 @@ void WorldRenderer::render(const RenderParams& params) const
 		render_tile_map(params);
 	}
 
+#ifdef _DEBUG
+	if (params.render_debug)
+	{
+		render_debug(params);
+	}
+#endif // _DEBUG
+
 	if (params.render_entities)
 	{
 		render_entities(params);
@@ -87,16 +96,40 @@ void WorldRenderer::render(const RenderParams& params) const
 
 void WorldRenderer::render_entities(const RenderParams& params) const
 {
-	for (const auto entity : get_world()->get_entities(
+	auto _render = [&](std::vector<Entity*> entities)
+		{
+			for (const auto entity : entities)
+			{
+				render_entity(params, entity);
+			}
+		};
+
+	_render(get_world()->get_entities(
 		EntityFilter
-		{ 
-			.ignore_held = true, 
-			.ignore_flags = EntityFlag::IS_HIDDEN | EntityFlag::IS_FLASHING
+		{
+			.ignore_held = true,
+			.ignore_flags = EntityFlag::IS_HIDDEN | EntityFlag::IS_FLASHING,
+			.required_flags = EntityFlag::IS_FURNITURE
 		}
-	))
-	{
-		render_entity(params, entity);
-	}
+	));
+
+	_render(get_world()->get_entities(
+		EntityFilter
+		{
+			.ignore_held = true,
+			.ignore_flags = EntityFlag::IS_HIDDEN | EntityFlag::IS_FLASHING,
+			.required_flags = EntityFlag::IS_ITEM
+		}
+	));
+
+	_render(get_world()->get_entities(
+		EntityFilter
+		{
+			.ignore_held = true,
+			.ignore_flags = EntityFlag::IS_HIDDEN | EntityFlag::IS_FLASHING,
+			.required_flags = EntityFlag::IS_CREATURE
+		}
+	));
 }
 
 void WorldRenderer::render_entity(const RenderParams& params, const Entity* entity) const
@@ -201,7 +234,7 @@ void WorldRenderer::render_tile_map(const RenderParams& params) const
 		return;
 
 	Position camera_offset = Position(0, 0, 0);
-	
+
 	if (params.camera)
 	{
 		camera_offset = params.camera->get_screen(0, 0, 0);
@@ -220,7 +253,7 @@ void WorldRenderer::render_tile_map(const RenderParams& params) const
 			continue;
 
 		const Tile* draw_tile = tile_map->get_tile(x, y, layer);
-		Renderable draw_renderable = draw_tile->get_renderable();
+		Renderable draw_renderable = draw_tile->renderable();
 
 		if (draw_tile->is_air())
 		{
@@ -250,4 +283,44 @@ void WorldRenderer::render_tile_map(const RenderParams& params) const
 			draw_renderable, TCOD_BKGND_SET
 		);
 	}
+}
+
+void WorldRenderer::render_debug(const RenderParams& params) const
+{
+#ifdef _DEBUG
+
+	for (auto& [pos, debug_tile] : DebugInfo::get_debug_tiles())
+	{
+		int draw_x{ pos.x }, draw_y{ pos.y }, depth{ pos.z };
+
+		if (params.camera)
+		{
+			std::tie(draw_x, draw_y, depth) = params.camera->get_screen(pos).as_tuple();
+		}
+
+		if (depth != 0)
+			continue;
+
+		draw_x += params.world_inner_frame_p1().x;
+		draw_y += params.world_inner_frame_p1().y;
+
+		if (debug_tile.change_fg)
+		{
+			output::set_char(draw_x, draw_y, debug_tile.renderable.glyph);
+		}
+
+		if (debug_tile.change_fg)
+		{
+			output::set_fg(draw_x, draw_y, debug_tile.renderable.fg);
+		}
+
+		if (debug_tile.change_bg)
+		{
+			output::set_bg(draw_x, draw_y, debug_tile.renderable.bg);
+		}
+
+	}
+
+#endif // _DEBUG
+
 }

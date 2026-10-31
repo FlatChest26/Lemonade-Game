@@ -5,6 +5,9 @@
 #include <string>
 #include <vector>
 
+#include "raw_master.h"
+#include "npc_generator.h"
+
 #include "game.h"
 #include "world_state.h"
 
@@ -19,15 +22,22 @@ namespace game_loop
 {
 	void new_game()
 	{
-		keybinds::initialize();
+		output::clear_console();
+		output::console_printf_ex(
+			output::get_console_center_x(), output::get_console_center_y(), TCOD_BKGND_DEFAULT, TCOD_CENTER, 
+			"Loading new game..."
+		);
+
+		RawMaster::load_raws();
+		npc_generator::initialize_npc_banks();
 
 		// Make new game
 		game = std::make_unique<Game>();
 
-		game->get_settings().fixed_camera = true;
-		game->get_settings().show_explored_tiles = true;
-		game->get_settings().instant_actions = true;
-		game->get_settings().use_second_person_pronouns = true;
+		GameSettings::FIXED_CAMERA = true;
+		GameSettings::SHOW_EXPLORED_TILES = true;
+		GameSettings::INSTANT_ACTIONS = true;
+		GameSettings::USE_SECOND_PERSON_PRONOUNS = true;
 
 		// Start new game on world state
 		WorldGameState* world_state = new WorldGameState();

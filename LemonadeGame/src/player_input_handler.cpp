@@ -3,7 +3,9 @@
 #include "action.h"
 #include "direction_action.h"
 #include "location_actions.h"
-#include "misc_actions.h"
+#include "interactions.h"
+#include "special_actions.h"
+
 #include "game.h"
 
 #include "world_state.h"
@@ -17,7 +19,85 @@
 
 #include "transforms.h"
 
-InputResult PlayerInputHandler::ev_key_down(SDL_Event event)
+template<typename T>
+T* InputHandler_Player::register_sidebar(const SidebarMenuID& ID)
+{
+	auto sidebar = get_world_state()->get_sidebar();
+
+	if (!sidebar->has_menu(ID))
+	{
+		return (T*)sidebar->add_menu(ID, std::make_unique<T>());
+	}
+	else
+	{
+		return (T*)sidebar->get_menu(ID);
+	}
+
+	return nullptr;
+}
+
+void InputHandler_Player::init()
+{
+	auto sidebar = get_world_state()->get_sidebar();
+
+	if (!sidebar)
+	{
+		CERR("No sidebar on world state!");
+		return;
+	}
+
+	auto player = get_player();
+
+	m_game_info_menu = register_sidebar<SidebarMenu_GameInfo>(sidebar_menus::GAME_INFO);
+
+	if (player)
+	{
+		m_person_info_menu = register_sidebar<SidebarMenu_PersonInfo>(sidebar_menus::PERSON_INFO);
+		m_person_info_menu->entity = player;
+	}
+
+
+	if (player)
+	{
+		m_needs_menu = register_sidebar<SidebarMenu_Needs>(sidebar_menus::NEEDS);
+		m_needs_menu->entity = player;
+	}
+
+	if (player)
+	{
+		if (!sidebar->has_menu(sidebar_menus::INVENTORY))
+		{
+			m_inventory_menu = register_sidebar<SidebarMenu_Inventory>(sidebar_menus::INVENTORY);
+			m_inventory_menu->pin();
+		}
+
+		m_inventory_menu = register_sidebar<SidebarMenu_Inventory>(sidebar_menus::INVENTORY);
+		m_inventory_menu->entity = player;
+
+		m_inventory_menu->collapse();
+	}
+
+	if (!sidebar->has_menu(sidebar_menus::LOOK))
+	{
+		m_look_menu = register_sidebar<SidebarMenu_Look>(sidebar_menus::LOOK);
+		m_look_menu->hide();
+	}
+
+	m_look_menu = register_sidebar<SidebarMenu_Look>(sidebar_menus::LOOK);
+
+	if (player)
+	{
+		m_look_menu->look_position = player->get_movable()->pos();
+		m_look_menu->follow_player = true;
+	}
+
+	m_examine_menu = register_sidebar<SidebarMenu_Examine>(sidebar_menus::EXAMINE);
+	m_examine_menu->set_visible(!m_examine_menu->examined_entities.empty() || m_examine_menu->examined_tile != nullptr);
+
+	m_interaction_menu = register_sidebar<SidebarMenu_Interaction>(sidebar_menus::INTERACTION);
+}
+
+InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 {
 	auto player = get_player();
 
@@ -51,10 +131,21 @@ InputResult PlayerInputHandler::ev_key_down(SDL_Event event)
 		return InputResult();
 	}
 
+	bool is_alive = false;
+	bool is_sleeping = false;
+
+	if (player->is_person())
+	{
+		is_sleeping = player->get_person()->is_asleep();
+		is_alive = player->get_person()->is_alive();
+	}
+
+	bool can_act = !is_sleeping && is_alive;
+
 	// Check if movement keys are pressed
 	Position move_dir = InputMap::get_input_direction(event);
 
-	if (!move_dir.empty())
+	if (can_act && !move_dir.empty())
 	{
 		return InputResult(std::make_unique<BumpAction>(player, move_dir.unit()));
 	}
@@ -66,98 +157,236 @@ InputResult PlayerInputHandler::ev_key_down(SDL_Event event)
 		game->stop_running();
 		return InputResult();
 	}
-	else if (InputMap::is_action_pressed(Keybind::Look, event))
+	
+	if (can_act && InputMap::is_action_pressed(Keybind::Look, event))
 	{
-		return InputResult(new PlayerLookHandler());
+		return InputResult(new InputHandler_Look());
 	}
-	else if (InputMap::is_action_pressed(Keybind::Inventory, event))
+	
+	if (can_act && InputMap::is_action_pressed(Keybind::Inventory, event))
 	{
-		return InputResult(new PlayerInventoryHandler());
+		return InputResult(new InputHandler_Inventory());
 	}
-	else if (InputMap::is_action_pressed(Keybind::Open, event))
+	
+	if (can_act && InputMap::is_action_pressed(Keybind::Open, event))
 	{
+		std::set<Position> open_positions;
+		std::unordered_map<Position, Tile*> added_tiles;
+
 		for (auto p : transforms::get_surrounding_locations(player->get_movable()->pos()))
 		{
-			if (world->get_tile(p)->can_open())
+			if (!world->get_tile(p)->can_open())
+				continue;
+
+			auto tile = world->get_tile(p);
+			added_tiles[p] = tile;
+
+			bool is_connection = false;
+
+			for (auto& [other_pos, other_tile] : added_tiles)
 			{
-				return InputResult(std::make_unique<OpenAction>(player->speed(), player, p));
+				if (other_tile == tile)
+					continue;
+
+				if (transforms::is_adjacent(p, other_pos) && (other_tile->can_connect_with(tile) || tile->can_connect_with(other_tile)))
+				{
+					is_connection = true;
+					break;
+				}
 			}
+
+			if (!is_connection)
+				open_positions.insert(p);
 		}
+
+		if (open_positions.size() == 1)
+		{
+			return InputResult(std::make_unique<OpenAction>(player->interact_speed(), player, *open_positions.begin()));
+		}
+		else if (open_positions.size() > 1)
+		{
+			auto callback = [](InputHandler_Player* input_handler, const Position& pos)
+				{
+					return InputResult(std::make_unique<OpenAction>(input_handler->get_player()->interact_speed(), input_handler->get_player(), pos));
+				};
+
+			return InputResult(new InputHandler_PositionSelector({
+				.center = player->get_movable()->pos(),
+				.callback = callback,
+				.valid_positions = open_positions,
+				.title = "Open where?",
+				.input_keybind = Keybind::Open
+			}));
+		}
+
+		return InputResult();
 	}
-	else if (InputMap::is_action_pressed(Keybind::Close, event))
+	
+	if (can_act && InputMap::is_action_pressed(Keybind::Close, event))
 	{
+		std::set<Position> close_positions;
+		std::unordered_map<Position, Tile*> added_tiles;
+
 		for (auto p : transforms::get_surrounding_locations(player->get_movable()->pos()))
 		{
-			if (world->get_tile(p)->can_close())
+			if (!world->get_tile(p)->can_close())
+				continue;
+
+			auto tile = world->get_tile(p);
+			added_tiles[p] = tile;
+
+			bool is_connection = false;
+
+			for (auto& [other_pos, other_tile] : added_tiles)
 			{
-				return InputResult(std::make_unique<CloseAction>(player->speed(), player, p));
+				if (other_tile == tile)
+					continue;
+
+				if (transforms::is_adjacent(p, other_pos) && (other_tile->can_connect_with(tile) || tile->can_connect_with(other_tile)))
+				{
+					is_connection = true;
+					break;
+				}
 			}
+
+			if (!is_connection)
+				close_positions.insert(p);
+		}
+
+		if (close_positions.size() == 1)
+		{
+			return InputResult(std::make_unique<CloseAction>(player->interact_speed(), player, *close_positions.begin()));
+		}
+		else if (close_positions.size() > 1)
+		{
+			auto callback = [](InputHandler_Player* input_handler, const Position& pos)
+				{
+					return InputResult(std::make_unique<CloseAction>(input_handler->get_player()->interact_speed(), input_handler->get_player(), pos));
+				};
+
+			return InputResult(new InputHandler_PositionSelector({
+				.center = player->get_movable()->pos(), 
+				.callback = callback, 
+				.valid_positions = close_positions,
+				.title = "Close where?",
+				.input_keybind = Keybind::Close
+			}));
+		}
+
+		return InputResult();
+	}
+	
+	if (InputMap::is_action_pressed(Keybind::Sleep, event))
+	{
+		if (player->get_person()->is_awake())
+		{
+			if (!player->get_person()->can_sleep())
+			{
+				world_state->game_message(GameMessage("You're not tired enough to sleep."));
+				return InputResult();
+			}
+
+			return InputResult(std::make_unique<StartSleepAction>(player->interact_speed(), player));
+		}
+		else
+		{
+			if (!player->get_person()->can_wake_up())
+			{
+				world_state->game_message(GameMessage("You're too tired to wake up."));
+				return InputResult();
+			}
+
+			return InputResult(std::make_unique<EndSleepAction>(player->interact_speed(), player));
 		}
 	}
-	else if (InputMap::is_action_pressed(Keybind::WaitShort, event))
+	
+	if (InputMap::is_action_pressed(Keybind::WaitShort, event))
 	{
 		return InputResult(std::make_unique<WaitAction>(TimeUnit::from_seconds(1.0)));
 	}
-	else if (InputMap::is_action_pressed(Keybind::WaitLong, event))
+	
+	if (InputMap::is_action_pressed(Keybind::WaitLong, event))
 	{
 		return InputResult(std::make_unique<WaitAction>(TimeUnit::from_seconds(10.0)));
 	}
 	
-	else if (InputMap::is_action_pressed(Keybind::Grab, event))
+	if (can_act && InputMap::is_action_pressed(Keybind::Grab, event))
 	{
-		auto entities_at = world->get_entities_at(player->get_movable()->pos());
+		auto inventory = player->get_inventory();
 
-		for (auto& item : entities_at)
+		if (!inventory)
 		{
-			if (item == player)
-				continue;
+			CERR("player has no inventory!");
+			return InputResult();
+		}
 
-			if (item->can_be_held())
+		if (inventory->is_full())
+		{
+			world_state->game_message(GameMessage("Your inventory is full.", color::get("light_red")));
+			return InputResult();
+		}
+
+		auto items_at = world->get_entities_at(
+			player->get_movable()->pos(), 
+			EntityFilter{ 
+				.ignore_entities = { player }, 
+				.required_flags = EntityFlag::CAN_BE_HELD 
+			}
+		);
+
+		if (items_at.empty())
+		{
+			return InputResult();
+		}
+
+		for (auto& item : items_at)
+		{
+			if (inventory->can_carry(item))
 			{
-				return InputResult(std::make_unique<GrabAction>(player->speed(), player, item));
+				return InputResult(std::make_unique<GrabAction>(player->interact_speed(), player, item));
 			}
 		}
+
+		world_state->game_message(GameMessage("You don't have the free space to carry that.", color::get("light_red")));
+
+		return InputResult();
 	}
-	else if (InputMap::is_action_pressed(Keybind::Drop, event))
+
+	if (InputMap::is_action_pressed(Keybind::Quit, event))
 	{
-		if (auto inventory = player->get_inventory())
-		{
-			if (inventory->get_item_count() == 1)
-			{
-				for (auto& item : inventory->get_items())
-				{
-					return InputResult(std::make_unique<DropAction>(player->speed(), player, item));
-				}
-			}
-			else if (inventory->get_item_count() > 1)
-			{
-				return InputResult(new PlayerInventoryHandler());
-			}
-		}
-		else
-		{
-			CERR("Player has no inventory!");
-		}
+		game->stop_running();
+		return InputResult();
 	}
-	else if (InputMap::is_action_pressed(Keybind::SetToTurnBasedSpeed, event))
+
+	if (InputMap::is_action_pressed(Keybind::SetToTurnBasedSpeed, event))
 	{
 		world_state->set_tick_speed(TickSpeed::TURN_BASED);
 		return InputResult();
 	}
-	else if (InputMap::is_action_pressed(Keybind::SetToRealTimeSpeed, event))
+
+	if (InputMap::is_action_pressed(Keybind::SetToRealTimeSpeed, event))
 	{
 		world_state->set_tick_speed(TickSpeed::REAL_TIME);
 		return InputResult();
 	}
-	else if (InputMap::is_action_pressed(Keybind::SetToRealTime2xSpeed, event))
+
+	if (InputMap::is_action_pressed(Keybind::SetToRealTime2xSpeed, event))
 	{
 		world_state->set_tick_speed(TickSpeed::REAL_TIME_2X);
 
 		return InputResult();
 	}
-	else if (InputMap::is_action_pressed(Keybind::SetToRealTime4xSpeed, event))
+
+	if (InputMap::is_action_pressed(Keybind::SetToRealTime4xSpeed, event))
 	{
-		world_state->set_tick_speed(TickSpeed::REAL_TIME_4X);
+		if (player->is_person() && player->get_person()->is_asleep())
+		{
+			world_state->set_tick_speed(TickSpeed::REAL_TIME_8X);
+		}
+		else
+		{
+			world_state->set_tick_speed(TickSpeed::REAL_TIME_4X);
+		}
 		return InputResult();
 	}
 
@@ -168,6 +397,14 @@ InputResult PlayerInputHandler::ev_key_down(SDL_Event event)
 
 	switch (sym)
 	{
+	case SDLK_F5:
+	{
+		if (player->has_movable())
+		{
+			COUT(player->get_movable()->pos());
+		}
+		break;
+	}
 	case SDLK_F6:
 	{
 		if (player->has_movable())
@@ -185,154 +422,140 @@ InputResult PlayerInputHandler::ev_key_down(SDL_Event event)
 	}
 	}
 #endif // _DEBUG
-
+	
 	return InputResult();
 }
 
-void PlayerInputHandler::init()
+void InputHandler_Player::step(const TimeUnit& delta_time)
 {
-	auto sidebar = get_world_state()->get_sidebar();
-
-	if (!sidebar)
+	if (m_look_menu && get_player() && m_look_menu->follow_player)
 	{
-		CERR("No sidebar on world state!");
-		return;
-	}
-
-	if (!sidebar->has_menu("GAME_INFO_SIDEBAR"))
-	{
-		sidebar->add_menu("GAME_INFO_SIDEBAR", std::make_unique<SidebarMenu_GameInfo>());
-	}
-
-	if (!sidebar->has_menu("INVENTORY_SIDEBAR"))
-	{
-		m_inventory_menu = (SidebarMenu_Inventory*)sidebar->add_menu("INVENTORY_SIDEBAR", std::make_unique<SidebarMenu_Inventory>());
-		m_inventory_menu->pin();
-	}
-	else
-	{
-		m_inventory_menu = (SidebarMenu_Inventory*)sidebar->get_menu("INVENTORY_SIDEBAR");
+		m_look_menu->look_position = get_player()->get_movable()->pos();
 	}
 }
 
-void PlayerInputHandler::step(const TimeUnit& delta_time)
-{
-}
-
-void PlayerInputHandler::render(const RenderParams& params) const
+void InputHandler_Player::render(const RenderParams& params) const
 {
 	output::draw_frame_rgb(
-		params.world_render_frame.pos.x, params.world_render_frame.pos.y, 
+		params.world_render_frame.pos.x, params.world_render_frame.pos.y,
 		params.world_render_frame.pos.x + params.world_render_frame.size.x,
 		params.world_render_frame.pos.y + params.world_render_frame.size.y,
 		color::get("white"), color::get("black"), DEFAULT_RECT_FRAME, false, TCOD_BKGND_SET
 	);
 }
 
-void PlayerLookHandler::init()
+void InputHandler_Look::init()
 {
-	PlayerInputHandler::init();
+	InputHandler_Player::init();
 
-	auto player = get_player();
+	m_look_menu->show();
+	m_look_menu->focus();
+	m_look_menu->follow_player = false;
+	get_world_state()->set_camera_focus(m_look_menu->look_position);
 
-	if (!player)
+	if (m_examine_menu->is_visible())
 	{
-		CERR("No player found.");
-		return;
+		m_examine_menu->focus();
 	}
-
-	if (!player->has_movable())
-	{
-		CERR("Player does not have a movable!");
-		return;
-	}
-
-	m_look_focus = player->get_movable()->pos();
-	get_world_state()->set_camera_focus(m_look_focus);
 }
 
-void PlayerLookHandler::remove()
+void InputHandler_Look::remove()
 {
 	if (auto world_state = get_world_state())
 	{
 		world_state->remove_camera_focus();
 	}
+
+	m_examine_menu->examined_entities.clear();
+	m_examine_menu->examined_tile = nullptr;
+
+	m_look_menu->follow_player = true;
+	m_look_menu->unfocus();
+	m_look_menu->hide();
 }
 
-InputResult PlayerLookHandler::ev_key_down(SDL_Event event)
+InputResult InputHandler_Look::ev_key_down(SDL_Event event)
 {
 	auto player = get_player();
 	auto world_state = get_world_state();
+	auto world = get_world();
+
+	bool is_alive = false;
+	bool is_sleeping = false;
+
+	if (player->is_person())
+	{
+		is_sleeping = player->get_person()->is_asleep();
+		is_alive = player->get_person()->is_alive();
+	}
 
 	// Check if movement keys are pressed
 	Position move_dir = InputMap::get_input_direction(event);
 
 	if (!move_dir.empty())
 	{
-		m_look_focus += move_dir.unit();
-
-		m_look_focus.x = std::clamp(m_look_focus.x, 0, (Coord)get_world()->get_tile_map()->get_width());
-		m_look_focus.y = std::clamp(m_look_focus.y, 0, (Coord)get_world()->get_tile_map()->get_height());
-		m_look_focus.z = std::clamp(m_look_focus.z, 0, (Coord)get_world()->get_tile_map()->get_depth());
-		world_state->set_camera_focus(m_look_focus);
-
-		return InputResult(InputResult::Type::Action);
+		m_look_menu->look_position += move_dir.unit();
+		world_state->set_camera_focus(m_look_menu->look_position);
+		return InputResult();
 	}
 
 	if (InputMap::is_action_pressed(Keybind::Look, event) || InputMap::is_action_pressed(Keybind::Quit, event))
 	{
 		return InputResult(InputResult::Type::Pop_InputHandler);
 	}
-	else if (InputMap::is_action_pressed(Keybind::Examine, event))
+	
+	if (InputMap::is_action_pressed(Keybind::Inventory, event))
 	{
-		auto tile = get_world()->get_tile(m_look_focus);
-		get_world_state()->game_message(GameMessage(tile->description()));
+		return InputResult(InputResult::Type::Pop_InputHandler, new InputResult(new InputHandler_Inventory()));
+	}
+	
+	if (InputMap::is_action_pressed(Keybind::Examine, event))
+	{
+		m_examine_menu->examined_entities.clear();
+		m_examine_menu->examined_tile = nullptr;
+		m_examine_menu->hide();
 
-		for (const auto& e : get_world()->get_entities_at(m_look_focus))
+		for (const auto& e : world->get_entities_at(m_look_menu->look_position))
 		{
-			get_world_state()->game_message(GameMessage(e->description()));
+			m_examine_menu->examined_entities.push_back(e);
+			m_examine_menu->show();
+			m_examine_menu->focus();
 		}
 
-		return InputResult(InputResult::Type::Action);
-	}
-	else if (InputMap::is_action_pressed(Keybind::SetToTurnBasedSpeed, event))
-	{
-		world_state->set_tick_speed(TickSpeed::TURN_BASED);
-		return InputResult();
-	}
-	else if (InputMap::is_action_pressed(Keybind::SetToRealTimeSpeed, event))
-	{
-		world_state->set_tick_speed(TickSpeed::REAL_TIME);
-		return InputResult();
-	}
-	else if (InputMap::is_action_pressed(Keybind::SetToRealTime2xSpeed, event))
-	{
-		world_state->set_tick_speed(TickSpeed::REAL_TIME_2X);
+		if (m_examine_menu->examined_entities.empty())
+		{
+			auto tile = world->get_tile(m_look_menu->look_position);
+
+			if (tile)
+			{
+				m_examine_menu->examined_tile = tile;
+				m_examine_menu->show();
+				m_examine_menu->focus();
+			}
+		}
 
 		return InputResult();
 	}
-	else if (InputMap::is_action_pressed(Keybind::SetToRealTime4xSpeed, event))
-	{
-		world_state->set_tick_speed(TickSpeed::REAL_TIME_4X);
-		return InputResult();
-	}
 
-	return InputResult();
+	return InputHandler_Player::ev_key_down(event);
 }
 
-void PlayerLookHandler::render(const RenderParams& params) const
+void InputHandler_Look::render(const RenderParams& params) const
 {
-	auto tile = get_world()->get_tile(m_look_focus);
-
-	int draw_x{ m_look_focus.x }, draw_y{ m_look_focus.y }, draw_z{ 0 };
+	int draw_x{ m_look_menu->look_position.x }, draw_y{ m_look_menu->look_position.y }, draw_z{ m_look_menu->look_position.z };
 
 	if (params.camera)
 	{
-		if (!params.camera->in_view(m_look_focus.x, m_look_focus.y, m_look_focus.z))
+		if (!params.camera->in_view(m_look_menu->look_position))
 			return;
 
-		std::tie(draw_x, draw_y, draw_z) = params.camera->get_screen(m_look_focus.x, m_look_focus.y, m_look_focus.z).as_tuple();
+		std::tie(draw_x, draw_y, draw_z) = params.camera->get_screen(m_look_menu->look_position).as_tuple();
 	}
+
+	if (draw_z != 0)
+		return;
+
+	auto tile = get_world()->get_tile(m_look_menu->look_position);
 
 	auto draw_fg = tile->bg();
 	auto draw_bg = tile->fg();
@@ -358,155 +581,202 @@ void PlayerLookHandler::render(const RenderParams& params) const
 
 	output::set_fg(draw_x + params.world_inner_frame_p1().x, draw_y + params.world_inner_frame_p1().x, draw_fg);
 	output::set_bg(draw_x + params.world_inner_frame_p1().x, draw_y + params.world_inner_frame_p1().y, draw_bg);
-
-	// Write info at look focus
-
-	int write_x = params.world_inner_frame_p1().x;
-	int write_y = params.world_inner_frame_p1().y;
-
-	if (tile->get_type())
-	{
-		if (!params.use_fov || tile->is_visible())
-		{
-			output::console_printf_rgb(write_x, write_y++, tile->fg(), tile->bg(), tile->get_display_name());
-		}
-		else if (tile->is_explored())
-		{
-			output::console_printf_rgb(write_x, write_y++, color::get("gray"), color::get("black"), tile->get_display_name() + " (remembered)");
-		}
-		else
-		{
-			output::console_printf_rgb(write_x, write_y++, color::get("gray"), color::get("black"), "unexplored");
-		}
-	}
-
-	for (const auto& entity : get_world()->get_entities_at(m_look_focus))
-	{
-		output::console_printf_rgb(
-			write_x, write_y++, entity->fg(), entity->bg(), entity->display_name() + (entity == get_player() ? " (You)" : "")
-		);
-	}
 }
 
-void PlayerInventoryHandler::init()
+void InputHandler_Inventory::init()
 {
-	PlayerInputHandler::init();
+	InputHandler_Player::init();
 
-	if (!get_player()->get_inventory())
+	auto inventory = get_player()->get_inventory();
+
+	if (!inventory)
 	{
 		CERR("Player has no inventory!");
 	}
 
-	if (get_player()->get_inventory()->empty())
-	{
-		m_inventory_menu->selected_slot = -1;
-	}
-	else if (m_inventory_menu->selected_slot == -1)
-	{
-		m_inventory_menu->selected_slot = 1;
-	}
+	m_inventory_menu->selected_slot = std::clamp(m_inventory_menu->selected_slot, 0, (int)inventory->get_max_slots());
 
 	m_inventory_menu->focus();
 	m_inventory_menu->uncollapse();
 }
 
-void PlayerInventoryHandler::remove()
+void InputHandler_Inventory::remove()
 {
+	m_examine_menu->examined_entities.clear();
+	m_examine_menu->examined_tile = nullptr;
+
 	m_inventory_menu->unfocus();
 	m_inventory_menu->collapse();
 }
 
-InputResult PlayerInventoryHandler::ev_key_down(SDL_Event event)
+InputResult InputHandler_Inventory::ev_key_down(SDL_Event event)
 {
 	auto player = get_player();
 	auto inventory = player->get_inventory();
 	auto world_state = get_world_state();
 
+	bool is_alive = false;
+	bool is_sleeping = false;
+
+	if (player->is_person())
+	{
+		is_sleeping = player->get_person()->is_asleep();
+		is_alive = player->get_person()->is_alive();
+	}
+
 	if (InputMap::is_action_pressed(Keybind::Inventory, event) || InputMap::is_action_pressed(Keybind::Quit, event))
 	{
 		return InputResult(InputResult::Type::Pop_InputHandler);
 	}
-	else if (InputMap::is_action_pressed(Keybind::MenuUp, event))
+	
+	if (InputMap::is_action_pressed(Keybind::Look, event))
 	{
-		if (inventory->empty())
-		{
-			m_inventory_menu->selected_slot = -1;
-		}
-		else
-		{
-			m_inventory_menu->selected_slot += 1;
-			m_inventory_menu->selected_slot = m_inventory_menu->selected_slot % inventory->get_item_count();
-		}
+		return InputResult(InputResult::Type::Pop_InputHandler, new InputResult(new InputHandler_Look()));
 	}
-	else if (InputMap::is_action_pressed(Keybind::MenuDown, event))
+	
+	if (InputMap::is_action_pressed(Keybind::MenuUp, event))
 	{
-		if (inventory->empty())
-		{
-			m_inventory_menu->selected_slot = -1;
-		}
-		else
-		{
-			m_inventory_menu->selected_slot -= 1;
-			m_inventory_menu->selected_slot = m_inventory_menu->selected_slot % inventory->get_item_count();
-		}
-	}
-	else if (InputMap::is_action_pressed(Keybind::Drop, event))
-	{
-		auto selected_item = inventory->get_item(m_inventory_menu->selected_slot);
-		
-		if (selected_item)
-		{
-			return InputResult(std::make_unique<DropAction>(player->speed(), player, selected_item));;
-		}
-	}
-	else if (InputMap::is_action_pressed(Keybind::Examine, event))
-	{
-		auto selected_item = inventory->get_item(m_inventory_menu->selected_slot);
-		if (selected_item)
-		{
-			get_world_state()->game_message(GameMessage(selected_item->description()));
-			return InputResult(InputResult::Type::Action);
-		}
-	}
-	else if (InputMap::is_action_pressed(Keybind::SetToTurnBasedSpeed, event))
-	{
-		world_state->set_tick_speed(TickSpeed::TURN_BASED);
+		m_inventory_menu->selected_slot += 1;
+		m_inventory_menu->selected_slot = m_inventory_menu->selected_slot % inventory->get_max_slots();
 		return InputResult();
 	}
-	else if (InputMap::is_action_pressed(Keybind::SetToRealTimeSpeed, event))
+	
+	if (InputMap::is_action_pressed(Keybind::MenuDown, event))
 	{
-		world_state->set_tick_speed(TickSpeed::REAL_TIME);
-		return InputResult();
-	}
-	else if (InputMap::is_action_pressed(Keybind::SetToRealTime2xSpeed, event))
-	{
-		world_state->set_tick_speed(TickSpeed::REAL_TIME_2X);
+		m_inventory_menu->selected_slot -= 1;
+		m_inventory_menu->selected_slot = m_inventory_menu->selected_slot % inventory->get_max_slots();
 
 		return InputResult();
 	}
-	else if (InputMap::is_action_pressed(Keybind::SetToRealTime4xSpeed, event))
+	
+	if (!is_sleeping && is_alive && InputMap::is_action_pressed(Keybind::Drop, event))
 	{
-		world_state->set_tick_speed(TickSpeed::REAL_TIME_4X);
+		if (auto selected_item = inventory->get_item(m_inventory_menu->selected_slot))
+		{
+			return InputResult(std::make_unique<DropAction>(player->interact_speed(), player, selected_item), new InputResult(InputResult::Type::Pop_InputHandler));
+		}
+
 		return InputResult();
 	}
-	else if (InputMap::is_action_pressed(Keybind::PinSidebarMenu, event))
+	
+	if (InputMap::is_action_pressed(Keybind::Examine, event))
+	{
+		if (auto selected_item = inventory->get_item(m_inventory_menu->selected_slot))
+		{
+			m_examine_menu->examined_entities.clear();
+			m_examine_menu->examined_entities.push_back(selected_item);
+			m_examine_menu->show();
+			m_examine_menu->focus();
+		}
+
+		return InputResult();
+	}
+	
+	if (InputMap::is_action_pressed(Keybind::PinSidebarMenu, event))
 	{
 		m_inventory_menu->set_pinned(!m_inventory_menu->is_pinned());
 		return InputResult();
 	}
 
-	return InputResult();
+	return InputHandler_Player::ev_key_down(event);
 }
 
-void PlayerInventoryHandler::step(const TimeUnit& delta_time)
+void InputHandler_Inventory::step(const TimeUnit& delta_time)
 {
-	PlayerInputHandler::step(delta_time);
+	InputHandler_Player::step(delta_time);
 
 	auto player = get_player();
 	auto inventory = player->get_inventory();
+}
 
-	if (inventory->empty())
+void InputHandler_Interaction::init()
+{
+	InputHandler_Player::init();
+
+}
+
+void InputHandler_Interaction::remove()
+{
+
+}
+
+InputResult InputHandler_Interaction::ev_key_down(SDL_Event event)
+{
+	return InputHandler_Player::ev_key_down(event);
+}
+
+InputResult InputHandler_PositionSelector::ev_key_down(SDL_Event event)
+{
+	Position move_dir = InputMap::get_input_direction(event);
+
+	if (!move_dir.empty())
 	{
-		m_inventory_menu->selected_slot = -1;
+		if (!m_valid_positions.empty() && m_valid_positions.contains(move_dir + m_center))
+		{
+			return InputResult(InputResult::Type::Pop_InputHandler);
+		}
+
+		auto result = m_callback(this, move_dir + m_center);
+		result.next_input_result = new InputResult(InputResult::Type::Pop_InputHandler);
+		return result;
 	}
+
+	if (InputMap::is_action_pressed(m_input_keybind, event) || InputMap::is_action_pressed(Keybind::Quit, event))
+	{
+		return InputResult(InputResult::Type::Pop_InputHandler);
+	}
+
+	return InputHandler_Player::ev_key_down(event);
+}
+
+void InputHandler_PositionSelector::render(const RenderParams& params) const
+{
+	for (auto& pos : m_valid_positions)
+	{
+		int draw_x{ pos.x }, draw_y{ pos.y }, draw_z{ pos.z };
+
+		if (params.camera)
+		{
+			if (!params.camera->in_view(pos))
+				return;
+
+			std::tie(draw_x, draw_y, draw_z) = params.camera->get_screen(pos).as_tuple();
+		}
+
+		if (draw_z != 0)
+			continue;
+
+		auto tile = get_world()->get_tile(pos);
+
+		auto draw_fg = tile->bg();
+		auto draw_bg = tile->fg();
+
+		if (params.use_fov)
+		{
+			if (tile->is_visible())
+			{
+				draw_fg = tile->bg();
+				draw_bg = tile->fg();
+			}
+			else if (tile->is_explored())
+			{
+				draw_fg = color::get("black");
+				draw_bg = color::get("col_explored");
+			}
+			else
+			{
+				draw_fg = color::get("white");
+				draw_bg = color::get("white");
+			}
+		}
+
+		output::set_fg(draw_x + params.world_inner_frame_p1().x, draw_y + params.world_inner_frame_p1().x, draw_fg);
+		output::set_bg(draw_x + params.world_inner_frame_p1().x, draw_y + params.world_inner_frame_p1().y, draw_bg);
+	}
+
+	output::console_printf_rgb_rect_ex(
+		params.world_inner_frame_p1().x, params.world_inner_frame_p1().y, params.world_inner_frame_size().x, params.world_inner_frame_size().y,
+		color::get("white"), color::get("black"),
+		TCOD_BKGND_SET, TCOD_CENTER, m_title
+	);
 }

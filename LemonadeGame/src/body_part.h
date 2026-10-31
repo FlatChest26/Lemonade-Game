@@ -72,7 +72,6 @@ inline std::map<std::string, BodyPartRelativePosition> AllBodyPartRelativePositi
 	{ "RIGHT", BodyPartRelativePosition::RIGHT },
 };
 
-
 class BodyPart : public Thing
 {
 protected:
@@ -94,9 +93,6 @@ protected:
 public:
 	BodyPart(Entity* owner = nullptr, ThingID ID = "", RawMaster::Ref<BodyPartType> type = nullptr, double rel_size = 25.0, BodyPartPosition position = BodyPartPosition::CENTER, std::string prefix = "");
 
-	constexpr bool is_body_part() const override { return true; }
-	constexpr BodyPart* as_body_part() override { return this; }
-
 	// -- Getters -- //
 
 	const BodyPartType* get_type() const { ASSERT(m_type, "Body part has no type"); return m_type.get(); }
@@ -106,14 +102,13 @@ public:
 
 	// -- Thing -- //
 
-	BodyPartID ID() const override { return m_ID; }
+	BodyPartID ID() const { return m_ID; }
 
-	Noun get_noun() const override { return m_type->noun; }
-	Pronouns get_pronouns() const override { return pronouns::IT_ITS; }
+	virtual Noun noun() const override { return m_type->noun; }
 
 	bool is_plural() const override { return m_type->plural; }
 
-	BodyPartType::Category category() const { return m_type->category; }
+	BodyPartCategory category() const { return m_type->category; }
 
 	virtual std::string prefix() const override;
 
@@ -157,36 +152,36 @@ public:
 public:
 	// -- Flag Checks -- //
 
-	BodyPartType::Flag flags() const { return m_type->flags; }
+	BodyPartFlag flags() const { return m_type->flags; }
 
-	bool has_flag(BodyPartType::Flag flag) { return m_type->flags & flag; }
+	bool has_flag(BodyPartFlag flag) { return m_type->flags & flag; }
 
-	bool is_sensory() const { return m_type->flags & BodyPartType::Flag::SENSORY; }
+	bool is_sensory() const { return m_type->flags & BodyPartFlag::SENSORY; }
 
-	bool can_choke() const { return m_type->flags & BodyPartType::Flag::CHOKABLE; }
+	bool can_choke() const { return m_type->flags & BodyPartFlag::CHOKABLE; }
 
-	bool is_grasp() const { return m_type->flags & BodyPartType::Flag::GRASP; }
-	bool is_limb() const { return m_type->flags & BodyPartType::Flag::LIMB; }
-	bool is_stance() const { return m_type->flags & BodyPartType::Flag::STANCE; }
+	bool is_grasp() const { return m_type->flags & BodyPartFlag::GRASP; }
+	bool is_limb() const { return m_type->flags & BodyPartFlag::LIMB; }
+	bool is_stance() const { return m_type->flags & BodyPartFlag::STANCE; }
 
-	bool is_internal() const { return m_type->flags & BodyPartType::Flag::INTERNAL; }
+	bool is_internal() const { return m_type->flags & BodyPartFlag::INTERNAL; }
 
-	bool is_used_for_thought() const { return m_type->flags & BodyPartType::Flag::THOUGHT; }
-	bool is_used_for_circulation() const { return m_type->flags & BodyPartType::Flag::CIRCULATION; }
-	bool is_used_for_digestion() const { return m_type->flags & BodyPartType::Flag::DIGESTION; }
+	bool is_used_for_thought() const { return m_type->flags & BodyPartFlag::THOUGHT; }
+	bool is_used_for_circulation() const { return m_type->flags & BodyPartFlag::CIRCULATION; }
+	bool is_used_for_digestion() const { return m_type->flags & BodyPartFlag::DIGESTION; }
 
-	bool is_used_to_eat() const { return m_type->flags & BodyPartType::Flag::EAT; }
-	bool is_used_to_speak() const { return m_type->flags & BodyPartType::Flag::SPEAK; }
+	bool is_used_to_eat() const { return m_type->flags & BodyPartFlag::EAT; }
+	bool is_used_to_speak() const { return m_type->flags & BodyPartFlag::SPEAK; }
 
-	bool is_phallus() const { return m_type->flags & BodyPartType::Flag::PHALLUS; }
-	bool is_orifice() const { return m_type->flags & BodyPartType::Flag::ORIFICE; }
-	bool is_handle() const { return m_type->flags & BodyPartType::Flag::HANDLE; }
-	bool is_cleavage() const { return m_type->flags & BodyPartType::Flag::CLEAVAGE; }
+	bool is_phallus() const { return m_type->flags & BodyPartFlag::PHALLUS; }
+	bool is_orifice() const { return m_type->flags & BodyPartFlag::ORIFICE; }
+	bool is_handle() const { return m_type->flags & BodyPartFlag::HANDLE; }
+	bool is_cleavage() const { return m_type->flags & BodyPartFlag::CLEAVAGE; }
 
-	bool is_lewd() const { return m_type->flags & BodyPartType::Flag::LEWD; }
-	bool is_suggestive() const { return m_type->flags & BodyPartType::Flag::SUGGESTIVE; }
-	bool is_kinky() const { return m_type->flags & BodyPartType::Flag::KINKY; }
-	bool is_pretty() const { return m_type->flags & BodyPartType::Flag::PRETTY; }
+	bool is_lewd() const { return m_type->flags & BodyPartFlag::LEWD; }
+	bool is_suggestive() const { return m_type->flags & BodyPartFlag::SUGGESTIVE; }
+	bool is_kinky() const { return m_type->flags & BodyPartFlag::KINKY; }
+	bool is_pretty() const { return m_type->flags & BodyPartFlag::PRETTY; }
 
 public:
 

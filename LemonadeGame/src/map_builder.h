@@ -12,7 +12,7 @@
 #include <map>
 
 class TileMap;
-class TileType;
+struct TileType;
 
 using TileMapping = std::map<char, ThingID>;
 
@@ -20,23 +20,23 @@ namespace MapBuilder
 {
 	inline const TileMapping default_tile_mapping
 	{
-		{ ' ', "TILE_AIR"					},
-		{ ',', "TILE_GRASS"					},
-		{ 'u', "TILE_GRAVEL"				},
-		{ '.', "TILE_PLAIN_FLOOR"			},
-		{ '#', "TILE_PLAIN_WALL"			},
-		{ '+', "TILE_DOOR"					},
-		{ '[', "TILE_WINDOW"				},
-		{ 'o', "TILE_GLASS"					},
-		{ '<', "TILE_UPWARD_STAIRCASE"		},
-		{ '>', "TILE_DOWNWARD_STAIRCASE"	},
+		{ ' ', "TILE_AIR" },
+		{ ',', "TILE_GRASS" },
+		{ 'u', "TILE_GRAVEL" },
+		{ '.', "TILE_PLAIN_FLOOR" },
+		{ '#', "TILE_PLAIN_WALL" },
+		{ '+', "TILE_DOOR" },
+		{ '[', "TILE_WINDOW" },
+		{ 'o', "TILE_GLASS" },
+		{ '<', "TILE_UPWARD_STAIRCASE" },
+		{ '>', "TILE_DOWNWARD_STAIRCASE" },
 		{ 'X', "TILE_UP_AND_DOWN_STAIRCASE" },
-		{ '=', "TILE_GARAGE_DOOR"			},
-		{ '^', "TILE_FENCE"					},
-		{ '/', "TILE_GLASS_DOOR"			},
-		{ 'V', "TILE_SLANTED_ROOF"			},
-		{ '_', "TILE_SIDEWALK"				},
-		{ 's', "TILE_ROAD"					},
+		{ '=', "TILE_GARAGE_DOOR" },
+		{ '^', "TILE_FENCE" },
+		{ '/', "TILE_GLASS_DOOR" },
+		{ 'V', "TILE_SLANTED_ROOF" },
+		{ '_', "TILE_SIDEWALK" },
+		{ 's', "TILE_ROAD" },
 	};
 
 	struct ASCIIMap

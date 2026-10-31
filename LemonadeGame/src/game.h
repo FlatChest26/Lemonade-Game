@@ -4,14 +4,7 @@
 #define LEMONADE_GAME_SRC_GAME_H
 
 #include "game_states.h"
-
-struct GameSettings
-{
-	bool show_explored_tiles = true;
-	bool fixed_camera = true; 
-	bool instant_actions = true;
-	bool use_second_person_pronouns = true;
-};
+#include "game_settings.h"
 
 /*
 This class manages the upper level of application logic, including the game loop and game state management.
@@ -33,8 +26,6 @@ public:
 
 	uint32_t frame = 0;
 
-	GameSettings settings;
-
 public:
 	Game() {}
 	virtual ~Game() {}
@@ -52,8 +43,6 @@ public:
 		return m_game_states.back().get();
 	}
 
-	GameSettings& get_settings() { return settings; }
-
 public:
 	// -- Game State -- //
 
@@ -68,26 +57,28 @@ public:
 		{
 		case InputResult::Type::None:
 		{
-			return;
+			break;
 		}
 		case InputResult::Type::Pop_GameState:
 		{
 			pop_game_state();
-
-			return;
+			break;
 		}
 		case InputResult::Type::Push_GameState:
 		{
 			push_game_state(result.next_game_state);
-
-			return;
+			break;
 		}
 		case InputResult::Type::Reset_GameState:
 		{
 			reset_game_states(result.next_game_state);
-
-			return;
+			break;
 		}
+		}
+
+		if (result.next_input_result)
+		{
+			handle_input_result(std::move(*result.next_input_result));
 		}
 	}
 

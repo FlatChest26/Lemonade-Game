@@ -2,8 +2,10 @@
 #include "tile_map.h"
 #include "entity.h"
 #include "world.h"
-#include <unordered_map>
 #include "transforms.h"
+#include "debug_info.h"
+
+#include <unordered_map>
 
 namespace Pathfinding
 {
@@ -14,8 +16,8 @@ namespace Pathfinding
 		bool visited{ false };
 		Node* parent{ nullptr };
 
-		double global_goal{ 0.0f };
 		double local_goal{ 0.0f };
+		double global_goal{ 0.0f };
 	};
 
 	//entity can be null!
@@ -32,11 +34,6 @@ namespace Pathfinding
 
 		if (entity && entity->can_collide())
 		{
-			if (tile_at->is_blocked())
-			{
-				return -1.0f;
-			}
-
 			auto world = tile_map->get_world();
 
 			if (!world)
@@ -45,7 +42,7 @@ namespace Pathfinding
 			}
 			else if (world->has_blocking_entities_at(pos, { .ignore_entities = { entity }, .ignore_flags = EntityFlag::FREE_TO_MOVE }))
 			{
-				cost *= 1000.0f;
+				return -1.0f;
 			}
 		}
 
@@ -54,8 +51,7 @@ namespace Pathfinding
 			auto tile_below = tile_map->get_tile(pos + Position(0, 0, -1));
 			if (!tile_below->has_ceiling())
 			{
-				//cost *= 50.0f;
-				cost = -1.0f;
+				cost *= 50.0f;
 			}
 		}
 
@@ -71,47 +67,44 @@ namespace Pathfinding
 			return -1.0f;
 		}
 
-		return tile_map->euclidian_distance_between_squared(from_pos, to_pos);
+		return (to_pos - from_pos).length_squared();
 	}
 
-	static Node* create_node_at(const Coord& x, const Coord& y, const Coord& z)
+	static Node create_node_at(const Coord& x, const Coord& y, const Coord& z)
 	{
-		return new Node{
+		return Node
+		{
 			.pos = Position(x, y, z),
 
 			.visited = false,
 			.parent = nullptr,
 
-			.global_goal = INFINITY,
 			.local_goal = INFINITY,
+			.global_goal = INFINITY,
 		};
 	}
 
-	static Node* create_node_at(const Position& pos)
+	static Node create_node_at(const Position& pos)
 	{
-		return new Node{
-			.pos = pos,
-
-			.visited = false,
-			.parent = nullptr,
-
-			.global_goal = INFINITY,
-			.local_goal = INFINITY,
-		};
+		return create_node_at(pos.x, pos.y, pos.z);
 	}
 
 	//entity can be null!
 	std::vector<Position> Pathfinding::compute_path(TileMap* tile_map, Position start_pos, Position end_pos, Entity* entity)
 	{
+#ifdef _DEBUG
+		// DebugInfo::clear_debug_tiles();
+#endif // _DEBUG
+
 		if (!tile_map)
 		{
 			CERR("tile_map is null!");
 			return {};
 		}
 
-		std::unordered_map<Position, std::unique_ptr<Node>> created_nodes;
+		std::unordered_map<Position, Node> created_nodes;
 
-		auto get_node = [&created_nodes, &tile_map](const Position& pos) mutable
+		auto get_node = [&created_nodes, &tile_map](const Position& pos)
 			{
 				if (!tile_map->in_bounds(pos))
 				{
@@ -120,10 +113,12 @@ namespace Pathfinding
 
 				if (!created_nodes.contains(pos))
 				{
-					created_nodes[pos] = std::unique_ptr<Node>(create_node_at(pos));
+					created_nodes[pos] = create_node_at(pos);
 				}
-
-				return created_nodes[pos].get();
+				
+				//DebugInfo::set_debug_tile(pos, DebugInfo::DebugTile{ .renderable = { .bg = color::get("red") }, .change_bg = true });
+				
+				return &created_nodes.at(pos);
 			};
 
 		start_pos.x = std::clamp(start_pos.x, 0, (Coord)tile_map->get_width());
@@ -139,13 +134,13 @@ namespace Pathfinding
 		current_node->local_goal = 0.0f;
 		current_node->global_goal = get_hueristic(tile_map, start_pos, end_pos, entity);
 
-		std::vector<Node*> nodes_to_check;
+		std::list<Node*> nodes_to_check;
 		nodes_to_check.push_back(current_node);
 
 		while (!nodes_to_check.empty())
 		{
 			// Sort the list of nodes by how close they are to the end point
-			std::sort(nodes_to_check.begin(), nodes_to_check.end(), [](Node* n1, Node* n2) { return n1->global_goal > n2->global_goal; });
+			nodes_to_check.sort([](Node* n1, Node* n2) { return n1->global_goal > n2->global_goal; });
 
 			// Get rid of all the nodes which we've already visited
 			while (!nodes_to_check.empty() && nodes_to_check.back()->visited)
@@ -171,20 +166,20 @@ namespace Pathfinding
 			// Check for unvisited nodes
 			for (const Position& check_location : transforms::get_surrounding_locations(current_node->pos, tile->can_ascend(), can_fall || tile->can_descend()))
 			{
-				if (!tile_map->in_bounds(check_location))
-					continue;
-
 				Node* neighbor_node = get_node(check_location);
-				
+
 				if (!neighbor_node)
 					continue;
 
 				double move_cost = get_move_cost(tile_map, check_location, entity);
-				
-				if (!neighbor_node->visited && move_cost > 0.0f)
+
+				if (move_cost < DBL_EPSILON)
+					continue;
+
+				if (!neighbor_node->visited)
 					nodes_to_check.push_back(neighbor_node);
 
-				double possible_lower_goal = current_node->local_goal + (tile_map->euclidian_distance_between_squared(current_node->pos, neighbor_node->pos) + move_cost);
+				double possible_lower_goal = current_node->local_goal + ((neighbor_node->pos - current_node->pos).length_squared() + (move_cost * move_cost));
 
 				if (possible_lower_goal < neighbor_node->local_goal)
 				{
@@ -203,6 +198,8 @@ namespace Pathfinding
 		while (checking_node != nullptr)
 		{
 			path.push_back(checking_node->pos);
+			//DebugInfo::set_debug_tile(checking_node->pos, DebugInfo::DebugTile{ .renderable = { .bg = color::get("yellow") }, .change_bg = true });
+			
 			checking_node = checking_node->parent;
 		}
 

@@ -16,9 +16,10 @@ protected:
 	Age m_total_lifespan{ 80 };
 
 public:
-	Living(Entity* owner = nullptr, Age current_age = {18}, Age total_lifespan = {80}):
+	Living(Entity* owner = nullptr, Age current_age = { 18 }, Age total_lifespan = { 80 }) :
 		m_owner(owner), m_current_age(current_age), m_total_lifespan(total_lifespan)
-	{}
+	{
+	}
 
 	void set_owner(Entity* owner);
 	Entity* get_owner() const;
@@ -41,6 +42,5 @@ public:
 		return m_total_lifespan < static_cast<Age::age_t>(INFINITY);
 	}
 };
-
 
 #endif // !LEMONADE_GAME_SRC_LIVING_H

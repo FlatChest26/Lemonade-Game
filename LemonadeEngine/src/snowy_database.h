@@ -401,7 +401,6 @@ namespace snowy
 
 			return values;
 		}
-
 	};
 
 	template<typename T>

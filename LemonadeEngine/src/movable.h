@@ -19,13 +19,12 @@ public:
 	using CoordType = PositionType::IntType;
 	using LengthType = SizeType::IntType;
 
-
 protected:
 	TransformType m_transform{};
 
 public:
 	Movable() :
-		m_transform({ PositionType(0, 0, 0), SizeType(1, 1, 1), NORTH})
+		m_transform({ PositionType(0, 0, 0), SizeType(1, 1, 1), NORTH })
 	{
 	}
 
@@ -139,7 +138,7 @@ public:
 	/* Sets this thing's position. */
 	template<typename T>
 	void set_position(const T& x, const T& y, const T& z) { return set_position(PositionType(static_cast<CoordType>(x), static_cast<CoordType>(y), static_cast<CoordType>(z))); }
-	
+
 	// Size
 
 	/* Sets this thing's size. */
@@ -198,11 +197,25 @@ public:
 	template<typename T>
 	bool contains_point(Vec3D<T> pos) const { return contains_point(pos.x, pos.y, pos.z); }
 
+	/* Returns true if the point is inside this thing. */
+	template<typename T>
+	bool contains_offset(const T& x, const T& y, const T& z) const
+	{
+		return
+			0 <= static_cast<CoordType>(x) && static_cast<CoordType>(x) < static_cast<CoordType>(m_transform.size.x) &&
+			0 <= static_cast<CoordType>(y) && static_cast<CoordType>(y) < static_cast<CoordType>(m_transform.size.y) &&
+			0 <= static_cast<CoordType>(z) && static_cast<CoordType>(z) < static_cast<CoordType>(m_transform.size.z);
+	}
+
+	/* Returns true if the point is inside this thing. */
+	template<typename T>
+	bool contains_offset(Vec3D<T> pos) const { return contains_offset(pos.x, pos.y, pos.z); }
+
 	/* Returns the points inside this thing, with the top-left-lower corner at (0, 0, 0). */
 	virtual std::vector<Position> get_offsets() const
 	{
-		if (m_transform.size == SizeType{1, 1, 1}) 
-			return { {0, 0, 0} };
+		if (m_transform.size == SizeType{ 1, 1, 1 })
+			return { { 0, 0, 0 } };
 
 		std::vector<Position> offsets;
 		offsets.reserve(static_cast<size_t>(m_transform.size.x * m_transform.size.y * m_transform.size.z));
@@ -218,7 +231,7 @@ public:
 	/* Returns the points inside this thing. */
 	virtual std::vector<Position> get_points() const
 	{
-		if (m_transform.size == SizeType{ 1, 1, 1 }) 
+		if (m_transform.size == SizeType{ 1, 1, 1 })
 			return { static_cast<Position>(m_transform.position) };
 
 		std::vector<Position> points;
@@ -236,7 +249,7 @@ public:
 	{
 		return Movable<Position, Size>(static_cast<Position>(m_transform.position), static_cast<Size>(m_transform.size), m_transform.direction);
 	}
-	
+
 	constexpr operator Movable<PositionF, SizeF>()
 	{
 		return Movable<PositionF, SizeF>(static_cast<PositionF>(m_transform.position), static_cast<SizeF>(m_transform.size), m_transform.direction);

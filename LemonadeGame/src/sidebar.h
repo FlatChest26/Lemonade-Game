@@ -10,6 +10,7 @@
 class WorldGameState;
 class World;
 class Entity;
+class Tile;
 class TileMap;
 class Sidebar;
 
@@ -26,8 +27,9 @@ class SidebarMenu
 {
 protected:
 	SidebarMenuID m_ID;
+	bool m_visible{ true };
 	bool m_focused{ false };
-	bool m_collapsed{ true };
+	bool m_collapsed{ false };
 	bool m_pinned{ false };
 
 public:
@@ -52,6 +54,12 @@ public:
 	void pin() { set_pinned(true); }
 	void unpin() { set_pinned(false); }
 
+	bool is_visible() const { return m_visible; }
+	void set_visible(bool visible) { m_visible = visible; }
+
+	void show() { set_visible(true); }
+	void hide() { set_visible(false); }
+
 public:
 	virtual int render(const RenderParams& params, const SidebarParams& sb_params) const = 0;
 };
@@ -64,7 +72,7 @@ protected:
 
 public:
 	Sidebar(WorldGameState* world_state);
-	
+
 	WorldGameState* get_world_state() const;
 	World* get_world() const;
 	Entity* get_player() const;
@@ -109,14 +117,52 @@ public:
 	virtual int render(const RenderParams& params, const SidebarParams& sb_params) const override;
 };
 
-class SidebarMenu_Inventory : public SidebarMenu
+class SidebarMenu_Look : public SidebarMenu
 {
 public:
-	int selected_slot{ 0 };
-
+	Position look_position;
+	bool follow_player;
 	virtual int render(const RenderParams& params, const SidebarParams& sb_params) const override;
 };
 
+class SidebarMenu_PersonInfo : public SidebarMenu
+{
+public:
+	Entity* entity;
+	virtual int render(const RenderParams& params, const SidebarParams& sb_params) const override;
+};
 
+class SidebarMenu_Needs : public SidebarMenu
+{
+public:
+	Entity* entity;
+	virtual int render(const RenderParams& params, const SidebarParams& sb_params) const override;
+};
+
+class SidebarMenu_Inventory : public SidebarMenu
+{
+public:
+	Entity* entity;
+	int selected_slot{ -1 };
+	virtual int render(const RenderParams& params, const SidebarParams& sb_params) const override;
+};
+
+class SidebarMenu_Examine : public SidebarMenu
+{
+public:
+	std::vector<Entity*> examined_entities;
+	Tile* examined_tile;
+	virtual int render(const RenderParams& params, const SidebarParams& sb_params) const override;
+};
+
+class SidebarMenu_Interaction : public SidebarMenu
+{
+public:
+	Entity* actor;
+	Entity* subject;
+
+
+	virtual int render(const RenderParams& params, const SidebarParams& sb_params) const override;
+};
 
 #endif // !LEMONADE_GAME_SRC_SIDEBAR_H

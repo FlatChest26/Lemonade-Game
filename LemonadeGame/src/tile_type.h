@@ -10,8 +10,8 @@
 #include <map>
 
 #include "enum_traits.h"
-#include <snowy_database.h>
-#include <snowy_macros.h>
+#include "snowy_macros.h"
+#include "raw_object_checker.h"
 #include "snowy_grammar.h"
 
 #include "thing.h"
@@ -41,145 +41,92 @@ inline const size_t DECORATION_MASK[17] = {
 
 using TileTexture = std::vector<Renderable>;
 
-class TileType : public Thing
+enum class TileFlag : uint64_t
 {
-public:
-	enum class Flag : uint64_t
-	{
-		NONE = 0,
+	NONE = 0,
 
-		IS_WALKABLE = 1 << 0,
-		IS_BLOCKED = ~IS_WALKABLE,
+	IS_WALKABLE = 1 << 0,
+	IS_BLOCKED = ~IS_WALKABLE,
 
-		IS_TRANSPARENT = 1 << 1,
-		IS_OPAQUE = ~IS_TRANSPARENT,
+	IS_TRANSPARENT = 1 << 1,
+	IS_OPAQUE = ~IS_TRANSPARENT,
 
-		HAS_FLOOR = 1 << 2,
-		HAS_CEILING = 1 << 3,
+	HAS_FLOOR = 1 << 2,
+	HAS_CEILING = 1 << 3,
 
-		CAN_ASCEND = 1 << 4,
-		CAN_DESCEND = 1 << 5,
+	CAN_ASCEND = 1 << 4,
+	CAN_DESCEND = 1 << 5,
 
-		IS_AIR = 1 << 6,
+	IS_AIR = 1 << 6,
 
-		CAN_OPEN = 1 << 7,
-		CAN_CLOSE = 1 << 8,
+	CAN_OPEN = 1 << 7,
+	CAN_CLOSE = 1 << 8,
 
-		OPENS_NEIGHBORS = 1 << 9,
-		CLOSES_NEIGHBORS = 1 << 10,
+	OPENS_NEIGHBORS = 1 << 9,
+	CLOSES_NEIGHBORS = 1 << 10,
 
-		IS_HALF_TILE = 1 << 11,
-	};
+	HAS_TRANSPARENT_FLOOR = 1 << 11,
+	HAS_TRANSPARENT_CEILING = 1 << 12,
+};
 
-protected:
-	ThingID m_ID;
+inline std::map<std::string, TileFlag> AllTileFlags
+{
+	{ "NONE",						TileFlag::NONE },
+	{ "IS_WALKABLE",				TileFlag::IS_WALKABLE },
+	{ "IS_BLOCKED",					TileFlag::IS_BLOCKED },
+	{ "IS_TRANSPARENT",				TileFlag::IS_TRANSPARENT },
+	{ "IS_OPAQUE",					TileFlag::IS_OPAQUE },
+	{ "HAS_FLOOR",					TileFlag::HAS_FLOOR },
+	{ "HAS_CEILING",				TileFlag::HAS_CEILING },
+	{ "CAN_ASCEND",					TileFlag::CAN_ASCEND },
+	{ "CAN_DESCEND",				TileFlag::CAN_DESCEND },
+	{ "IS_AIR",						TileFlag::IS_AIR },
+	{ "CAN_OPEN",					TileFlag::CAN_OPEN },
+	{ "CAN_CLOSE",					TileFlag::CAN_CLOSE },
+	{ "OPENS_NEIGHBORS",			TileFlag::OPENS_NEIGHBORS },
+	{ "CLOSES_NEIGHBORS",			TileFlag::CLOSES_NEIGHBORS },
+	{ "HAS_TRANSPARENT_FLOOR",		TileFlag::HAS_TRANSPARENT_FLOOR },
+	{ "HAS_TRANSPARENT_CEILING",	TileFlag::HAS_TRANSPARENT_CEILING },
+};
 
-	Noun m_noun;
-	Pronouns m_pronouns;
+IS_FLAG_ENUM(TileFlag);
 
-	std::string m_description{ "" };
+struct TileType
+{
+	ThingID ID;
+	std::string description{ "" };
 
-	TileTexture m_texture{};
-	TileType::Flag m_flags{ TileType::Flag::NONE };
+	Noun noun{ "air", "air" };
 
-	bool m_random_texture{ false };
-	bool m_wall_texture{ false };
+	TileTexture texture{ { ' ', color::get("cyan"), color::get("black") } };
 
-	std::vector<ThingID> m_tags{};
-	std::vector<ThingID> m_connects_with{};
+	TileFlag flags{ 0 };
 
-	ThingID m_transforms_to{ "" };
+	bool random_texture{ false };
+	bool wall_texture{ false };
 
-	double m_move_cost{ 1.0f };
+	std::vector<ThingID> tags{};
+	std::vector<ThingID> connects_with{};
 
-public:
-	struct initializer {
-		ThingID ID;
-		std::string description{ "" };
+	ThingID transforms_to{ "" };
 
-		Noun noun{ "air", "air" };
-		Pronouns pronouns{ pronouns::IT_ITS };
+	double move_cost{ 1.0f };
 
-		TileTexture texture{ { ' ', color::get("cyan"), color::get("black") } };
-
-		TileType::Flag flags{ 0 };
-
-		bool random_texture{ false };
-		bool wall_texture{ false };
-
-		std::vector<ThingID> tags{};
-		std::vector<ThingID> connects_with{};
-
-		ThingID transforms_to{ "" };
-
-		double move_cost{ 1.0f };
-	};
-
-public:
-
-	TileType(const initializer& init = {});
+	static std::shared_ptr<RawObjectChecker> get_checker();
 	static TileType from_json(const json& j);
-
-	constexpr bool is_tile_type() const override { return true; }
-	constexpr TileType* as_tile_type() override { return this; }
-
-	// -- Getters & Setters -- //
-
-	virtual ThingID ID() const override { return m_ID; }
-
-	virtual Noun get_noun() const override { return m_noun; }
-	virtual Pronouns get_pronouns() const override { return m_pronouns; }
-	virtual std::string description() const override { return m_description; }
-
-	virtual TileTexture& get_texture() { return m_texture; }
-	virtual const TileTexture& get_texture() const { return m_texture; }
-
-	virtual TileType::Flag tile_flags() const { return m_flags; }
-
-	virtual bool has_random_texture() const { return m_random_texture; }
-	virtual bool has_wall_texture() const { return m_wall_texture; }
-
-	virtual std::vector<ThingID>& get_tags() { return m_tags; }
-	virtual const std::vector<ThingID>& get_tags() const { return m_tags; }
-
-	virtual std::vector<ThingID>& get_connect_with() { return m_connects_with; }
-	virtual const std::vector<ThingID>& get_connect_with() const { return m_connects_with; }
-
-	virtual ThingID get_transform_ID() const { return m_transforms_to; }
-	virtual double get_move_cost() const { return m_move_cost; }
 };
-
-inline std::map<std::string, TileType::Flag> AllTileFlags
-{
-	{ "NONE",				TileType::Flag::NONE				},
-	{ "IS_WALKABLE",		TileType::Flag::IS_WALKABLE			},
-	{ "IS_BLOCKED",			TileType::Flag::IS_BLOCKED			},
-	{ "IS_TRANSPARENT",		TileType::Flag::IS_TRANSPARENT		},
-	{ "IS_OPAQUE",			TileType::Flag::IS_OPAQUE			},
-	{ "HAS_FLOOR",			TileType::Flag::HAS_FLOOR			},
-	{ "HAS_CEILING",		TileType::Flag::HAS_CEILING			},
-	{ "CAN_ASCEND",			TileType::Flag::CAN_ASCEND			},
-	{ "CAN_DESCEND",		TileType::Flag::CAN_DESCEND			},
-	{ "IS_AIR",				TileType::Flag::IS_AIR				},
-	{ "CAN_OPEN",			TileType::Flag::CAN_OPEN			},
-	{ "CAN_CLOSE",			TileType::Flag::CAN_CLOSE			},
-	{ "OPENS_NEIGHBORS",	TileType::Flag::OPENS_NEIGHBORS		},
-	{ "CLOSES_NEIGHBORS",	TileType::Flag::CLOSES_NEIGHBORS	},
-	{ "IS_HALF_TILE",		TileType::Flag::IS_HALF_TILE		},
-};
-
-IS_FLAG_ENUM(TileType::Flag);
 
 namespace tile_types
 {
-	inline TileType NO_TILE{ {
+	inline TileType VoidTile
+	{
 		.ID = "TILE_VOID",
 		.noun = { "void", "void" },
 		.texture = { { ' ', color::get("red"), color::get("black") } },
-		.flags = TileType::Flag::IS_TRANSPARENT | TileType::Flag::HAS_FLOOR | TileType::Flag::HAS_CEILING,
+		.flags = TileFlag::IS_TRANSPARENT | TileFlag::HAS_FLOOR | TileFlag::HAS_CEILING,
 		.tags = { "VOID" },
 		.move_cost = 0.0f
-	} };
+	};
 }
 
 #endif // !LEMONADE_GAME_SRC_TILE_TYPE_H

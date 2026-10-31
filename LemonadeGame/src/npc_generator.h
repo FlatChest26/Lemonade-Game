@@ -14,12 +14,16 @@ class AIManager;
 class WorldGameState;
 class World;
 
+namespace npc_generator
+{
+	extern void initialize_npc_banks();
+}
+
 class NPCGenerator
 {
 protected:
 	AIManager* m_owner{ nullptr };
 	uint32_t m_npc_count{ 0 };
-	
 
 public:
 	NPCGenerator(AIManager* owner);
@@ -27,7 +31,6 @@ public:
 	AIManager* get_ai_manager() const;
 	WorldGameState* get_world_state() const;
 	World* get_world() const;
-
 
 public:
 	// -- Utilities -- //

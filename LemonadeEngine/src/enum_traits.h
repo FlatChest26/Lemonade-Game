@@ -98,7 +98,6 @@ struct enum_test_result
 	}
 };
 
-
 template<typename E, typename = std::enable_if_t<is_flag_enum<E>::value>>
 inline E operator~(E l)
 {
