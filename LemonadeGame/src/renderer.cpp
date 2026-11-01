@@ -161,6 +161,38 @@ void WorldRenderer::render_entity(const RenderParams& params, const Entity* enti
 		camera_offset = params.camera->get_screen(0, 0, 0);
 	}
 
+	std::vector<RenderOverride> active_overrides;
+
+	for (const auto& override : entity->render_overrides)
+	{
+		if (override.active && !override.active(entity))
+		{
+			continue;
+		}
+
+		if (override.flash_frames_on > 0)
+		{
+			FrameInt frame = params.current_frame % (override.flash_frames_on + override.flash_frames_off);
+
+			if (frame > override.flash_frames_on)
+			{
+				continue;
+			}
+		}
+
+		active_overrides.push_back(override);
+	}
+
+	if (!active_overrides.empty())
+	{
+		std::sort(active_overrides.begin(), active_overrides.end(),
+			[](const RenderOverride& a, const RenderOverride& b)
+			{
+				return a.priority < b.priority;
+			}
+		);
+	}
+
 	for (const auto& offset : entity->get_movable()->get_offsets()) // In the case of drawing an entity larger than 1x1x1
 	{
 		Position world_position = entity->get_movable()->pos() + offset;
@@ -188,9 +220,24 @@ void WorldRenderer::render_entity(const RenderParams& params, const Entity* enti
 			draw_renderable.glyph = DISTANT_DOT;
 		}
 
-		if (!entity->is_on_floor())
+		if(!active_overrides.empty())
 		{
-			draw_renderable.bg = color::get("col_falling");
+			auto& override = active_overrides.front();
+
+			if (override.override_glyph)
+			{
+				draw_renderable.glyph = override.renderable.glyph;
+			}
+
+			if (override.override_fg)
+			{
+				draw_renderable.fg = override.renderable.fg;
+			}
+
+			if (override.override_bg)
+			{
+				draw_renderable.bg = override.renderable.bg;
+			}
 		}
 
 		output::put_rgb(

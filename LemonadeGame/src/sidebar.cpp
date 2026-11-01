@@ -141,7 +141,6 @@ int SidebarMenu_PersonInfo::render(const RenderParams& params, const SidebarPara
 		};
 
 	print_text(fmt::format("{} ({})", entity->full_name(), entity->pronouns()->shortened), entity->fg());
-	draw_y++;
 	print_text(fmt::format("${:.2f}", entity->get_person()->cash().total_dollars()), color::get("yellow"));
 
 	panel_height = std::max(panel_height, (draw_y - panel_y) + 1);
@@ -220,6 +219,11 @@ int SidebarMenu_Look::render(const RenderParams& params, const SidebarParams& sb
 
 int SidebarMenu_Needs::render(const RenderParams& params, const SidebarParams& sb_params) const
 {
+	if (!entity->has_living())
+	{
+		return 0;
+	}
+
 	int panel_x = sb_params.menu_position.x;
 	int panel_y = sb_params.menu_position.y;
 
@@ -237,9 +241,9 @@ int SidebarMenu_Needs::render(const RenderParams& params, const SidebarParams& s
 			draw_y += output::console_printf_rgb_rect_ex(draw_x, draw_y, panel_width - 1, 0, new_fg, bg, DEFAULT_BKGND_FLAG, TCOD_LEFT, text);
 		};
 
-	for (const auto& need_id : entity->get_person()->get_needs())
+	for (const auto& need_id : entity->get_living()->get_needs())
 	{
-		const auto& need = entity->get_person()->stat(need_id);
+		const auto& need = entity->get_living()->stat(need_id);
 		print_text(fmt::format("{}", capitalize(need.name()), need.get_value()), fg);
 		print_text(fmt::format(" You are {}.", need.description()), need.description_color());
 	}

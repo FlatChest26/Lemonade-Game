@@ -5,6 +5,7 @@
 
 #include "camera.h"
 #include "transforms.h"
+#include "game_settings.h"
 
 enum class UIAttachPosition
 {
@@ -32,6 +33,8 @@ struct RenderParams
 	bool render_tile_map = true;
 
 	bool render_debug = false;
+
+	FrameInt current_frame = 0;
 
 	UIAttachPosition sidebar_position;
 	UIAttachPosition gamelog_position;
@@ -72,7 +75,7 @@ struct RenderParams
 		return world_outer_frame_p1() <= pos && pos < (world_outer_frame_p2() - world_render_frame.padding * 2);
 	}
 
-	bool in_world_frame(const Coord& x, const Coord& y) const
+	bool in_world_frame(Coord x, Coord y) const
 	{
 		return in_world_frame(UIPosition(x, y));
 	}

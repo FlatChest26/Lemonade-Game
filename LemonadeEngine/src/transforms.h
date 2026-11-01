@@ -981,7 +981,7 @@ namespace transforms
 		return dir;
 	}
 
-	inline Direction pos_as_dir(const Coord& x, const Coord& y, const Coord& z)
+	inline Direction pos_as_dir(Coord x, Coord y, Coord z)
 	{
 		return pos_as_dir(Position(x, y, z));
 	}

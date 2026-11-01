@@ -628,7 +628,7 @@ bool Entity::add_to_inventory(Entity* item)
 	return true;
 }
 
-void Entity::remove_from_inventory(Entity* item)
+void Entity::remove_from_inventory(Entity* item, bool update_inventory)
 {
 	if (!item)
 		return;
@@ -636,7 +636,14 @@ void Entity::remove_from_inventory(Entity* item)
 	if (!m_inventory)
 		return;
 
-	m_inventory->remove_item(item);
+	if (item->get_entity_holder() != this)
+		return;
+
+	if (update_inventory)
+	{
+		m_inventory->remove_item(item);
+	}
+
 	item->set_location(get_world(), false);
 }
 
@@ -757,7 +764,7 @@ void Entity::complete_action()
 	}
 }
 
-bool Entity::can_see(const Coord& x, const Coord& y, const Coord& z) const
+bool Entity::can_see(Coord x, Coord y, Coord z) const
 {
 	if (is_player())
 	{
@@ -800,7 +807,7 @@ bool Entity::can_see(const Entity* entity) const
 	return false;
 }
 
-bool Entity::has_seen(const Coord& x, const Coord& y, const Coord& z) const
+bool Entity::has_seen(Coord x, Coord y, Coord z) const
 {
 	if (is_player())
 	{
@@ -928,54 +935,56 @@ void Entity::step(const TimeUnit& time_delta)
 {
 	// Step person
 
-	if (is_person())
+	if (m_living)
 	{
-		get_person()->step(time_delta);
+		m_living->step(time_delta);
 	}
 
-	// Try to escape wall
-
-	if (has_movable() && !is_being_held() && can_collide() && free_to_move() && get_tile_map()->get_tile(m_movable->pos())->is_blocked())
+	if (m_movable)
 	{
-		auto new_pos = escape_wall(m_movable->pos());
+		// Try to escape wall
+		if (!is_being_held() && can_collide() && free_to_move() && get_tile_map()->get_tile(m_movable->pos())->is_blocked())
+		{
+			auto new_pos = escape_wall(m_movable->pos());
 
-		if (new_pos == m_movable->pos())
-		{
-			CERR("Entity cannot escape wall!");
-		}
-		else
-		{
-			m_movable->pos() = new_pos;
-		}
-	}
-
-	// Fall if not on ground
-	if (has_movable() && can_fall() && !is_on_floor())
-	{
-		if (!m_fall_timer)
-		{
-			m_fall_timer = std::make_unique<TimeUnit>();
+			if (new_pos == m_movable->pos())
+			{
+				CERR("Entity cannot escape wall!");
+			}
+			else
+			{
+				m_movable->pos() = new_pos;
+			}
 		}
 
-		if (*m_fall_timer < TimeUnit::from_seconds(1.0))
+		// Fall if not on ground
+		if (can_fall() && !is_on_floor())
 		{
-			*m_fall_timer += time_delta;
+			if (!m_fall_timer)
+			{
+				m_fall_timer = std::make_unique<TimeUnit>();
+			}
+
+			if (*m_fall_timer < TimeUnit::from_seconds(1.0))
+			{
+				*m_fall_timer += time_delta;
+			}
+
+			if (*m_fall_timer >= TimeUnit::from_seconds(1.0))
+			{
+				get_movable()->move(0, 0, -1);
+				*m_fall_timer -= TimeUnit::from_seconds(1.0); // Reset the fall timer
+			}
 		}
 
-		if (*m_fall_timer >= TimeUnit::from_seconds(1.0))
+		if (is_being_held() && get_entity_holder()->has_movable())
 		{
-			get_movable()->move(0, 0, -1);
-			*m_fall_timer -= TimeUnit::from_seconds(1.0); // Reset the fall timer
+			m_movable->pos() = get_entity_holder()->get_movable()->pos();
 		}
-	}
-
-	if (has_movable() && is_being_held() && get_entity_holder()->has_movable())
-	{
-		m_movable->pos() = get_entity_holder()->get_movable()->pos();
 	}
 
 	// Handle current action
-	if (has_action_user())
+	if (m_action_user)
 	{
 		if (has_current_action())
 		{
@@ -989,7 +998,7 @@ void Entity::step(const TimeUnit& time_delta)
 	}
 
 	// Step AI Brain
-	if (has_brain())
+	if (m_brain)
 	{
 		m_brain->step(time_delta);
 	}

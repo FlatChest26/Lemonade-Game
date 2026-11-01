@@ -9,6 +9,8 @@
 
 namespace EntityBuilder
 {
+	extern void default_entity_render_overrides(std::vector<RenderOverride>& render_overrides);
+
 	using StatInitializer = std::tuple<StatID, StatInt_t>;
 
 	struct CreatureInitializer
@@ -23,21 +25,21 @@ namespace EntityBuilder
 		std::vector<StatInitializer> initial_stats;
 	};
 
-	Entity* create_creature(EntityID ID, CreatureInitializer init);
+	extern Entity* create_creature(EntityID ID, CreatureInitializer init);
 
 	struct ItemInitializer
 	{
 		RawMaster::Ref<ItemDefinition> item_definition{ nullptr };
 	};
 
-	Entity* create_item(EntityID ID, ItemInitializer init);
+	extern Entity* create_item(EntityID ID, ItemInitializer init);
 
 	struct FurnitureInitializer
 	{
 		RawMaster::Ref<FurnitureDefinition> furniture_definition{ nullptr };
 	};
 
-	Entity* create_furniture(EntityID ID, FurnitureInitializer init);
+	extern Entity* create_furniture(EntityID ID, FurnitureInitializer init);
 }
 
 #endif // !LEMONADE_GAME_SRC_ENTITY_BUILDER_H

@@ -70,7 +70,7 @@ namespace Pathfinding
 		return (to_pos - from_pos).length_squared();
 	}
 
-	static Node create_node_at(const Coord& x, const Coord& y, const Coord& z)
+	static Node create_node_at(Coord x, Coord y, Coord z)
 	{
 		return Node
 		{

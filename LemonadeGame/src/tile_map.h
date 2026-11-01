@@ -37,7 +37,7 @@ protected:
 	bool m_should_update_fov{ false };
 
 public:
-	TileMap(World* world = {}, const Length& width = DEFAULT_MAP_WIDTH, const Length& height = DEFAULT_MAP_HEIGHT, const Length& depth = DEFAULT_MAP_DEPTH);
+	TileMap(World* world = {}, Length width = DEFAULT_MAP_WIDTH, Length height = DEFAULT_MAP_HEIGHT, Length depth = DEFAULT_MAP_DEPTH);
 	~TileMap();
 
 public:
@@ -57,17 +57,17 @@ public:
 	constexpr Length get_depth() const { return m_depth; }
 
 	// Returns a pointer to the `Tile` at the given coordinates. If the coordinates are out of bounds, returns a pointer to the void tile.
-	Tile* get_tile(const Coord& x, const Coord& y, const Coord& z);
+	Tile* get_tile(Coord x, Coord y, Coord z);
 	// Returns a pointer to the `Tile` at the given position. If the position is out of bounds, returns a pointer to the void tile.
 	Tile* get_tile(const Position& position) { return get_tile(position.x, position.y, position.z); }
 
 	// Returns a constant pointer to the `Tile` at the given coordinates. If the coordinates are out of bounds, returns a constant pointer to the void tile.
-	const Tile* get_tile(const Coord& x, const Coord& y, const Coord& z) const;
+	const Tile* get_tile(Coord x, Coord y, Coord z) const;
 	// Returns a constant pointer to the `Tile` at the given position. If the position is out of bounds, returns a constant pointer to the void tile.
 	const Tile* get_tile(const Position& position) const { return get_tile(position.x, position.y, position.z); }
 
 	// Returns true if the given coordinates are in bounds.
-	constexpr bool in_bounds(const Coord& x, const Coord& y, const Coord& z) const;
+	constexpr bool in_bounds(Coord x, Coord y, Coord z) const;
 	// Returns true if the given position is in bounds.
 	constexpr bool in_bounds(const Position& position) const { return in_bounds(position.x, position.y, position.z); }
 
@@ -77,7 +77,7 @@ public:
 	const TCODMap* get_tcod_map_layer(const size_t& layer) const { return get_tcod_map_layer(layer); }
 
 	// Returns the index of the tile at the given coordinates. `index = (x * height * depth) + (y * depth) + z`
-	constexpr size_t get_index(const Coord& x, const Coord& y, const Coord& z) const;
+	constexpr size_t get_index(Coord x, Coord y, Coord z) const;
 	// Returns the index of the tile at the given position. `index = (x * height * depth) + (y * depth) + z`
 	constexpr size_t get_index(const Position& position) const { return get_index(position.x, position.y, position.z); }
 
@@ -85,31 +85,31 @@ public:
 	// -- Utilities -- //
 
 	// Sets the tile at the given coordinates to the type, and optionally updates the tiles around it.
-	void set_tile(const Coord& x, const Coord& y, const Coord& z, RawMaster::Ref<TileType> type, bool update = true);
+	void set_tile(Coord x, Coord y, Coord z, RawMaster::Ref<TileType> type, bool update = true);
 	// Sets the tile at the given position to the type, and optionally updates the tiles around it.
 	void set_tile(const Position& pos, RawMaster::Ref<TileType> type, bool update = true) { set_tile(pos.x, pos.y, pos.z, type, update); }
 
 	// Updates the tile at the given coordinates.
-	void update_tile_at(const Coord& x, const Coord& y, const Coord& z);
+	void update_tile_at(Coord x, Coord y, Coord z);
 	// Updates the tile at the given position.
 	void update_tile_at(const Position& pos) { update_tile_at(pos.x, pos.y, pos.z); }
 
 	// Field of View //
 
 	// Computes what tiles would be visible from the given pov and radius.
-	void compute_fov(const Coord& pov_x, const Coord& pov_y, const Coord& pov_z, const Coord& radius);
+	void compute_fov(Coord pov_x, Coord pov_y, Coord pov_z, Coord radius);
 	// Marks a tile as being visible.
-	void fov_mark_visible(const Coord& x, const Coord& y, const Coord& z, bool visible = true);
+	void fov_mark_visible(Coord x, Coord y, Coord z, bool visible = true);
 
 	// -- Checks -- //
 
 	// Returns true if the given coordinates are visible to the previously computed FOV.
-	bool is_visible(const Coord& x, const Coord& y, const Coord& z) const;
+	bool is_visible(Coord x, Coord y, Coord z) const;
 	// Returns true if the given position is visible to the previously computed FOV.
 	bool is_visible(const Position& pos) const { return is_visible(pos.x, pos.y, pos.z); }
 
 	// Returns true if the given coordinate were once visible to a previously computed FOV.
-	bool is_explored(const Coord& x, const Coord& y, const Coord& z) const;
+	bool is_explored(Coord x, Coord y, Coord z) const;
 	// Returns true if the given position was once visible to a previously computed FOV.
 	bool is_explored(const Position& pos) const { return is_explored(pos.x, pos.y, pos.z); }
 

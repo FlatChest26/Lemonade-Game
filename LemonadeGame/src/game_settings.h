@@ -3,6 +3,8 @@
 #ifndef LEMONADE_GAME_SRC_GAME_SETTINGS_H
 #define LEMONADE_GAME_SRC_GAME_SETTINGS_H
 
+using FrameInt = uint32_t;
+
 namespace GameSettings
 {
 	inline bool SHOW_EXPLORED_TILES = true;

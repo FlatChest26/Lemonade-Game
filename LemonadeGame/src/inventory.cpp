@@ -130,11 +130,10 @@ void Inventory::clear_items()
 {
 	for (auto& item_slot : get_filled_item_slots())
 	{
-		if (!item_slot.filled())
+		if (!item_slot.item)
 			continue;
 
-		if (auto holder = item_slot.item->get_entity_holder())
-			holder->remove_from_inventory(item_slot.item);
+		if (m_owner) m_owner->remove_from_inventory(item_slot.item, false);
 
 		m_slots_taken -= item_slot.item->carry_slots();
 		item_slot.item = nullptr;

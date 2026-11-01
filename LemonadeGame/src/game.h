@@ -24,7 +24,7 @@ public:
 	bool should_update_window_title = true;
 	bool should_update_screen = true;
 
-	uint32_t frame = 0;
+	FrameInt frame = 0;
 
 public:
 	Game() {}

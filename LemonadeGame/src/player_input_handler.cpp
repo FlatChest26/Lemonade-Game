@@ -134,10 +134,10 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 	bool is_alive = false;
 	bool is_sleeping = false;
 
-	if (player->is_person())
+	if (player->has_living())
 	{
-		is_sleeping = player->get_person()->is_asleep();
-		is_alive = player->get_person()->is_alive();
+		is_sleeping = player->get_living()->is_asleep();
+		is_alive = player->get_living()->is_alive();
 	}
 
 	bool can_act = !is_sleeping && is_alive;
@@ -278,9 +278,14 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 	
 	if (InputMap::is_action_pressed(Keybind::Sleep, event))
 	{
-		if (player->get_person()->is_awake())
+		if (!player->has_living())
 		{
-			if (!player->get_person()->can_sleep())
+			return InputResult();
+		}
+
+		if (!is_sleeping)
+		{
+			if (!player->get_living()->can_sleep())
 			{
 				world_state->game_message(GameMessage("You're not tired enough to sleep."));
 				return InputResult();
@@ -290,7 +295,7 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 		}
 		else
 		{
-			if (!player->get_person()->can_wake_up())
+			if (!player->get_living()->can_wake_up())
 			{
 				world_state->game_message(GameMessage("You're too tired to wake up."));
 				return InputResult();
@@ -379,7 +384,7 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 
 	if (InputMap::is_action_pressed(Keybind::SetToRealTime4xSpeed, event))
 	{
-		if (player->is_person() && player->get_person()->is_asleep())
+		if (is_sleeping)
 		{
 			world_state->set_tick_speed(TickSpeed::REAL_TIME_8X);
 		}
@@ -483,10 +488,10 @@ InputResult InputHandler_Look::ev_key_down(SDL_Event event)
 	bool is_alive = false;
 	bool is_sleeping = false;
 
-	if (player->is_person())
+	if (player->has_living())
 	{
-		is_sleeping = player->get_person()->is_asleep();
-		is_alive = player->get_person()->is_alive();
+		is_sleeping = player->get_living()->is_asleep();
+		is_alive = player->get_living()->is_alive();
 	}
 
 	// Check if movement keys are pressed
@@ -618,10 +623,10 @@ InputResult InputHandler_Inventory::ev_key_down(SDL_Event event)
 	bool is_alive = false;
 	bool is_sleeping = false;
 
-	if (player->is_person())
+	if (player->has_living())
 	{
-		is_sleeping = player->get_person()->is_asleep();
-		is_alive = player->get_person()->is_alive();
+		is_sleeping = player->get_living()->is_asleep();
+		is_alive = player->get_living()->is_alive();
 	}
 
 	if (InputMap::is_action_pressed(Keybind::Inventory, event) || InputMap::is_action_pressed(Keybind::Quit, event))

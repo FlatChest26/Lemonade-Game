@@ -5,7 +5,7 @@
 
 #include "raw_master.h"
 
-TileMap::TileMap(World* world, const Length& width, const Length& height, const Length& depth) :
+TileMap::TileMap(World* world, Length width, Length height, Length depth) :
 	m_world(world), m_width(width), m_height(height), m_depth(depth)
 {
 	m_void_tile = Tile(RawMaster::get<TileType>("TILE_VOID"));
@@ -48,7 +48,7 @@ void TileMap::set_world(World* world)
 	m_world = world;
 }
 
-Tile* TileMap::get_tile(const Coord& x, const Coord& y, const Coord& z)
+Tile* TileMap::get_tile(Coord x, Coord y, Coord z)
 {
 	if (!in_bounds(x, y, z))
 	{
@@ -58,7 +58,7 @@ Tile* TileMap::get_tile(const Coord& x, const Coord& y, const Coord& z)
 	return &m_tiles[get_index(x, y, z)];
 }
 
-const Tile* TileMap::get_tile(const Coord& x, const Coord& y, const Coord& z) const
+const Tile* TileMap::get_tile(Coord x, Coord y, Coord z) const
 {
 	if (!in_bounds(x, y, z))
 	{
@@ -68,7 +68,7 @@ const Tile* TileMap::get_tile(const Coord& x, const Coord& y, const Coord& z) co
 	return &m_tiles[get_index(x, y, z)];
 }
 
-constexpr bool TileMap::in_bounds(const Coord& x, const Coord& y, const Coord& z) const
+constexpr bool TileMap::in_bounds(Coord x, Coord y, Coord z) const
 {
 	return
 		0 <= x && static_cast<Length>(x) < m_width &&
@@ -76,14 +76,14 @@ constexpr bool TileMap::in_bounds(const Coord& x, const Coord& y, const Coord& z
 		0 <= z && static_cast<Length>(z) < m_depth;
 }
 
-constexpr size_t TileMap::get_index(const Coord& x, const Coord& y, const Coord& z) const
+constexpr size_t TileMap::get_index(Coord x, Coord y, Coord z) const
 {
 	return static_cast<size_t>(x) * static_cast<size_t>(get_height()) * static_cast<size_t>(get_depth())
 		+ static_cast<size_t>(y) * static_cast<size_t>(get_depth())
 		+ static_cast<size_t>(z);
 }
 
-void TileMap::set_tile(const Coord& x, const Coord& y, const Coord& z, RawMaster::Ref<TileType> type, bool update)
+void TileMap::set_tile(Coord x, Coord y, Coord z, RawMaster::Ref<TileType> type, bool update)
 {
 	if (!in_bounds(x, y, z))
 	{
@@ -109,7 +109,7 @@ void TileMap::set_tile(const Coord& x, const Coord& y, const Coord& z, RawMaster
 	set_update_path(true);
 }
 
-void TileMap::update_tile_at(const Coord& x, const Coord& y, const Coord& z)
+void TileMap::update_tile_at(Coord x, Coord y, Coord z)
 {
 	if (!in_bounds(x, y, z))
 	{
@@ -164,7 +164,7 @@ void TileMap::update_tile_at(const Coord& x, const Coord& y, const Coord& z)
 	}
 }
 
-void TileMap::compute_fov(const Coord& pov_x, const Coord& pov_y, const Coord& pov_z, const Coord& radius)
+void TileMap::compute_fov(Coord pov_x, Coord pov_y, Coord pov_z, Coord radius)
 {
 	for (Coord x = 0; (Length)x < get_width(); ++x) for (Coord y = 0; (Length)y < get_height(); ++y) for (Coord z = 0; (Length)z < get_depth(); ++z)
 	{
@@ -185,7 +185,7 @@ void TileMap::compute_fov(const Coord& pov_x, const Coord& pov_y, const Coord& p
 	m_should_update_fov = false;
 }
 
-void TileMap::fov_mark_visible(const Coord& x, const Coord& y, const Coord& z, bool visible)
+void TileMap::fov_mark_visible(Coord x, Coord y, Coord z, bool visible)
 {
 	if (!in_bounds(x, y, z))
 	{
@@ -200,7 +200,7 @@ void TileMap::fov_mark_visible(const Coord& x, const Coord& y, const Coord& z, b
 	get_tile(x, y, z)->set_visible(visible);
 }
 
-bool TileMap::is_visible(const Coord& x, const Coord& y, const Coord& z) const
+bool TileMap::is_visible(Coord x, Coord y, Coord z) const
 {
 	if (!in_bounds(x, y, z))
 	{
@@ -210,7 +210,7 @@ bool TileMap::is_visible(const Coord& x, const Coord& y, const Coord& z) const
 	return get_tile(x, y, z)->is_visible();
 }
 
-bool TileMap::is_explored(const Coord& x, const Coord& y, const Coord& z) const
+bool TileMap::is_explored(Coord x, Coord y, Coord z) const
 {
 	if (!in_bounds(x, y, z))
 	{

@@ -34,12 +34,14 @@
 #include <variant>
 #include <vector>
 #include <map>
+#include <functional>
 
 class TileMap;
 class World;
 class Game;
 class WorldGameState;
 struct GameMessage;
+class Entity;
 
 using EntityLocation = std::variant<World*, Entity*>;
 
@@ -97,6 +99,22 @@ struct ActionUser
 	std::unique_ptr<Action> current_action{ nullptr };
 };
 
+struct RenderOverride
+{
+	size_t priority{ 0 };
+
+	Renderable renderable{ ' ', color::get("white"), color::get("black") };
+
+	bool override_glyph{ false };
+	bool override_fg{ false };
+	bool override_bg{ false };
+
+	FrameInt flash_frames_on{ 0 };
+	FrameInt flash_frames_off{ flash_frames_on };
+
+	std::function<bool(const Entity*)> active;
+};
+
 /* An entity represents anything in the world. */
 class Entity : public Thing
 {
@@ -123,8 +141,11 @@ protected:
 	std::unique_ptr<Person> m_person{ nullptr };
 	std::unique_ptr<TimeUnit> m_fall_timer = nullptr; // Used to simulate falling over discrete time steps.
 
+
 public:
 	// -- Virtual Variables -- //
+
+	std::vector<RenderOverride> render_overrides;
 
 	virtual TimeUnit move_speed() const; // How long it takes this entity to move a single tile.
 	virtual TimeUnit interact_speed() const; // How long it takes this entity to interact with something.
@@ -162,7 +183,7 @@ public:
 	
 
 public:
-	// Actions
+	// Actions //
 
 	ActionUser* get_action_user() const { return m_action_user.get(); }
 	bool has_action_user() const { return m_action_user != nullptr; }
@@ -223,7 +244,7 @@ public:
 	// Adds an item to this entity's `Inventory` component. Returns true if adding the item was successful.
 	bool add_to_inventory(Entity* item);
 	// Removes an item from this entity's `Inventory` component.
-	void remove_from_inventory(Entity* item);
+	void remove_from_inventory(Entity* item, bool update_inventory = true);
 	// Returns this entity's `Inventory` component, if it exists.
 	virtual Inventory* get_inventory() const { return m_inventory.get(); }
 
@@ -483,11 +504,11 @@ public:
 public:
 	// - Field of View -- //
 
-	bool can_see(const Coord& x, const Coord& y, const Coord& z) const;
+	bool can_see(Coord x, Coord y, Coord z) const;
 	bool can_see(const Position& pos) const { return can_see(pos.x, pos.y, pos.z); }
 	bool can_see(const Entity* entity) const;
 
-	bool has_seen(const Coord& x, const Coord& y, const Coord& z) const;
+	bool has_seen(Coord x, Coord y, Coord z) const;
 	bool has_seen(const Position& pos) const { return has_seen(pos.x, pos.y, pos.z); }
 
 public:

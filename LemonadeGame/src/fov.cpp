@@ -213,7 +213,7 @@ namespace sym_shadowcast3d
 			(tile.layer >= plane.depth * plane.start_slope_layer) && (tile.layer <= plane.depth * plane.end_slope_layer);
 	}
 
-	static void scan(TileMap* tile_map, Plane plane, const Coord& radius)
+	static void scan(TileMap* tile_map, Plane plane, Coord radius)
 	{
 		if (radius > 0 && plane.depth > radius)
 			return;
@@ -279,7 +279,7 @@ namespace sym_shadowcast3d
 
 namespace FOV
 {
-	static void compute_fov_symmetric_shadowcast2d(TileMap* tile_map, const Position& pov, const Coord& radius)
+	static void compute_fov_symmetric_shadowcast2d(TileMap* tile_map, const Position& pov, Coord radius)
 	{
 		using namespace sym_shadowcast2d;
 
@@ -303,7 +303,7 @@ namespace FOV
 		}
 	}
 
-	static void compute_fov_tcod_way(TileMap* tile_map, const Position& pov, const Coord& radius)
+	static void compute_fov_tcod_way(TileMap* tile_map, const Position& pov, Coord radius)
 	{
 		size_t bottom_lyr = 0;
 		size_t top_lyr = tile_map->get_depth();
@@ -328,7 +328,7 @@ namespace FOV
 		}
 	}
 
-	static void compute_fov_symmetric_shadowcast3d(TileMap* tile_map, const Position& pov, const Coord& radius)
+	static void compute_fov_symmetric_shadowcast3d(TileMap* tile_map, const Position& pov, Coord radius)
 	{
 		using namespace sym_shadowcast3d;
 
@@ -356,7 +356,7 @@ namespace FOV
 		}
 	}
 
-	void compute_fov(TileMap* tile_map, const Position& pov, const Coord& radius)
+	void compute_fov(TileMap* tile_map, const Position& pov, Coord radius)
 	{
 		if (!tile_map)
 		{

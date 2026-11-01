@@ -8,13 +8,13 @@ bool StartSleepAction::check_action() const
 	if (!EntityAction::check_action())
 		return false;
 
-	if (!m_actor->is_person())
+	if (!m_actor->has_living())
 	{
 		ACTION_CERR("Actor is not a person (and thus cannot sleep)! " << m_actor->ID());
 		return false;
 	}
 
-	if (m_actor->get_person()->is_asleep())
+	if (m_actor->get_living()->is_asleep())
 	{
 		ACTION_CERR("Actor is already asleep! " << m_actor->ID());
 		return false;
@@ -25,7 +25,7 @@ bool StartSleepAction::check_action() const
 
 ActionResult StartSleepAction::perform()
 {
-	m_actor->get_person()->fall_asleep();
+	m_actor->get_living()->fall_asleep();
 
 	auto n1 = m_actor->display_noun();
 
@@ -42,13 +42,13 @@ bool EndSleepAction::check_action() const
 	if (!EntityAction::check_action())
 		return false;
 
-	if (!m_actor->is_person())
+	if (!m_actor->has_living())
 	{
 		ACTION_CERR("Actor is not a person (and thus cannot wake up)! " << m_actor->ID());
 		return false;
 	}
 
-	if (m_actor->get_person()->is_awake())
+	if (m_actor->get_living()->is_awake())
 	{
 		ACTION_CERR("Actor is awake! " << m_actor->ID());
 		return false;
@@ -59,7 +59,7 @@ bool EndSleepAction::check_action() const
 
 ActionResult EndSleepAction::perform()
 {
-	m_actor->get_person()->wake_up();
+	m_actor->get_living()->wake_up();
 
 	auto n1 = m_actor->display_noun();
 

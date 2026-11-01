@@ -7,6 +7,8 @@
 World::World(GameState* game_state) :
 	m_game_state(game_state)
 {
+	m_entity_by_id.reserve(MAX_ENTITY_COUNT);
+	m_entities.reserve(MAX_ENTITY_COUNT);
 }
 
 GameState* World::get_game_state() const
@@ -42,77 +44,49 @@ Game* World::get_game() const
 	return nullptr;
 }
 
-std::vector<Entity*> World::get_entities()
+std::vector<Entity*> World::get_entities() const
 {
-	std::vector<Entity*> entities;
+	return m_entities;
+}
 
-	for (auto& [ID, entity] : m_entities)
+bool World::has_entity(const EntityID& ID) const
+{
+	return m_entity_by_id.contains(ID);
+}
+
+bool World::has_entity(const Entity* entity) const
+{
+	if (!entity)
 	{
-		entities.push_back(entity.get());
+		CERR("Entity is null!");
+		return false;
 	}
 
-	return entities;
+	return has_entity(entity->ID());
 }
 
-std::vector<const Entity*> World::get_entities() const
+EntityID World::get_id(const Entity* entity) const
 {
-	std::vector<const Entity*> entities;
-
-	for (auto& [ID, entity] : m_entities)
+	if (!entity)
 	{
-		entities.push_back(entity.get());
+		CERR("Entity is null!");
+		return EntityID();
 	}
 
-	return entities;
+	if (!has_entity(entity->ID()))
+	{
+		CERR("Entity not found in world: " << entity->ID());
+		return EntityID();
+	}
+
+	return entity->ID();
 }
 
-void World::queue_remove_entity(Entity* entity)
-{
-	queue_remove_entity(get_entity_ID(entity));
-}
-
-void World::queue_remove_entity(EntityID ID)
+Entity* World::get_entity(const EntityID& ID) const
 {
 	if (has_entity(ID))
 	{
-		auto entity = get_entity(ID);
-		entity->queue_remove();
-	}
-}
-
-bool World::has_entity(EntityID ID) const
-{
-	return m_entities.find(ID) != m_entities.end();
-}
-
-EntityID World::get_entity_ID(Entity* entity) const
-{
-	for (const auto& [check_ID, check_entity] : m_entities)
-	{
-		if (*check_entity == *entity)
-		{
-			return check_ID;
-		}
-	}
-
-	return EntityID();
-}
-
-Entity* World::get_entity(EntityID ID)
-{
-	if (has_entity(ID))
-	{
-		return m_entities[ID].get();
-	}
-
-	return nullptr;
-}
-
-const Entity* World::get_entity(EntityID ID) const
-{
-	if (m_entities.find(ID) != m_entities.end())
-	{
-		return m_entities.at(ID).get();
+		return m_entity_by_id.at(ID).get();
 	}
 
 	return nullptr;
@@ -120,7 +94,7 @@ const Entity* World::get_entity(EntityID ID) const
 
 Entity* World::add_entity(Entity* entity)
 {
-	if (m_entities.size() >= MAX_ENTITY_COUNT)
+	if (m_entity_by_id.size() >= MAX_ENTITY_COUNT)
 	{
 		CERR("Max entity count reached!");
 		return nullptr;
@@ -133,32 +107,18 @@ Entity* World::add_entity(Entity* entity)
 		return nullptr;
 	}
 
-	m_entities[entity_ID] = std::unique_ptr<Entity>(entity);
-	m_entities[entity_ID]->set_location(this);
+	m_entity_by_id[entity_ID] = std::unique_ptr<Entity>(entity);
+	m_entity_by_id[entity_ID]->set_location(this);
+	m_entities.push_back(m_entity_by_id[entity_ID].get());
 
-	if (m_entities[entity_ID]->is_creature())
-	{
-		m_creatures.push_back(entity_ID);
-	}
-
-	if (m_entities[entity_ID]->is_item())
-	{
-		m_items.push_back(entity_ID);
-	}
-
-	if (m_entities[entity_ID]->is_furniture())
-	{
-		m_furniture.push_back(entity_ID);
-	}
-
-	return m_entities[entity_ID].get();
+	return m_entities.back();
 }
 
-Entity* World::add_entity_at(Entity* entity, const Coord& x, const Coord& y, const Coord& z)
+Entity* World::add_entity_at(Entity* entity, Coord x, Coord y, Coord z)
 {
 	auto new_entity = add_entity(entity);
 
-	if (new_entity == nullptr)
+	if (!new_entity)
 		return nullptr;
 
 	if (!new_entity->has_movable())
@@ -173,7 +133,17 @@ Entity* World::add_entity_at(Entity* entity, const Coord& x, const Coord& y, con
 	return new_entity;
 }
 
-bool World::in_bounds(const Coord& x, const Coord& y, const Coord& z) const
+void World::queue_remove(Entity* entity)
+{
+	queue_remove(get_id(entity));
+}
+
+void World::queue_remove(const EntityID& ID)
+{
+	m_entity_by_id.at(ID)->queue_remove();
+}
+
+bool World::in_bounds(Coord x, Coord y, Coord z) const
 {
 	if (!m_tile_map)
 	{
@@ -184,7 +154,7 @@ bool World::in_bounds(const Coord& x, const Coord& y, const Coord& z) const
 	return m_tile_map->in_bounds(x, y, z);
 }
 
-Tile* World::get_tile(const Coord& x, const Coord& y, const Coord& z) const
+Tile* World::get_tile(Coord x, Coord y, Coord z) const
 {
 	if (!m_tile_map)
 	{
@@ -195,38 +165,11 @@ Tile* World::get_tile(const Coord& x, const Coord& y, const Coord& z) const
 	return m_tile_map->get_tile(x, y, z);
 }
 
-std::vector<Entity*> World::get_entities(const EntityFilter& filter)
+std::vector<Entity*> World::get_entities(const EntityFilter& filter) const
 {
 	std::vector<Entity*> entities_filtered;
-	auto entities = get_entities();
-
 	std::copy_if(
-		entities.begin(), entities.end(), std::back_inserter(entities_filtered),
-		[&filter](const auto& entity)
-		{
-			if (entity->should_remove())
-				return false;
-
-			if (filter.should_ignore(entity))
-				return false;
-
-			if (!filter.is_required(entity))
-				return false;
-
-			return true;
-		}
-	);
-
-	return entities_filtered;
-}
-
-std::vector<const Entity*> World::get_entities(const EntityFilter& filter) const
-{
-	std::vector<const Entity*> entities_filtered;
-	auto entities = get_entities();
-
-	std::copy_if(
-		entities.begin(), entities.end(), std::back_inserter(entities_filtered),
+		m_entities.begin(), m_entities.end(), std::back_inserter(entities_filtered),
 		[&filter](const auto& entity)
 		{
 			if (entity->should_remove())
@@ -249,15 +192,15 @@ bool World::has_entities(const EntityFilter& filter) const
 {
 	return std::any_of(
 		m_entities.begin(), m_entities.end(),
-		[&filter](const auto& pair)
+		[&filter](const auto& entity)
 		{
-			if (pair.second->should_remove())
+			if (entity->should_remove())
 				return false;
 
-			if (filter.should_ignore(pair.second.get()))
+			if (filter.should_ignore(entity))
 				return false;
 
-			if (!filter.is_required(pair.second.get()))
+			if (!filter.is_required(entity))
 				return false;
 
 			return true;
@@ -265,29 +208,35 @@ bool World::has_entities(const EntityFilter& filter) const
 	);
 }
 
-int World::count_entities(const EntityFilter& filter) const
+size_t World::count_entities(const EntityFilter& filter) const
 {
+	if (!m_entities.size())
+		return 0;
+
+	if (!filter.has_required() && !filter.has_ignore())
+		return static_cast<size_t>(m_entities.size());
+
 	auto count = std::count_if(
 		m_entities.begin(), m_entities.end(),
-		[&filter](const auto& pair)
+		[&filter](const auto& entity)
 		{
-			if (pair.second->should_remove())
+			if (entity->should_remove())
 				return false;
 
-			if (filter.should_ignore(pair.second.get()))
+			if (filter.should_ignore(entity))
 				return false;
 
-			if (!filter.is_required(pair.second.get()))
+			if (!filter.is_required(entity))
 				return false;
 
 			return true;
 		}
 	);
 
-	return static_cast<int>(count);
+	return static_cast<size_t>(count);
 }
 
-bool World::has_blocking_entities_at(const Coord& x, const Coord& y, const Coord& z, const EntityFilter& filter) const
+bool World::has_blocking_entities_at(Coord x, Coord y, Coord z, const EntityFilter& filter) const
 {
 	EntityFilter new_filter = filter;
 
@@ -295,7 +244,7 @@ bool World::has_blocking_entities_at(const Coord& x, const Coord& y, const Coord
 	return has_entities_at(x, y, z, new_filter);
 }
 
-std::vector<Entity*> World::get_blocking_entities_at(const Coord& x, const Coord& y, const Coord& z, const EntityFilter& filter)
+std::vector<Entity*> World::get_blocking_entities_at(Coord x, Coord y, Coord z, const EntityFilter& filter)
 {
 	EntityFilter new_filter = filter;
 
@@ -303,7 +252,7 @@ std::vector<Entity*> World::get_blocking_entities_at(const Coord& x, const Coord
 	return get_entities_at(x, y, z, new_filter);
 }
 
-std::vector<Entity*> World::get_entities_at(const Coord& x, const Coord& y, const Coord& z, const EntityFilter& filter)
+std::vector<Entity*> World::get_entities_at(Coord x, Coord y, Coord z, const EntityFilter& filter)
 {
 	EntityFilter new_filter = filter;
 
@@ -311,7 +260,7 @@ std::vector<Entity*> World::get_entities_at(const Coord& x, const Coord& y, cons
 	return get_entities(new_filter);
 }
 
-int World::count_entities_at(const Coord& x, const Coord& y, const Coord& z, const EntityFilter& filter) const
+size_t World::count_entities_at(Coord x, Coord y, Coord z, const EntityFilter& filter) const
 {
 	EntityFilter new_filter = filter;
 
@@ -319,7 +268,7 @@ int World::count_entities_at(const Coord& x, const Coord& y, const Coord& z, con
 	return count_entities(new_filter);
 }
 
-bool World::has_entities_at(const Coord& x, const Coord& y, const Coord& z, const EntityFilter& filter) const
+bool World::has_entities_at(Coord x, Coord y, Coord z, const EntityFilter& filter) const
 {
 	EntityFilter new_filter = filter;
 
@@ -327,7 +276,7 @@ bool World::has_entities_at(const Coord& x, const Coord& y, const Coord& z, cons
 	return has_entities(new_filter);
 }
 
-bool World::is_blocked(const Coord& x, const Coord& y, const Coord& z, const Entity* fit, const Coord& z_dir) const
+bool World::is_blocked(Coord x, Coord y, Coord z, const Entity* fit, Coord z_dir) const
 {
 	if (!m_tile_map)
 	{
@@ -369,7 +318,7 @@ bool World::is_blocked(const Coord& x, const Coord& y, const Coord& z, const Ent
 	);
 }
 
-bool World::is_opaque(const Coord& x, const Coord& y, const Coord& z, const Entity* fit, const Coord& z_dir)  const
+bool World::is_opaque(Coord x, Coord y, Coord z, const Entity* fit, Coord z_dir)  const
 {
 	if (!m_tile_map)
 	{
@@ -403,8 +352,16 @@ bool World::is_opaque(const Coord& x, const Coord& y, const Coord& z, const Enti
 	return false;
 }
 
-void World::prepare_remove_entity(Entity* entity)  const
+void World::prepare_remove_entity(Entity* entity)
 {
+	if (auto inventory = entity->get_inventory())
+	{
+		for (auto& item : inventory->get_items())
+		{
+			queue_remove(item);
+		}
+	}
+
 	if (auto entity_holder = entity->get_entity_holder())
 	{
 		entity_holder->remove_from_inventory(entity);
@@ -413,41 +370,32 @@ void World::prepare_remove_entity(Entity* entity)  const
 
 void World::step(const TimeUnit& time_delta)
 {
-	std::vector<EntityID> remove_entities;
+	std::vector<size_t> remove_entities;
 
-	for (const auto& [ID, entity] : m_entities)
+	for (size_t idx = 0; idx < m_entities.size(); ++idx)
 	{
+		auto& entity = m_entities[idx];
+
 		if (entity->should_remove())
 		{
-			remove_entities.push_back(ID);
+			remove_entities.push_back(idx);
 		}
 	}
 
 	for (const auto& remove_idx : remove_entities)
 	{
-		if (!has_entity(remove_idx))
+		auto& entity = m_entities[remove_idx];
+
+		if (!has_entity(entity))
 			continue;
 
-		prepare_remove_entity(m_entities[remove_idx].get());
-		m_entities.erase(remove_idx);
+		prepare_remove_entity(entity);
 
-		if (auto find_idx = std::find(m_creatures.begin(), m_creatures.end(), remove_idx) != m_creatures.end())
-		{
-			m_creatures.erase(m_creatures.begin() + find_idx);
-		}
-
-		if (auto find_idx = std::find(m_items.begin(), m_items.end(), remove_idx) != m_items.end())
-		{
-			m_items.erase(m_items.begin() + find_idx);
-		}
-
-		if (auto find_idx = std::find(m_furniture.begin(), m_furniture.end(), remove_idx) != m_furniture.end())
-		{
-			m_furniture.erase(m_furniture.begin() + find_idx);
-		}
+		m_entity_by_id.erase(entity->ID());
+		m_entities.erase(m_entities.begin() + remove_idx);
 	}
 
-	for (const auto& [ID, entity] : m_entities)
+	for (const auto& [ID, entity] : m_entity_by_id)
 	{
 		if (!entity->should_remove())
 		{

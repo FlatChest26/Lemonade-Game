@@ -49,7 +49,7 @@ public:
 		m_transform.position = p - get_center_offset();
 	}
 
-	bool in_view(const Coord& x, const Coord& y, const Coord& z) const
+	bool in_view(Coord x, Coord y, Coord z) const
 	{
 		return get_x1() <= x && x < get_x2() && get_y1() <= y && y < get_y2() && get_z2() < z && z <= get_z1();
 	}
@@ -66,7 +66,7 @@ public:
 	}
 
 	// Camera coordinates from world coordinates.
-	Position get_screen(const Coord& x, const Coord& y, const Coord& z) const
+	Position get_screen(Coord x, Coord y, Coord z) const
 	{
 		return Position(x - get_x1(), y - get_y1(), z - get_z1());
 	}
@@ -75,7 +75,7 @@ public:
 	Position get_screen(const Position& p) const { return get_screen(p.x, p.y, p.z); }
 
 	// World coordinates from camera coordinates.
-	Position get_local(const Coord& x, const Coord& y, const Coord& z) const
+	Position get_local(Coord x, Coord y, Coord z) const
 	{
 		return Position(x + get_x1(), y + get_y1(), z + get_z1());
 	}

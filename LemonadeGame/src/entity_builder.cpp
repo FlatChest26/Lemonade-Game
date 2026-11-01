@@ -2,6 +2,26 @@
 #include "anatomy.h"
 #include "gait.h"
 
+#include "world.h"
+#include "entity_filter.h"
+
+void EntityBuilder::default_entity_render_overrides(std::vector<RenderOverride>& render_overrides)
+{
+	// Falling bg
+	render_overrides.push_back({
+		.priority = 1,
+		.renderable = Renderable{ .bg = color::get("col_falling") },
+		.override_bg = true,
+		.flash_frames_on = 20,
+		.active = [](const Entity* entity)
+			{
+				return !entity->is_on_floor();
+			}
+		});
+
+	return;
+}
+
 Entity* EntityBuilder::create_creature(EntityID ID, CreatureInitializer init)
 {
 	auto new_creature = new Entity(ID);
@@ -44,25 +64,28 @@ Entity* EntityBuilder::create_creature(EntityID ID, CreatureInitializer init)
 		CERR("Creature: " << ID << " has no species assigned!");
 	}
 
-	// Lifespan
-	new_creature->set_living(new Living(nullptr, init.current_age, init.lifespan));
-
-	// Stats
-	new_creature->set_person(new Person(new_creature, init.starting_cash));
-	new_creature->get_person()->add_defaults();
+	// Living
+	new_creature->set_living(new Living(new_creature, init.current_age, init.lifespan));
+	new_creature->get_living()->add_defaults();
 
 	for (auto& [ID, init_amount] : init.initial_stats)
 	{
-		if (!new_creature->get_person()->has_stat(ID))
+		if (!new_creature->get_living()->has_stat(ID))
 		{
 			CERR("Invalid stat ID: " << ID);
 			continue;
 		}
 
-		new_creature->get_person()->stat(ID).value() = init_amount;
+		new_creature->get_living()->stat(ID).value() = init_amount;
 	}
 
+	// Person
+	new_creature->set_person(new Person(new_creature, init.starting_cash));
+	
+
 	new_creature->get_inventory()->set_max_slots(new_creature->default_inventory_slots());
+
+	default_entity_render_overrides(new_creature->render_overrides);
 
 	return new_creature;
 }
@@ -81,6 +104,8 @@ Entity* EntityBuilder::create_item(EntityID ID, ItemInitializer init)
 	//new_item->add_flag(EntityFlag::CAN_HOLD_ITEMS);
 
 	new_item->set_item_def(init.item_definition);
+
+	default_entity_render_overrides(new_item->render_overrides);
 
 	return new_item;
 }
@@ -106,6 +131,8 @@ Entity* EntityBuilder::create_furniture(EntityID ID, FurnitureInitializer init)
 
 	new_furniture->set_movable({});
 	new_furniture->get_movable()->set_size(init.furniture_definition->size);
+
+	default_entity_render_overrides(new_furniture->render_overrides);
 
 	return new_furniture;
 }
