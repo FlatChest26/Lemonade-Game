@@ -57,6 +57,8 @@ namespace output
 
 	// Printing //
 
+	extern int console_get_print_height(int x, int y, int width, int height, std::string fmt, ...);
+
 	extern int console_print(int x, int y, const char* fmt);
 	extern int console_print(int x, int y, std::string str);
 

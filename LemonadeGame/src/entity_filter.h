@@ -11,11 +11,13 @@ struct EntityFilter
 	std::vector<const Entity*> ignore_entities;
 	EntityFlag ignore_flags = EntityFlag::NONE;
 	std::vector<Position> ignore_positions;
+	bool ignore_ai = false;
 
 	bool require_held = false;
 	std::vector<const Entity*> required_entities;
 	EntityFlag required_flags = EntityFlag::NONE;
 	std::vector<Position> required_positions;
+	bool must_be_ai = false;
 
 	bool has_required() const
 	{
@@ -31,6 +33,9 @@ struct EntityFilter
 		if (!required_positions.empty())
 			return true;
 
+		if (must_be_ai)
+			return true;
+
 		return false;
 	}
 
@@ -38,6 +43,9 @@ struct EntityFilter
 	{
 		if (!has_required())
 			return true;
+
+		if (must_be_ai && !entity->has_brain())
+			return false;
 
 		if (require_held && !entity->is_being_held())
 			return false;
@@ -84,6 +92,9 @@ struct EntityFilter
 		if (!ignore_positions.empty())
 			return true;
 
+		if (ignore_ai)
+			return true;
+
 		return false;
 	}
 
@@ -91,6 +102,9 @@ struct EntityFilter
 	{
 		if (!has_ignore())
 			return false;
+
+		if (ignore_ai && entity->has_brain())
+			return true;
 
 		if (ignore_held && entity->is_being_held())
 			return true;

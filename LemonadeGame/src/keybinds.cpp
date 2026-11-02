@@ -32,6 +32,8 @@ void keybinds::initialize()
 	InputMap::add_input_direction(Keybind::MoveWest_Below, { -1, 0,  -1 });
 	InputMap::add_input_direction(Keybind::MoveNorthWest_Below, { -1, -1, -1 });
 
+	InputMap::add_input_direction(Keybind::MoveCenter, { 0, 0, 0 });
+
 	InputMap::add_input_action(Keybind::Quit, SDLK_ESCAPE);
 
 	InputMap::add_input_action(Keybind::MoveBelow, SDLK_PERIOD, KMOD_SHIFT);
@@ -79,6 +81,8 @@ void keybinds::initialize()
 	InputMap::add_input_action(Keybind::MoveWest_Below, SDLK_KP_4, KMOD_CTRL);
 	InputMap::add_input_action(Keybind::MoveNorthWest_Below, SDLK_KP_7, KMOD_CTRL);
 
+	InputMap::add_input_action(Keybind::MoveCenter, SDLK_KP_5, KMOD_NONE);
+
 	InputMap::add_input_action(Keybind::MenuUp, SDLK_UP, KMOD_NONE, KMOD_SHIFT);
 	InputMap::add_input_action(Keybind::MenuDown, SDLK_DOWN, KMOD_NONE, KMOD_SHIFT);
 	InputMap::add_input_action(Keybind::MenuLeft, SDLK_LEFT, KMOD_NONE, KMOD_SHIFT);
@@ -100,6 +104,7 @@ void keybinds::initialize()
 	InputMap::add_input_action(Keybind::Grab, SDLK_g, KMOD_NONE, KMOD_SHIFT);
 	InputMap::add_input_action(Keybind::Drop, SDLK_d, KMOD_NONE, KMOD_SHIFT);
 	InputMap::add_input_action(Keybind::Interact, SDLK_e, KMOD_NONE, KMOD_SHIFT);
+	InputMap::add_input_action(Keybind::Consume, SDLK_e, KMOD_SHIFT, KMOD_NONE);
 	InputMap::add_input_action(Keybind::Sleep, SDLK_z, KMOD_SHIFT, KMOD_NONE);
 
 	InputMap::add_input_action(Keybind::SetToTurnBasedSpeed, SDLK_F1, KMOD_NONE, KMOD_SHIFT);

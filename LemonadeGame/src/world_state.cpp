@@ -282,7 +282,7 @@ void WorldGameState::new_game()
 		}
 	))
 	{
-		entity->add_brain(m_ai_manager->create_brain());
+		entity->set_brain(m_ai_manager->create_brain());
 	}
 
 	m_world->set_tile_map(std::move(tile_map));
@@ -415,13 +415,21 @@ void WorldGameState::step(const TimeUnit& time_delta)
 {
 	ASSERT(m_world, "WorldGameState::step() called but world is null");
 
-	m_world->step(time_delta);
+	TimeUnit elloted_time = time_delta;
 
-	if (m_ai_manager)
+	while (elloted_time > TimeUnit::none())
 	{
-		m_ai_manager->step(time_delta);
-	}
+		TimeUnit step_time = std::min(elloted_time, TimeUnit::from_seconds(1.0));
+		
+		m_world->step(step_time);
 
+		if (m_ai_manager)
+		{
+			m_ai_manager->step(step_time);
+		}
+
+		elloted_time -= step_time;
+	}
 
 	auto tile_map = m_world->get_tile_map();
 
@@ -430,26 +438,24 @@ void WorldGameState::step(const TimeUnit& time_delta)
 		tile_map->set_update_path(false);
 	}
 
-	if (m_player->should_remove())
-	{
-		m_player = nullptr;
-	}
-
 	update_camera();
 
 	if (m_player && tile_map)
 	{
-		if (m_previous_player_pos != m_player->get_movable()->pos())
+		auto player_pos = m_player->get_movable()->pos();
+
+		if (m_previous_player_pos != player_pos)
 		{
 			tile_map->request_fov_update();
-			m_previous_player_pos = m_player->get_movable()->pos();
+			m_previous_player_pos = player_pos;
 		}
 
 		// Update FOV for player
 		if (m_player->has_field_of_view() && tile_map->should_update_fov())
 		{
 			tile_map->compute_fov(
-				m_player->get_movable()->posx(), m_player->get_movable()->posy(), m_player->get_movable()->posz(), m_player->view_range()
+				player_pos.x, player_pos.y, player_pos.z,
+				m_player->view_range()
 			);
 		}
 	}
@@ -461,12 +467,10 @@ void WorldGameState::step(const TimeUnit& time_delta)
 
 	if (auto game = m_game)
 	{
-		game->request_screen_update();
+		m_game->request_screen_update();
 	}
 
 	//COUT("Simulation stepped by " << time_delta.total_seconds() << " seconds");
-
-	
 }
 
 void WorldGameState::update_camera()
@@ -537,9 +541,12 @@ void WorldGameState::handle_action(QueuedAction action)
 
 	auto action_result = action->perform();
 
-	if (action_result.response != "")
+	if (!action_result.responses.empty())
 	{
-		game_message(GameMessage(action_result.response));
+		for (const auto& response : action_result.responses)
+		{
+			game_message(response);
+		}
 	}
 
 	if (!action_result.success)
@@ -557,17 +564,17 @@ void WorldGameState::handle_action(QueuedAction action)
 			{
 				if (actor == get_player())
 				{
-					handle_input_result(InputResult(std::move(next_action)));
+					handle_input_result(InputResult(std::unique_ptr<Action>(next_action)));
 				}
 				else
 				{
-					actor->queue_action(std::move(next_action));
+					actor->queue_action(std::unique_ptr<Action>(next_action));
 				}
 			}
 		}
 		else
 		{
-			handle_input_result(InputResult(std::move(next_action)));
+			handle_input_result(InputResult(std::unique_ptr<Action>(next_action)));
 		}
 	}
 }
@@ -608,7 +615,7 @@ void WorldGameState::handle_input_result(InputResult result)
 	}
 }
 
-void WorldGameState::game_message(GameMessage msg)
+void WorldGameState::game_message(const GameMessage& msg)
 {
 	if (msg.text.empty())
 		return;
@@ -619,10 +626,8 @@ void WorldGameState::game_message(GameMessage msg)
 		return;
 	}
 
-	GameMessage new_message(msg.text, msg.fg, msg.bg, get_world()->get_time().total_time());
-
-	m_log->add_message(new_message);
-	std::cout << new_message.text << std::endl;
+	m_log->add_message(msg, get_world()->get_time().total_time());
+	std::cout << msg.text << std::endl;
 
 	if (auto game = m_game)
 	{

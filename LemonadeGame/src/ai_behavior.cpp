@@ -128,7 +128,7 @@ bool Behavior_Wander::perform(AIBrain* brain, TimeUnit delta)
 			}
 		}
 
-		brain->add_behavior(std::make_unique<Behavior_MoveTo>(wander_location));
+		brain->add_behavior(new Behavior_MoveTo(wander_location));
 
 		if ((m_min_wait > TimeUnit::none()) && (m_max_wait > m_min_wait))
 		{

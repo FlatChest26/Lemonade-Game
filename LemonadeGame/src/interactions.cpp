@@ -98,12 +98,17 @@ ActionResult GrabAction::perform()
 	auto n1 = m_actor->display_noun();
 	auto n2 = m_subject->display_noun();
 
-	return ActionResult(true, fmt::format(
-		"{} {} {}.",
-		grammar::A(n1),
-		(grammar::is_plural(n1) ? "pick up" : "picks up"),
-		m_actor->is_player() ? grammar::the(n2) : grammar::a(n2)
-	));
+	return ActionResult{
+		.success = true,
+		.responses = {
+			fmt::format(
+				"{} {} {}.",
+				grammar::A(n1),
+				(grammar::is_plural(n1) ? "pick up" : "picks up"),
+				m_actor->is_player() ? grammar::the(n2) : grammar::a(n2)
+			)
+		}
+	};
 }
 
 bool DropAction::check_action() const
@@ -127,10 +132,79 @@ ActionResult DropAction::perform()
 	auto n1 = m_actor->display_noun();
 	auto n2 = m_subject->display_noun();
 
-	return ActionResult(true, fmt::format(
-		"{} {} {}.",
-		grammar::A(n1),
-		(grammar::is_plural(n1) ? "drop" : "drops"),
-		m_actor->is_player() ? grammar::the(n2) : grammar::a(n2)
-	));
+	return ActionResult{
+		.success = true,
+		.responses = {
+			fmt::format(
+				"{} {} {}.",
+				grammar::A(n1),
+				(grammar::is_plural(n1) ? "drop" : "drops"),
+				m_actor->is_player() ? grammar::the(n2) : grammar::a(n2)
+			)
+		}
+	};
+}
+
+bool ConsumeAction::check_action() const
+{
+	if (!Interaction::check_action())
+		return false;
+
+	if (!m_actor->has_living())
+	{
+		ACTION_CERR("Actor is not a living thing!");
+		return false;
+	}
+
+	if (!m_subject->is_item())
+	{
+		ACTION_CERR("Target is not an item!");
+		return false;
+	}
+
+	if (!m_subject->get_item_def()->is_consumable())
+	{
+		ACTION_CERR("Target item is not consumable!");
+		return false;
+	}
+
+	return true;
+}
+
+ActionResult ConsumeAction::perform()
+{
+	std::vector<std::string> taste_descriptions;
+
+	auto living = m_actor->get_living();
+
+	for (auto& effect : m_subject->get_item_def()->consumable_effects)
+	{
+		if (!living->take_consumable(effect))
+			continue;
+		taste_descriptions.push_back(effect.taste);
+	}
+
+	m_actor->remove_from_inventory(m_subject);
+	m_subject->queue_remove();
+
+	auto n1 = m_actor->display_noun();
+	auto n2 = m_subject->display_noun();
+
+	std::string taste = fmt::format(
+		"It tastes {}!",
+		english_list(taste_descriptions)
+	);
+
+	return ActionResult{
+		.success = true,
+		.responses = {
+			fmt::format(
+				"{} {} {}.",
+				grammar::A(n1),
+				(grammar::is_plural(n1) ? "consume" : "consumes"),
+				m_actor->is_player() ? grammar::the(n2) : grammar::a(n2)
+			),
+			GameMessage(taste, color::get("yellow"))
+		}
+	};
 }

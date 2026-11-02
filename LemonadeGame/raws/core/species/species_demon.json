@@ -13,7 +13,7 @@
     "child_age": 12,
     "adult_age": 18,
     "mature_age": 20,
-    "flags": [ "DOES_NOT_EXIST" ],
+    "flags": [ "does_not_exist" ],
     "common_genders": [
       { "type": "NEUTER", "frequency": 2.0 },
       { "type": "EPICENE", "frequency": 25.0 },
@@ -35,7 +35,7 @@
     "child_age": 12,
     "adult_age": 18,
     "mature_age": 20,
-    "flags": [ "DOES_NOT_EXIST", "PART_OF_SOCIETY" ],
+    "flags": [ "does_not_exist", "part_of_society" ],
     "common_genders": [
       { "type": "NEUTER", "frequency": 2.0 },
       { "type": "EPICENE", "frequency": 25.0 },
@@ -51,7 +51,7 @@
     "adjective": "fire imp",
     "renderable": { "glyph": "I", "fg": "orange", "bg": "black" },
     "description": "A small humanoid demon, known for their ability to produce fire.",
-    "remove_flags": [ "DOES_NOT_EXIST" ]
+    "remove_flags": [ "does_not_exist" ]
   },
   {
     "copy_from": "IMP",
@@ -61,6 +61,6 @@
     "adjective": "ice imp",
     "renderable": { "glyph": "I", "fg": "light_cyan", "bg": "black" },
     "description": "A small humanoid demon, known for their ability to produce ice.",
-    "remove_flags": [ "DOES_NOT_EXIST" ]
+    "remove_flags": [ "does_not_exist" ]
   }
 ]

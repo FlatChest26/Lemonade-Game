@@ -257,6 +257,15 @@
     <ClInclude Include="src\debug_info.h">
       <Filter>Code\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\consumable.h">
+      <Filter>Code\Header Files\Entity\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game_message.h">
+      <Filter>Code\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\action_option.h">
+      <Filter>Code\Header Files\Actions</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -387,6 +396,9 @@
     </ClCompile>
     <ClCompile Include="src\debug_info.cpp">
       <Filter>Code\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\consumable.cpp">
+      <Filter>Code\Source Files\Entity\Components</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -155,13 +155,18 @@ public:
 	virtual int render(const RenderParams& params, const SidebarParams& sb_params) const override;
 };
 
-class SidebarMenu_Interaction : public SidebarMenu
+#include "keybinds.h"
+
+using SelectionMenuItem = std::tuple<std::string, color_t, color_t>;
+
+class SidebarMenu_GenericSelectionMenu : public SidebarMenu
 {
 public:
-	Entity* actor;
-	Entity* subject;
-
-
+	std::string title{ "" };
+	color_t frame_fg{ color::get("white") };
+	Keybind input_action;
+	std::vector<SelectionMenuItem> menu_items;
+	int selected_slot{ -1 };
 	virtual int render(const RenderParams& params, const SidebarParams& sb_params) const override;
 };
 

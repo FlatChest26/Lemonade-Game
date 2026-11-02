@@ -5,7 +5,8 @@
     "noun": { "singular": "lemonade stand", "plural": "lemonade stands" },
     "renderable": { "glyph": "[", "fg": "brown", "bg": "black" },
     "description": "The method of all your labor.",
-    "price": 20.0
+    "price": 20.0,
+    "carry_slots": 2
   },
   {
     "type": "furniture_definition",
@@ -25,7 +26,8 @@
     "noun": { "singular": "bed", "plural": "beds" },
     "renderable": { "glyph": 233, "fg": "dark_red", "bg": "black" },
     "description": "A place to rest.",
-    "price": 100.0
+    "price": 100.0,
+    "carry_size": 2
   },
   {
     "type": "furniture_definition",

@@ -98,7 +98,11 @@ ActionResult TransformAction::perform()
 
 				if (is_blocked != entities.end())
 				{
-					return ActionResult(false, "Thunk!");
+					return ActionResult
+					{
+						.success = false,
+						.responses = { GameMessage("Thunk!", color::get("light_red"))}
+					};
 				}
 			}
 		}

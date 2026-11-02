@@ -49,7 +49,7 @@ public:
 
 	virtual InputResult handle_event(SDL_Event event) { return dispatch(event); }
 
-	virtual void init() {}
+	virtual bool init() { return true; }
 	virtual void remove() {}
 	virtual void update(double delta_time) {}
 	virtual void step(const TimeUnit& delta_time) {}

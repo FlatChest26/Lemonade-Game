@@ -63,4 +63,18 @@ public:
 	static std::string action_name() { return "drop"; }
 };
 
+class ConsumeAction : public Interaction
+{
+public:
+	ConsumeAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, Entity* subject = nullptr) :
+		Interaction(action_length, actor, subject)
+	{
+	}
+
+	virtual bool check_action() const override;
+	virtual ActionResult perform();
+
+	static std::string action_name() { return "consume"; }
+};
+
 #endif // !LEMONADE_GAME_SRC_MISC_ACTIONS_H

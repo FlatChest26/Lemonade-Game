@@ -78,20 +78,23 @@ void AIManager::step(TimeUnit time_delta)
 		std::vector<double> spawn_group_weights = { 4.0, 5.0, 1.0, 3.0 };
 
 		std::discrete_distribution<int> npc_count_dis(spawn_group_weights.begin(), spawn_group_weights.end());
-		auto spawn_count = npc_count_dis(snowy::rng::generator) + 1;
-
-		for (;spawn_count > 0; spawn_count--)
+		for (int spawn_count = npc_count_dis(snowy::rng::generator) + 1; spawn_count > 0; spawn_count--)
 		{
 			Coord x = ((spawn_count - 1) % m_sidewalk_width);
 			Coord y = ((spawn_count - 1) / m_sidewalk_width);
+
+			if (spawn_count == 1 && snowy::rng::flip_coin())
+			{
+				x++;
+			}
 
 			auto npc = world->add_entity_at(m_npc_generator->generate_npc(), m_sidewalk_start + Position(x, y, 0));
 
 			if (npc)
 			{
-				auto brain = npc->add_brain(create_brain());
+				auto brain = npc->set_brain(create_brain());
 				npc->change_gait_type("STROLL");
-				brain->add_behavior(std::make_unique<Behavior_MoveTo>(m_sidewalk_end + Position(x, 0, 0)));
+				brain->add_behavior(new Behavior_MoveTo(m_sidewalk_end + Position(x, 0, 0)));
 			}
 		}
 	}

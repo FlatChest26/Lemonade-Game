@@ -25,10 +25,9 @@ IS_FLAG_ENUM(SpeciesFlag);
 
 inline std::map<std::string, SpeciesFlag> AllSpeciesFlags
 {
-	{ "NONE",				SpeciesFlag::NONE				},
-	{ "MUNDANE",			SpeciesFlag::MUNDANE			},
-	{ "DOES_NOT_EXIST",		SpeciesFlag::DOES_NOT_EXIST		},
-	{ "PART_OF_SOCIETY",	SpeciesFlag::PART_OF_SOCIETY	},
+	{ "mundane",			SpeciesFlag::MUNDANE			},
+	{ "does_not_exist",		SpeciesFlag::DOES_NOT_EXIST		},
+	{ "part_of_society",	SpeciesFlag::PART_OF_SOCIETY	},
 };
 
 struct GenderedNouns
@@ -128,6 +127,7 @@ public:
 
 	bool is_mundane() const { return flags & SpeciesFlag::MUNDANE; }
 	bool does_not_exist() const { return flags & SpeciesFlag::DOES_NOT_EXIST; }
+	bool is_part_of_society() const { return flags & SpeciesFlag::PART_OF_SOCIETY; }
 
 public:
 	bool operator==(const Species& other) const { return other.ID == ID; }

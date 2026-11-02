@@ -51,8 +51,8 @@ void GameLog::render(RenderParams params) const
 			break;
 		}
 
-		color_t draw_fg = msg.fg;
-		color_t draw_bg = msg.bg;
+		color_t draw_fg = msg.message.color;
+		color_t draw_bg = color::get("black");
 
 		if (auto world_state = get_world_state())
 		{
@@ -65,9 +65,12 @@ void GameLog::render(RenderParams params) const
 			}
 		}
 
-		draw_y -= output::console_printf_rgb_rect_ex(
-			draw_x, draw_y, panel_width - 2, panel_height - 2, draw_fg, draw_bg, TCOD_BKGND_SET, TCOD_LEFT,
-			msg.text + std::string(msg.repeat_count > 1 ? (" (x" + std::to_string(msg.repeat_count) + ")") : "")
+		std::string text = msg.message.text + std::string(msg.repeat_count > 1 ? (" (x" + std::to_string(msg.repeat_count) + ")") : "");
+
+		draw_y -= output::console_get_print_height(draw_x, draw_y, panel_width - 2, panel_height - 2, text);
+
+		output::console_printf_rgb_rect_ex(
+			draw_x, draw_y + 1, panel_width - 2, panel_height - 2, draw_fg, draw_bg, TCOD_BKGND_SET, TCOD_LEFT, text
 		);
 	}
 }

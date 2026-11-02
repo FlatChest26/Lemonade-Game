@@ -276,16 +276,41 @@ int SidebarMenu_Inventory::render(const RenderParams& params, const SidebarParam
 		panel_height = (int)inventory->get_max_slots();
 
 		std::vector<InventoryListTuple> inventory_list;
+		std::set<Entity*> unique_items;
 
+		std::string last_item_text = "";
+		size_t last_item_length = 0;
 		size_t slot_number = 0;
+
 		for (const auto& item_slot : inventory->get_item_slots())
 		{
 			if (item_slot.item)
 			{
-				inventory_list.push_back(std::tuple(
-					grammar::a(item_slot.item->display_noun()), item_slot.item->fg(), item_slot.item->bg(),
-					m_focused && selected_slot == slot_number)
-				);
+				if (!unique_items.contains(item_slot.item))
+				{
+					
+					last_item_text = grammar::a(item_slot.item->display_noun());
+					unique_items.insert(item_slot.item);
+					inventory_list.push_back(std::tuple(
+						last_item_text, item_slot.item->fg(), item_slot.item->bg(),
+						m_focused && selected_slot == slot_number)
+					);
+
+					last_item_length = 1;
+				}
+				else
+				{
+
+					inventory_list.push_back(std::tuple(
+						last_item_length + 1 == item_slot.item->carry_slots() ? 
+						fmt::format("└{:─^{}}┘", "", last_item_text.size() - 2) : 
+						fmt::format("│{:^{}}│", "", last_item_text.size() - 2),
+						item_slot.item->fg(), item_slot.item->bg(),
+						m_focused && selected_slot == slot_number - last_item_length)
+					);
+
+					last_item_length++;
+				}
 			}
 			else
 			{
@@ -309,7 +334,8 @@ int SidebarMenu_Inventory::render(const RenderParams& params, const SidebarParam
 			draw_y += output::console_printf_rgb_rect_ex(
 				draw_x, draw_y,
 				panel_width - 2, 0,
-				fg, bg, TCOD_BKGND_SET, TCOD_CENTER, std::get<0>(inv_list_item)
+				fg, bg, TCOD_BKGND_SET, TCOD_CENTER, 
+				std::get<0>(inv_list_item)
 			);
 		}
 
@@ -408,9 +434,9 @@ int SidebarMenu_Examine::render(const RenderParams& params, const SidebarParams&
 	return panel_height;
 }
 
-int SidebarMenu_Interaction::render(const RenderParams& params, const SidebarParams& sb_params) const
+int SidebarMenu_GenericSelectionMenu::render(const RenderParams& params, const SidebarParams& sb_params) const
 {
-	if (!actor || !subject)
+	if (menu_items.empty())
 	{
 		return 0;
 	}
@@ -424,26 +450,45 @@ int SidebarMenu_Interaction::render(const RenderParams& params, const SidebarPar
 	int panel_width = (int)(sb_params.sidebar_rect.size.x);
 	int panel_height = 2;
 
-	color_t fg = color::get("white");
+	color_t fg = frame_fg;
 	color_t bg = color::get("black");
 
-	if (!is_focused())
-	{
-		fg = color::get("gray");
-	}
-
-	auto print_text = [&](std::string text, color_t new_fg = color::get("white"))
+	auto print_text = [&](std::string text, color_t new_fg = color::get("white"), color_t new_bg = color::get("black"))
 		{
-			draw_y += output::console_printf_rgb_rect_ex(draw_x, draw_y, panel_width - 1, 0, new_fg, bg, DEFAULT_BKGND_FLAG, TCOD_LEFT, text);
+			draw_y += output::console_printf_rgb_rect_ex(draw_x, draw_y, panel_width - 1, 0, new_fg, new_bg, TCOD_BKGND_SET, TCOD_LEFT, text);
 		};
 
+	panel_height = (int)(menu_items.size() + 2);
+
+	size_t idx = 0;
+
+	for (const auto& item : menu_items)
+	{
+		bool selected = idx == selected_slot;
+		print_text(std::get<0>(item), selected ? std::get<2>(item) : std::get<1>(item), selected ? std::get<1>(item) : std::get<2>(item));
+		idx++;
+	}
 
 	panel_height = std::max(panel_height, (draw_y - panel_y) + 1);
 
-	std::string title = fmt::format("{}", InputMap::actions_to_string(Keybind::Examine));
 
 	output::draw_frame_rgb(panel_x, panel_y, panel_width, panel_height, fg, bg, DEFAULT_RECT_FRAME, false, TCOD_BKGND_SET);
-	output::console_printf_rgb_rect_ex(panel_x, panel_y, panel_width, 1, is_focused() ? bg : color::get("white"), is_focused() ? fg : bg, TCOD_BKGND_SET, TCOD_CENTER, title);
+
+	if (!title.empty())
+	{
+		std::string frame_title;
+
+		if (input_action != Keybind::None)
+		{
+			frame_title = fmt::format("{} ({})", title, InputMap::actions_to_string(input_action));
+		}
+		else
+		{
+			frame_title = title;
+		}
+
+		output::console_printf_rgb_rect_ex(panel_x, panel_y, panel_width, 1, is_focused() ? bg : color::get("white"), is_focused() ? fg : bg, TCOD_BKGND_SET, TCOD_CENTER, frame_title);
+	}
 
 	if (is_pinned())
 	{

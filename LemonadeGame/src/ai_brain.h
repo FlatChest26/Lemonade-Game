@@ -34,7 +34,7 @@ public:
 	void set_entity(Entity* entity);
 	Entity* get_entity();
 
-	void add_behavior(std::unique_ptr<Behavior> behavior);
+	void add_behavior(Behavior* behavior);
 	Behavior* current_behavior();
 	void cancel_behavior();
 };

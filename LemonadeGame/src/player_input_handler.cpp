@@ -36,46 +36,44 @@ T* InputHandler_Player::register_sidebar(const SidebarMenuID& ID)
 	return nullptr;
 }
 
-void InputHandler_Player::init()
+bool InputHandler_Player::init()
 {
 	auto sidebar = get_world_state()->get_sidebar();
 
 	if (!sidebar)
 	{
 		CERR("No sidebar on world state!");
-		return;
+		return false;
 	}
 
 	auto player = get_player();
 
+	if (!player)
+	{
+		CERR("No player found!");
+		return false;
+	}
+
 	m_game_info_menu = register_sidebar<SidebarMenu_GameInfo>(sidebar_menus::GAME_INFO);
 
-	if (player)
+	m_person_info_menu = register_sidebar<SidebarMenu_PersonInfo>(sidebar_menus::PERSON_INFO);
+	m_person_info_menu->entity = player;
+	
+	m_needs_menu = register_sidebar<SidebarMenu_Needs>(sidebar_menus::NEEDS);
+	m_needs_menu->entity = player;
+	
+
+	if (!sidebar->has_menu(sidebar_menus::INVENTORY))
 	{
-		m_person_info_menu = register_sidebar<SidebarMenu_PersonInfo>(sidebar_menus::PERSON_INFO);
-		m_person_info_menu->entity = player;
-	}
-
-
-	if (player)
-	{
-		m_needs_menu = register_sidebar<SidebarMenu_Needs>(sidebar_menus::NEEDS);
-		m_needs_menu->entity = player;
-	}
-
-	if (player)
-	{
-		if (!sidebar->has_menu(sidebar_menus::INVENTORY))
-		{
-			m_inventory_menu = register_sidebar<SidebarMenu_Inventory>(sidebar_menus::INVENTORY);
-			m_inventory_menu->pin();
-		}
-
 		m_inventory_menu = register_sidebar<SidebarMenu_Inventory>(sidebar_menus::INVENTORY);
-		m_inventory_menu->entity = player;
-
-		m_inventory_menu->collapse();
+		m_inventory_menu->pin();
 	}
+
+	m_inventory_menu = register_sidebar<SidebarMenu_Inventory>(sidebar_menus::INVENTORY);
+	m_inventory_menu->entity = player;
+
+	m_inventory_menu->collapse();
+	
 
 	if (!sidebar->has_menu(sidebar_menus::LOOK))
 	{
@@ -85,16 +83,14 @@ void InputHandler_Player::init()
 
 	m_look_menu = register_sidebar<SidebarMenu_Look>(sidebar_menus::LOOK);
 
-	if (player)
-	{
-		m_look_menu->look_position = player->get_movable()->pos();
-		m_look_menu->follow_player = true;
-	}
+	m_look_menu->look_position = player->get_movable()->pos();
+	m_look_menu->follow_player = true;
+	
 
 	m_examine_menu = register_sidebar<SidebarMenu_Examine>(sidebar_menus::EXAMINE);
 	m_examine_menu->set_visible(!m_examine_menu->examined_entities.empty() || m_examine_menu->examined_tile != nullptr);
 
-	m_interaction_menu = register_sidebar<SidebarMenu_Interaction>(sidebar_menus::INTERACTION);
+	return true;
 }
 
 InputResult InputHandler_Player::ev_key_down(SDL_Event event)
@@ -167,6 +163,131 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 	{
 		return InputResult(new InputHandler_Inventory());
 	}
+
+	if (can_act && InputMap::is_action_pressed(Keybind::Interact, event))
+	{
+		std::unordered_map<Position, std::vector<Entity*>> interactable_entities;
+
+		for (auto& entity : world->get_entities_at(player->get_movable()->pos(), { .ignore_entities = { player } }))
+		{
+			if (player->can_interact_with(entity))
+			{
+				interactable_entities[player->get_movable()->pos()].push_back(entity);
+			}
+		}
+
+		if (!interactable_entities[player->get_movable()->pos()].empty())
+		{
+			if (interactable_entities[player->get_movable()->pos()].size() == 1)
+			{
+				return InputResult(new InputHandler_Interaction({ .actor = player, .subject = interactable_entities[player->get_movable()->pos()].front() }));
+			}
+			else
+			{
+				return InputResult(new InputHandler_ListSelector({ 
+					.title = "Interact with what?",
+					.input_keybind = Keybind::Interact,
+					.display_input_keybind = false,
+					.items = [&]()
+					{
+						std::vector<ListSelectorItem> items;
+						for (auto& entity : interactable_entities[player->get_movable()->pos()])
+						{
+							items.push_back(ListSelectorItem(
+								entity->display_name(), entity->fg(), entity->bg(),
+								[=]()
+								{
+									return InputResult(new InputHandler_Interaction({ .actor = player, .subject = entity }));
+								}
+							));
+						}
+						return items;
+					}(),
+				}));
+			}
+		}
+
+		for (auto p : transforms::get_surrounding_locations(player->get_movable()->pos()))
+		{
+			if (p == player->get_movable()->pos())
+				continue;
+
+			for (auto& entity : world->get_entities_at(p, { .ignore_entities = { player } }))
+			{
+				if (player->can_interact_with(entity))
+				{
+					interactable_entities[p].push_back(entity);
+				}
+			}
+		}
+		
+		if (!interactable_entities.empty())
+		{
+			return InputResult(new InputHandler_PositionSelector({
+				.title = "Interact where?",
+				.input_keybind = Keybind::Interact,
+				.center = player->get_movable()->pos(),
+				.valid_positions = [&]()
+				{
+					std::set<Position> positions;
+					std::set<Entity*> already_added_entities;
+
+					for (auto& [pos, entities] : interactable_entities)
+					{
+						if (pos == player->get_movable()->pos())
+							continue;
+
+						if (entities.empty())
+							continue;
+
+						if (std::any_of(entities.begin(), entities.end(), [&](const auto& entity) { return !already_added_entities.contains(entity); }))
+						{
+							positions.insert(pos);
+							already_added_entities.insert(entities.begin(), entities.end());
+						}
+					}
+
+					return positions;
+				}(),
+				.callback = [=](const Position& pos)
+				{
+					if (!interactable_entities.contains(pos))
+						return InputResult();
+					
+					auto& entities = interactable_entities.at(pos);
+
+					if (entities.size() == 1)
+					{
+						return InputResult(new InputHandler_Interaction({ .actor = player, .subject = entities.front() }));
+					}
+					else
+					{
+						return InputResult(new InputHandler_ListSelector({
+							.title = "Interact with what?",
+							.input_keybind = Keybind::Interact,
+							.display_input_keybind = false,
+							.items = [&]()
+							{
+								std::vector<ListSelectorItem> items;
+								for (auto& entity : entities)
+								{
+									items.push_back(ListSelectorItem(
+										entity->display_name(), entity->fg(), entity->bg(),
+										[=]()
+										{
+											return InputResult(new InputHandler_Interaction({ .actor = player, .subject = entity }));
+										}
+									));
+								}
+								return items;
+							}(),
+						}));
+					}
+					return InputResult();
+				}
+			}));
+		}
+	}
 	
 	if (can_act && InputMap::is_action_pressed(Keybind::Open, event))
 	{
@@ -205,23 +326,21 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 		}
 		else if (open_positions.size() > 1)
 		{
-			auto callback = [](InputHandler_Player* input_handler, const Position& pos)
-				{
-					return InputResult(std::make_unique<OpenAction>(input_handler->get_player()->interact_speed(), input_handler->get_player(), pos));
-				};
-
 			return InputResult(new InputHandler_PositionSelector({
-				.center = player->get_movable()->pos(),
-				.callback = callback,
-				.valid_positions = open_positions,
 				.title = "Open where?",
-				.input_keybind = Keybind::Open
+				.input_keybind = Keybind::Open,
+				.center = player->get_movable()->pos(),
+				.valid_positions = open_positions,
+				.callback = [=](const Position& pos)
+				{
+					return InputResult(std::make_unique<OpenAction>(player->interact_speed(), player, pos));
+				}
 			}));
 		}
 
 		return InputResult();
 	}
-	
+
 	if (can_act && InputMap::is_action_pressed(Keybind::Close, event))
 	{
 		std::set<Position> close_positions;
@@ -259,17 +378,15 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 		}
 		else if (close_positions.size() > 1)
 		{
-			auto callback = [](InputHandler_Player* input_handler, const Position& pos)
-				{
-					return InputResult(std::make_unique<CloseAction>(input_handler->get_player()->interact_speed(), input_handler->get_player(), pos));
-				};
-
 			return InputResult(new InputHandler_PositionSelector({
-				.center = player->get_movable()->pos(), 
-				.callback = callback, 
-				.valid_positions = close_positions,
 				.title = "Close where?",
-				.input_keybind = Keybind::Close
+				.input_keybind = Keybind::Close,
+				.center = player->get_movable()->pos(), 
+				.valid_positions = close_positions,
+				.callback = [=](const Position& pos)
+				{
+					return InputResult(std::make_unique<CloseAction>(player->interact_speed(), player, pos));
+				}
 			}));
 		}
 
@@ -396,11 +513,7 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 	}
 
 #ifdef _DEBUG
-	auto scancode = event.key.keysym.scancode;
-	auto sym = event.key.keysym.sym;
-	auto mod = event.key.keysym.mod;
-
-	switch (sym)
+	switch (event.key.keysym.sym)
 	{
 	case SDLK_F5:
 	{
@@ -414,13 +527,9 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 	{
 		if (player->has_movable())
 		{
-			for (auto& entity : world->get_entities())
+			for (auto& entity : world->get_entities(EntityFilter{ .must_be_ai = true }))
 			{
-				if (entity->has_brain())
-				{
-					auto new_goal = std::make_unique<Behavior_MoveTo>(player->get_movable()->pos());
-					entity->get_brain()->add_behavior(std::move(new_goal));
-				}
+				entity->get_brain()->add_behavior(new Behavior_MoveTo(player->get_movable()->pos()));
 			}
 		}
 		break;
@@ -449,9 +558,10 @@ void InputHandler_Player::render(const RenderParams& params) const
 	);
 }
 
-void InputHandler_Look::init()
+bool InputHandler_Look::init()
 {
-	InputHandler_Player::init();
+	if (!InputHandler_Player::init())
+		return false;
 
 	m_look_menu->show();
 	m_look_menu->focus();
@@ -462,6 +572,8 @@ void InputHandler_Look::init()
 	{
 		m_examine_menu->focus();
 	}
+
+	return true;
 }
 
 void InputHandler_Look::remove()
@@ -508,12 +620,7 @@ InputResult InputHandler_Look::ev_key_down(SDL_Event event)
 	{
 		return InputResult(InputResult::Type::Pop_InputHandler);
 	}
-	
-	if (InputMap::is_action_pressed(Keybind::Inventory, event))
-	{
-		return InputResult(InputResult::Type::Pop_InputHandler, new InputResult(new InputHandler_Inventory()));
-	}
-	
+
 	if (InputMap::is_action_pressed(Keybind::Examine, event))
 	{
 		m_examine_menu->examined_entities.clear();
@@ -562,47 +669,35 @@ void InputHandler_Look::render(const RenderParams& params) const
 
 	auto tile = get_world()->get_tile(m_look_menu->look_position);
 
-	auto draw_fg = tile->bg();
-	auto draw_bg = tile->fg();
+	int screen_x = draw_x + params.world_inner_frame_p1().x;
+	int screen_y = draw_y + params.world_inner_frame_p1().y;
 
-	if (params.use_fov)
-	{
-		if (tile->is_visible())
-		{
-			draw_fg = tile->bg();
-			draw_bg = tile->fg();
-		}
-		else if (tile->is_explored())
-		{
-			draw_fg = color::get("black");
-			draw_bg = color::get("col_explored");
-		}
-		else
-		{
-			draw_fg = color::get("white");
-			draw_bg = color::get("white");
-		}
-	}
+	auto draw_fg = output::get_bg(screen_x, screen_y);
+	auto draw_bg = output::get_fg(screen_x, screen_y);
 
-	output::set_fg(draw_x + params.world_inner_frame_p1().x, draw_y + params.world_inner_frame_p1().x, draw_fg);
-	output::set_bg(draw_x + params.world_inner_frame_p1().x, draw_y + params.world_inner_frame_p1().y, draw_bg);
+	output::set_fg(screen_x, screen_y, draw_fg);
+	output::set_bg(screen_x, screen_y, draw_bg);
 }
 
-void InputHandler_Inventory::init()
+bool InputHandler_Inventory::init()
 {
-	InputHandler_Player::init();
+	if (!InputHandler_Player::init())
+		return false;
 
 	auto inventory = get_player()->get_inventory();
 
 	if (!inventory)
 	{
 		CERR("Player has no inventory!");
+		return false;
 	}
 
 	m_inventory_menu->selected_slot = std::clamp(m_inventory_menu->selected_slot, 0, (int)inventory->get_max_slots());
 
 	m_inventory_menu->focus();
 	m_inventory_menu->uncollapse();
+
+	return true;
 }
 
 void InputHandler_Inventory::remove()
@@ -634,22 +729,41 @@ InputResult InputHandler_Inventory::ev_key_down(SDL_Event event)
 		return InputResult(InputResult::Type::Pop_InputHandler);
 	}
 	
-	if (InputMap::is_action_pressed(Keybind::Look, event))
-	{
-		return InputResult(InputResult::Type::Pop_InputHandler, new InputResult(new InputHandler_Look()));
-	}
-	
 	if (InputMap::is_action_pressed(Keybind::MenuUp, event))
 	{
-		m_inventory_menu->selected_slot += 1;
+		int change_amount = 1;
+
+		if (auto selected_item = inventory->get_item(m_inventory_menu->selected_slot))
+		{
+			change_amount = (int)selected_item->carry_slots();
+		}
+
+		m_inventory_menu->selected_slot += change_amount;
 		m_inventory_menu->selected_slot = m_inventory_menu->selected_slot % inventory->get_max_slots();
 		return InputResult();
 	}
 	
 	if (InputMap::is_action_pressed(Keybind::MenuDown, event))
 	{
-		m_inventory_menu->selected_slot -= 1;
+		int change_amount = 1;
+
+		if (auto selected_item = inventory->get_item(m_inventory_menu->selected_slot))
+		{
+			change_amount = (int)selected_item->carry_slots();
+		}
+
+		m_inventory_menu->selected_slot -= change_amount;
 		m_inventory_menu->selected_slot = m_inventory_menu->selected_slot % inventory->get_max_slots();
+
+		return InputResult();
+	}
+
+	if (!is_sleeping && is_alive && InputMap::is_action_pressed(Keybind::Interact, event))
+	{
+		if (auto selected_item = inventory->get_item(m_inventory_menu->selected_slot))
+		{
+			return InputResult(InputResult::Type::Pop_InputHandler, new InputResult(new InputHandler_Interaction({ player, selected_item })));
+		}
 
 		return InputResult();
 	}
@@ -668,18 +782,51 @@ InputResult InputHandler_Inventory::ev_key_down(SDL_Event event)
 	{
 		if (auto selected_item = inventory->get_item(m_inventory_menu->selected_slot))
 		{
-			m_examine_menu->examined_entities.clear();
-			m_examine_menu->examined_entities.push_back(selected_item);
-			m_examine_menu->show();
-			m_examine_menu->focus();
+			if (std::find(m_examine_menu->examined_entities.begin(), m_examine_menu->examined_entities.end(), selected_item) == m_examine_menu->examined_entities.end())
+			{
+				m_examine_menu->examined_entities.clear();
+				m_examine_menu->examined_entities.push_back(selected_item);
+				m_examine_menu->show();
+				m_examine_menu->focus();
+			}
+			else
+			{
+				m_examine_menu->examined_entities.erase(std::find(m_examine_menu->examined_entities.begin(), m_examine_menu->examined_entities.end(), selected_item));
+				m_examine_menu->hide();
+			}
 		}
 
 		return InputResult();
+	}
+
+	if (InputMap::is_action_pressed(Keybind::Consume, event))
+	{
+		auto selected_item = inventory->get_item(m_inventory_menu->selected_slot);
+
+		if (!selected_item)
+		{
+			return InputResult();
+		}
+		
+		if (!selected_item->get_item_def()->is_consumable())
+		{
+			world_state->game_message(GameMessage("You can't consume that item.", color::get("light_red")));
+			return InputResult();
+		}
+
+		return InputResult(std::make_unique<ConsumeAction>(player->interact_speed(), player, selected_item), new InputResult(InputResult::Type::Pop_InputHandler));
 	}
 	
 	if (InputMap::is_action_pressed(Keybind::PinSidebarMenu, event))
 	{
 		m_inventory_menu->set_pinned(!m_inventory_menu->is_pinned());
+		return InputResult();
+	}
+
+	Position move_dir = InputMap::get_input_direction(event);
+
+	if (!move_dir.empty())
+	{
 		return InputResult();
 	}
 
@@ -694,19 +841,113 @@ void InputHandler_Inventory::step(const TimeUnit& delta_time)
 	auto inventory = player->get_inventory();
 }
 
-void InputHandler_Interaction::init()
+bool InputHandler_Interaction::init()
 {
-	InputHandler_Player::init();
+	if (!InputHandler_Player::init())
+		return false;
 
+	if (!m_actor || !m_subject)
+	{
+		CERR("Interaction input handler requires an actor and a subject.");
+		return false;
+	}
+
+	m_interactions = m_actor->get_interactions_with(m_subject);
+
+	m_selection_menu = register_sidebar<SidebarMenu_GenericSelectionMenu>(sidebar_menus::INTERACTION);
+	
+	m_selection_menu->title = fmt::format("{}", m_subject->display_name());
+	m_selection_menu->frame_fg = m_subject->fg();
+
+	m_selection_menu->focus();
+	m_selection_menu->uncollapse();
+
+	for (const auto& interaction : m_interactions)
+	{
+		m_selection_menu->menu_items.push_back(SelectionMenuItem(
+			fmt::format("{} - {}", InputMap::actions_to_string(interaction.input_action), interaction.name),
+			color::get("white"), 
+			color::get("black")
+		));
+	}
+
+	if (!m_interactions.empty())
+	{
+		m_selection_menu->selected_slot = 0;
+	}
+
+	return true;
 }
 
 void InputHandler_Interaction::remove()
 {
-
+	get_world_state()->get_sidebar()->remove_menu(sidebar_menus::INTERACTION);
 }
 
 InputResult InputHandler_Interaction::ev_key_down(SDL_Event event)
 {
+	if (InputMap::is_action_pressed(Keybind::Interact, event) || InputMap::is_action_pressed(Keybind::Quit, event))
+	{
+		return InputResult(InputResult::Type::Pop_InputHandler);
+	}
+
+	if (InputMap::is_action_pressed(Keybind::MenuUp, event))
+	{
+		m_selection_menu->selected_slot += 1;
+		m_selection_menu->selected_slot = m_selection_menu->selected_slot % m_interactions.size();
+
+		return InputResult();
+	}
+
+	if (InputMap::is_action_pressed(Keybind::MenuDown, event))
+	{
+		m_selection_menu->selected_slot -= 1;
+		m_selection_menu->selected_slot = m_selection_menu->selected_slot % m_interactions.size();
+
+		return InputResult();
+	}
+
+	if (InputMap::is_action_pressed(Keybind::MenuConfirm, event))
+	{
+		if (m_selection_menu->selected_slot >= 0 && m_selection_menu->selected_slot < m_interactions.size())
+		{
+			auto action = m_interactions[m_selection_menu->selected_slot].action(m_actor, m_subject);
+
+			if (!action)
+			{
+				CERR("Interaction action returned null!");
+				return InputResult();
+			}
+
+			return InputResult(std::unique_ptr<Action>(action), new InputResult(InputResult::Type::Pop_InputHandler));
+
+		}
+
+		return InputResult();
+	}
+
+	for (const auto& interaction : m_interactions)
+	{
+		if (InputMap::is_action_pressed(interaction.input_action, event))
+		{
+			auto action = interaction.action(m_actor, m_subject);
+			if (!action)
+			{
+				CERR("Interaction action returned null!");
+				return InputResult();
+			}
+
+			return InputResult(std::unique_ptr<Action>(action), new InputResult(InputResult::Type::Pop_InputHandler));
+		}
+	}
+
+	Position move_dir = InputMap::get_input_direction(event);
+
+	if (!move_dir.empty())
+	{
+		return InputResult();
+	}
+
 	return InputHandler_Player::ev_key_down(event);
 }
 
@@ -714,16 +955,14 @@ InputResult InputHandler_PositionSelector::ev_key_down(SDL_Event event)
 {
 	Position move_dir = InputMap::get_input_direction(event);
 
-	if (!move_dir.empty())
+	if (!move_dir.empty() || InputMap::is_action_pressed(Keybind::MoveCenter, event))
 	{
-		if (!m_valid_positions.empty() && m_valid_positions.contains(move_dir + m_center))
+		if (!m_valid_positions.empty() && !m_valid_positions.contains(move_dir + m_center))
 		{
 			return InputResult(InputResult::Type::Pop_InputHandler);
 		}
 
-		auto result = m_callback(this, move_dir + m_center);
-		result.next_input_result = new InputResult(InputResult::Type::Pop_InputHandler);
-		return result;
+		return InputResult(InputResult::Type::Pop_InputHandler, new InputResult(m_callback(move_dir + m_center)));
 	}
 
 	if (InputMap::is_action_pressed(m_input_keybind, event) || InputMap::is_action_pressed(Keybind::Quit, event))
@@ -732,6 +971,16 @@ InputResult InputHandler_PositionSelector::ev_key_down(SDL_Event event)
 	}
 
 	return InputHandler_Player::ev_key_down(event);
+}
+
+bool InputHandler_PositionSelector::init()
+{
+	if (!InputHandler_Player::init())
+		return false;
+
+	get_world_state()->set_tick_speed(TickSpeed::TURN_BASED);
+
+	return true;
 }
 
 void InputHandler_PositionSelector::render(const RenderParams& params) const
@@ -751,32 +1000,14 @@ void InputHandler_PositionSelector::render(const RenderParams& params) const
 		if (draw_z != 0)
 			continue;
 
-		auto tile = get_world()->get_tile(pos);
+		int screen_x = draw_x + params.world_inner_frame_p1().x;
+		int screen_y = draw_y + params.world_inner_frame_p1().y;
 
-		auto draw_fg = tile->bg();
-		auto draw_bg = tile->fg();
+		auto draw_fg = output::get_bg(screen_x, screen_y);
+		auto draw_bg = output::get_fg(screen_x, screen_y);
 
-		if (params.use_fov)
-		{
-			if (tile->is_visible())
-			{
-				draw_fg = tile->bg();
-				draw_bg = tile->fg();
-			}
-			else if (tile->is_explored())
-			{
-				draw_fg = color::get("black");
-				draw_bg = color::get("col_explored");
-			}
-			else
-			{
-				draw_fg = color::get("white");
-				draw_bg = color::get("white");
-			}
-		}
-
-		output::set_fg(draw_x + params.world_inner_frame_p1().x, draw_y + params.world_inner_frame_p1().x, draw_fg);
-		output::set_bg(draw_x + params.world_inner_frame_p1().x, draw_y + params.world_inner_frame_p1().y, draw_bg);
+		output::set_fg(screen_x, screen_y, draw_fg);
+		output::set_bg(screen_x, screen_y, draw_bg);
 	}
 
 	output::console_printf_rgb_rect_ex(
@@ -784,4 +1015,112 @@ void InputHandler_PositionSelector::render(const RenderParams& params) const
 		color::get("white"), color::get("black"),
 		TCOD_BKGND_SET, TCOD_CENTER, m_title
 	);
+}
+
+bool InputHandler_ListSelector::init()
+{
+	if (!InputHandler_Player::init())
+		return false;
+
+	get_world_state()->set_tick_speed(TickSpeed::TURN_BASED);
+
+	return true;
+}
+
+InputResult InputHandler_ListSelector::ev_key_down(SDL_Event event)
+{
+	if (InputMap::is_action_pressed(m_input_keybind, event) || InputMap::is_action_pressed(Keybind::Quit, event))
+	{
+		return InputResult(InputResult::Type::Pop_InputHandler);
+	}
+
+	if (InputMap::is_action_pressed(Keybind::MenuUp, event))
+	{
+		m_selected_slot += 1;
+		m_selected_slot = m_selected_slot % m_items.size();
+
+		return InputResult();
+	}
+
+	if (InputMap::is_action_pressed(Keybind::MenuDown, event))
+	{
+		m_selected_slot -= 1;
+		m_selected_slot = m_selected_slot % m_items.size();
+
+		return InputResult();
+	}
+
+	if (InputMap::is_action_pressed(Keybind::MenuConfirm, event))
+	{
+		if (m_selected_slot >= 0 && m_selected_slot < m_items.size())
+		{
+			return InputResult(
+				InputResult::Type::Pop_InputHandler, 
+				new InputResult(std::get<3>(m_items[m_selected_slot])())
+			);
+		}
+
+		return InputResult();
+	}
+
+	Position move_dir = InputMap::get_input_direction(event);
+
+	if (!move_dir.empty())
+	{
+		return InputResult();
+	}
+
+	return InputHandler_Player::ev_key_down(event);
+}
+
+void InputHandler_ListSelector::render(const RenderParams& params) const
+{
+	int panel_x = params.world_inner_frame_p1().x;
+	int panel_y = params.world_inner_frame_p1().y;
+
+	int draw_x = panel_x + 1;
+	int draw_y = panel_y + 1;
+
+	int panel_width = params.world_inner_frame_size().x / 2;
+	int panel_height = 2;
+
+	color_t fg = color::get("white");
+	color_t bg = color::get("black");
+
+	auto print_text = [&](std::string text, color_t new_fg = color::get("white"), color_t new_bg = color::get("black"))
+		{
+			draw_y += output::console_printf_rgb_rect_ex(draw_x, draw_y, panel_width - 1, 0, new_fg, new_bg, TCOD_BKGND_SET, TCOD_LEFT, text);
+		};
+
+	panel_height = (int)(m_items.size() + 2);
+
+	size_t idx = 0;
+
+	for (const auto& item : m_items)
+	{
+		bool selected = idx == m_selected_slot;
+		print_text(std::get<0>(item), selected ? std::get<2>(item) : std::get<1>(item), selected ? std::get<1>(item) : std::get<2>(item));
+		idx++;
+	}
+
+	panel_height = std::max(panel_height, (draw_y - panel_y) + 1);
+
+
+	output::draw_frame_rgb(panel_x, panel_y, panel_width, panel_height, fg, bg, DEFAULT_RECT_FRAME, false, TCOD_BKGND_SET);
+
+	if (!m_title.empty())
+	{
+		std::string frame_title;
+
+		if (m_input_keybind != Keybind::None && m_display_input_keybind)
+		{
+			frame_title = fmt::format("{} ({})", m_title, InputMap::actions_to_string(m_input_keybind));
+		}
+		else
+		{
+			frame_title = m_title;
+		}
+
+		output::console_printf_rgb_rect_ex(panel_x, panel_y, panel_width, 1, bg, fg, TCOD_BKGND_SET, TCOD_CENTER, frame_title);
+	}
 }

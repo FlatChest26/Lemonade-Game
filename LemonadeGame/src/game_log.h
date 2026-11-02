@@ -5,6 +5,7 @@
 
 #include "render_params.h"
 #include "time_units.h"
+#include "game_message.h"
 
 #include "world.h"
 #include <string>
@@ -12,22 +13,15 @@
 
 class WorldGameState;
 
-struct GameMessage
+struct GameLogMessage
 {
-	std::string text = "";
-	color_t fg = DEFAULT_FG_COLOR;
-	color_t bg = DEFAULT_BG_COLOR;
-	TimeUnit time_point;
+	GameMessage message;
 
+	TimeUnit time_point;
 	int repeat_count = 1;
 
-	GameMessage(std::string msg = "", color_t fg = DEFAULT_FG_COLOR, color_t bg = DEFAULT_BG_COLOR, const TimeUnit& time_point = TimeUnit::none()) :
-		text(msg), fg(fg), bg(bg), time_point(time_point), repeat_count(1)
-	{
-	}
-
-	bool empty() const { return text.empty(); }
-	operator std::string() const { return text; }
+	bool empty() const { return message.empty(); }
+	operator std::string() const { return message.text; }
 };
 
 constexpr size_t MAX_HISTORY_LENGTH = 256;
@@ -36,7 +30,7 @@ class GameLog
 {
 protected:
 	WorldGameState* m_world_state;
-	std::vector<GameMessage> m_messages;
+	std::vector<GameLogMessage> m_messages;
 	size_t m_history_length{ MAX_HISTORY_LENGTH };
 
 public:
@@ -47,7 +41,7 @@ public:
 
 public:
 	// From most to least recent
-	GameMessage& get_message(size_t idx)
+	GameLogMessage& get_message(size_t idx)
 	{
 		size_t index = m_messages.size() - (idx + 1);
 
@@ -59,7 +53,7 @@ public:
 		return m_messages[index];
 	}
 
-	const GameMessage& get_message(size_t idx) const
+	const GameLogMessage& get_message(size_t idx) const
 	{
 		size_t index = m_messages.size() - (idx + 1);
 
@@ -71,16 +65,18 @@ public:
 		return m_messages[index];
 	}
 
-	void add_message(const GameMessage& msg)
+	void add_message(const GameMessage& msg, const TimeUnit& time_point)
 	{
-		if (m_messages.size() > 0 && get_message(0).text == msg.text)
+		GameLogMessage new_message(msg, time_point);
+
+		if (m_messages.size() > 0 && get_message(0).message.text == new_message.message.text)
 		{
 			auto& old_message = get_message(0);
 			old_message.repeat_count += 1;
 		}
 		else
 		{
-			m_messages.push_back(msg);
+			m_messages.push_back(new_message);
 
 			if (m_messages.size() >= m_history_length)
 			{

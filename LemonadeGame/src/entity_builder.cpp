@@ -45,18 +45,41 @@ Entity* EntityBuilder::create_creature(EntityID ID, CreatureInitializer init)
 	// Species
 	if (init.species)
 	{
-		new_creature->set_species(init.species);
+		auto species = init.species;
+		new_creature->set_species(species);
 
 		// Body Plan
-		auto combined_body_mods = init.species->body_mods;
+		auto combined_body_mods = species->body_mods;
 
-		combined_body_mods.reserve(init.body_mods.size() + init.species->body_mods.size());
+		combined_body_mods.reserve(init.body_mods.size() + species->body_mods.size());
 		combined_body_mods.insert(combined_body_mods.end(), init.body_mods.begin(), init.body_mods.end());
 
-		new_creature->set_anatomy(new Anatomy(init.species->default_body_plan, combined_body_mods));
+		new_creature->set_anatomy(new Anatomy(species->default_body_plan, combined_body_mods));
 
 		// Gaits
-		new_creature->set_gait(new Gait(*init.species->default_gaits));
+		new_creature->set_gait(new Gait(*species->default_gaits));
+
+		// Living
+		new_creature->set_living(new Living(new_creature, init.current_age, init.lifespan));
+		new_creature->get_living()->add_defaults();
+
+		for (auto& [ID, init_amount] : init.initial_stats)
+		{
+			if (!new_creature->get_living()->has_stat(ID))
+			{
+				CERR("Invalid stat ID: " << ID);
+				continue;
+			}
+
+			new_creature->get_living()->stat(ID).value() = init_amount;
+		}
+
+		// Person
+		if (species->is_part_of_society())
+			new_creature->set_person(new Person(new_creature, init.starting_cash));
+
+		// Inventory
+		new_creature->get_inventory()->set_max_slots(new_creature->default_inventory_slots());
 	}
 
 	if (!init.species)
@@ -64,27 +87,7 @@ Entity* EntityBuilder::create_creature(EntityID ID, CreatureInitializer init)
 		CERR("Creature: " << ID << " has no species assigned!");
 	}
 
-	// Living
-	new_creature->set_living(new Living(new_creature, init.current_age, init.lifespan));
-	new_creature->get_living()->add_defaults();
-
-	for (auto& [ID, init_amount] : init.initial_stats)
-	{
-		if (!new_creature->get_living()->has_stat(ID))
-		{
-			CERR("Invalid stat ID: " << ID);
-			continue;
-		}
-
-		new_creature->get_living()->stat(ID).value() = init_amount;
-	}
-
-	// Person
-	new_creature->set_person(new Person(new_creature, init.starting_cash));
 	
-
-	new_creature->get_inventory()->set_max_slots(new_creature->default_inventory_slots());
-
 	default_entity_render_overrides(new_creature->render_overrides);
 
 	return new_creature;

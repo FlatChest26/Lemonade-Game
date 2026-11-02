@@ -17,8 +17,7 @@ using json = nlohmann::json;
 
 #include "enum_traits.h"
 
-template<typename T, typename Predicate>
-inline std::string english_list(T list, Predicate to_str)
+inline std::string english_list(const std::ranges::input_range auto& list)
 {
 	std::string final_list = "";
 
@@ -26,7 +25,7 @@ inline std::string english_list(T list, Predicate to_str)
 
 	for (const auto& item : list)
 	{
-		final_list += to_str(item);
+		final_list += item;
 
 		if (i == list.size() - 1)
 		{

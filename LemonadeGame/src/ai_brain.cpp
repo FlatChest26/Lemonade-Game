@@ -19,6 +19,12 @@ void AIBrain::step(TimeUnit time_delta)
 {
 	auto entity = get_entity();
 
+	if (entity->get_brain() != this)
+	{
+		CERR("entity's brain is not this brain!");
+		return;
+	}
+
 	if (!entity || entity->should_remove())
 	{
 		return;
@@ -33,13 +39,13 @@ void AIBrain::step(TimeUnit time_delta)
 	}
 	else
 	{
-		//add_behavior(std::make_unique<Behavior_Wander>(2, Position(-1, -1, -1), TimeUnit::from_seconds(0.5), TimeUnit::from_seconds(4.0)));
+		//add_behavior(new Behavior_Wander(2, Position(-1, -1, -1), TimeUnit::from_seconds(0.5), TimeUnit::from_seconds(4.0)));
 
-		double required_distance_squared = 2.0f * 2.0f;
+		double required_distance_squared = 1.0f + DBL_EPSILON;
 		double dist_1 = (m_manager->get_sidewalk_end() - entity->get_movable()->pos()).length_squared();
 		double dist_2 = ((m_manager->get_sidewalk_end() + Position(1, 0, 0)) - entity->get_movable()->pos()).length_squared();
 
-		if (dist_1 < required_distance_squared && dist_2 < required_distance_squared)
+		if (dist_1 <= required_distance_squared && dist_2 <= required_distance_squared)
 		{
 			entity->queue_remove();
 		}
@@ -56,14 +62,14 @@ Entity* AIBrain::get_entity()
 	return m_entity;
 }
 
-void AIBrain::add_behavior(std::unique_ptr<Behavior> behavior)
+void AIBrain::add_behavior(Behavior* behavior)
 {
 	if (!behavior)
 	{
 		return;
 	}
 
-	m_behavior_stack.push_back(std::move(behavior));
+	m_behavior_stack.emplace_back(behavior);
 }
 
 Behavior* AIBrain::current_behavior()

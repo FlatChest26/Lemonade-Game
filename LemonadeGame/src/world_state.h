@@ -43,8 +43,11 @@ public:
 	WorldGameState();
 
 public:
-	// -- Getters -- //
+	// -- Getters & Setters -- //
+
 	Entity* get_player() const { return m_player; }
+	void set_player(Entity* player) { m_player = player; }
+
 	World* get_world() const { return m_world.get(); }
 	Camera* get_camera() const { return m_camera.get(); }
 	AIManager* get_ai_manager() const { return m_ai_manager.get(); }
@@ -96,7 +99,7 @@ public:
 
 	virtual void handle_input_result(InputResult result) override;
 
-	void game_message(GameMessage msg);
+	void game_message(const GameMessage& msg);
 };
 
 #endif // !LEMONADE_GAME_SRC_WORLD_STATE_H

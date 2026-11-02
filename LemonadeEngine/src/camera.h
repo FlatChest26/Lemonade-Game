@@ -13,22 +13,12 @@ class Camera : public Movable<Position, Size>
 public:
 	// -- Getters -- //
 
-	Position get_center_offset() const
+	virtual Position get_center() const override
 	{
-		return Position(static_cast<Coord>(get_width() / 2), static_cast<Coord>(get_height() / 2), 0);
+		return Position(static_cast<Coord>(width() / 2), static_cast<Coord>(height() / 2), 0);
 	}
-
-	Position get_p1() const { return get_pos(); }
-
-	Coord get_x1() const { return get_p1().x; }
-	Coord get_y1() const { return get_p1().y; }
-	Coord get_z1() const { return get_p1().z; }
-
-	Position get_p2() const { return get_pos() + Position(static_cast<Coord>(width()), static_cast<Coord>(height()), -static_cast<Coord>(depth())); }
-
-	Coord get_x2() const { return get_p2().x; }
-	Coord get_y2() const { return get_p2().y; }
-	Coord get_z2() const { return get_p2().z; }
+	
+	virtual Position get_p2() const override { return get_pos() + Position(static_cast<Coord>(width()), static_cast<Coord>(height()), -static_cast<Coord>(depth())); }
 
 public:
 	explicit Camera(TransformType transform = { DEFAULT_POSITION,{ 1, 1, CAMERA_VIEW_DEPTH }, BELOW }) :
@@ -46,7 +36,7 @@ public:
 	// Positions the view so the input is at the exact center of the camera.
 	void set_center(const Position& p)
 	{
-		m_transform.position = p - get_center_offset();
+		m_transform.position = p - get_center();
 	}
 
 	bool in_view(Coord x, Coord y, Coord z) const

@@ -13,7 +13,12 @@
     "noun": { "singular": "glass of lemonade", "plural": "glasses of lemonade" },
     "renderable": { "glyph": "u", "fg": "yellow", "bg": "black" },
     "description": "A glass of a sweet, refreshing drink.",
-    "price": 1.0
+    "price": 1.0,
+    "flags": [ "consumable" ],
+    "consumable_effects": [
+      { "modified_stat": "thirst", "amount": -30.0, "taste": "sweet" },
+      { "modified_stat": "mood", "amount": 18.0, "taste": "refreshing" }
+    ]
   },
   {
     "type": "item_definition",

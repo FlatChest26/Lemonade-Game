@@ -32,6 +32,7 @@ public:
 	~Inventory();
 
 	Entity* get_owner() const { return m_owner; }
+	void set_owner(Entity* owner) { m_owner = owner; }
 
 	std::vector<ItemSlot> get_item_slots() const { return m_item_slots; }
 	std::vector<ItemSlot> get_filled_item_slots() const;

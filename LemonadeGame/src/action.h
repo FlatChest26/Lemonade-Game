@@ -5,6 +5,7 @@
 
 #include "time_units.h"
 #include "keybinds.h"
+#include "game_message.h"
 
 #include <memory>
 #include <vector>
@@ -27,70 +28,30 @@ class TileMap;
 
 using QueuedAction = std::unique_ptr<Action>;
 using ActionQueue = std::vector<QueuedAction>;
-using ActionResponse = std::string;
+using ActionResponse = GameMessage;
 
 struct ActionResult
 {
 	bool success{ false };
-	ActionResponse response{ "" };
-	ActionQueue next_actions;
-
-	ActionResult(bool success, ActionResponse response, ActionQueue next_actions) :
-		success(success), response(response)
-	{
-		for (auto& a : next_actions)
-		{
-			add_next_action(std::move(a));
-		}
-	}
-
-	ActionResult(bool success, ActionResponse response, QueuedAction next_action) :
-		success(success), response(response)
-	{
-		add_next_action(std::move(next_action));
-	}
-
-	ActionResult(bool success, ActionQueue next_actions) :
-		success(success), response("")
-	{
-		for (auto& a : next_actions)
-		{
-			add_next_action(std::move(a));
-		}
-	}
-
-	ActionResult(bool success, QueuedAction next_action) :
-		success(success), response("")
-	{
-		add_next_action(std::move(next_action));
-	}
-
-	ActionResult(bool success, ActionResponse response) :
-		success(success), response(response)
-	{
-	}
-
-	ActionResult(bool success) :
-		success(success), response("")
-	{
-	}
+	std::vector<ActionResponse> responses{};
+	std::vector<Action*> next;
 
 	constexpr bool has_next_action() const
 	{
-		return !next_actions.empty();
+		return !next.empty();
 	}
 
-	void add_next_action(std::unique_ptr<Action> action)
+	void add_next_action(Action* action)
 	{
-		next_actions.push_back(std::move(action));
+		next.push_back(action);
 	}
 
-	std::unique_ptr<Action> get_next_action()
+	Action* get_next_action()
 	{
-		if (next_actions.front())
+		if (next.front())
 		{
-			auto next_action = std::move(next_actions.front());
-			next_actions.erase(next_actions.begin());
+			auto next_action = next.front();
+			next.erase(next.begin());
 
 			return next_action;
 		}
@@ -173,11 +134,6 @@ public:
 	static std::string action_name() { return "<unnamed entity action>"; }
 };
 
-struct PotentialAction
-{
-	std::string name;
-	Keybind input_action;
-	Action* action;
-};
+
 
 #endif // !LEMONADE_GAME_SRC_ACTION_H

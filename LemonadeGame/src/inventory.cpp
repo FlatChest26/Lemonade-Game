@@ -84,12 +84,17 @@ bool Inventory::add_item(Entity* item)
 	if (!can_carry(item))
 		return false;
 
-	auto carry_slots = item->carry_slots();
-
-	for (auto carry_slots = item->carry_slots(); carry_slots > 0; carry_slots--)
+	for (size_t carry_slots = item->carry_slots(); carry_slots > 0; --carry_slots)
 	{
-		m_item_slots[m_slots_taken].item = item;
-		m_slots_taken += 1;
+		for (auto& item_slot : m_item_slots)
+		{
+			if (!item_slot.filled())
+			{
+				item_slot.item = item;
+				m_slots_taken += 1;
+				break;
+			}
+		}
 	}
 
 	return true;

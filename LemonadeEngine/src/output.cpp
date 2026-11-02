@@ -434,6 +434,23 @@ namespace output // Printing
 		va_start(args, fmt);
 		return console_printf_rgb_rect_ex(x, y, width, height, fg, bg, flag, alignment, fmt.c_str(), args);
 	}
+
+	int console_get_print_height(int x, int y, int width, int height,  std::string fmt, ...)
+	{
+		if (auto o = get_output())
+		{
+			va_list args;
+			va_start(args, fmt);
+			return TCOD_console_get_height_rect_fmt(
+				o->get_console().get(),
+				x, y, width, height,
+				fmt.c_str(),
+				args
+			);
+		}
+
+		return 0;
+	}
 }
 
 namespace output // Drawing

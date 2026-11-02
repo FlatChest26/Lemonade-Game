@@ -47,6 +47,7 @@ enum class Keybind : uint64_t
 	MoveSouthWest_Below,
 	MoveWest_Below,
 	MoveNorthWest_Below,
+	MoveCenter,
 
 	WaitShort,
 	WaitLong,
@@ -60,6 +61,7 @@ enum class Keybind : uint64_t
 	Drop,
 	Interact,
 	Sleep,
+	Consume,
 
 	SetToTurnBasedSpeed,
 	SetToRealTimeSpeed,

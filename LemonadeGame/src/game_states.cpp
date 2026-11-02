@@ -88,12 +88,13 @@ void GameState::push_input_handler(InputHandler* input_handler)
 	{
 		return;
 	}
+	
+	input_handler->set_game_state(this);
 
-	auto new_input_handler = std::unique_ptr<InputHandler>(input_handler);
-	m_input_handlers.push_back(std::move(new_input_handler));
+	if (!input_handler->init())
+		return;
 
-	get_current_input_handler()->set_game_state(this);
-	get_current_input_handler()->init();
+	m_input_handlers.emplace_back(input_handler);
 }
 
 void GameState::reset_input_handlers(InputHandler* input_handler)

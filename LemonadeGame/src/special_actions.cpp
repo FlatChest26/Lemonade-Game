@@ -34,7 +34,12 @@ ActionResult StartSleepAction::perform()
 		get_world_game_state()->set_tick_speed(TickSpeed::REAL_TIME_8X);
 	}
 
-	return ActionResult(true, fmt::format("{} {} asleep.", grammar::A(n1), grammar::is_plural(n1) ? "fall" : "falls"));
+	return ActionResult{
+		.success = true,
+		.responses = {
+			fmt::format("{} {} asleep.", grammar::A(n1), grammar::is_plural(n1) ? "fall" : "falls")
+		}
+	};
 }
 
 bool EndSleepAction::check_action() const
@@ -68,5 +73,10 @@ ActionResult EndSleepAction::perform()
 		get_world_game_state()->set_tick_speed(TickSpeed::TURN_BASED);
 	}
 
-	return ActionResult(true, fmt::format("{} {} up.", grammar::A(n1), grammar::is_plural(n1) ? "wake" : "wakes"));
+	return ActionResult{
+		.success = true,
+		.responses = {
+			fmt::format("{} {} up.", grammar::A(n1), grammar::is_plural(n1) ? "wake" : "wakes")
+		}
+	};
 }

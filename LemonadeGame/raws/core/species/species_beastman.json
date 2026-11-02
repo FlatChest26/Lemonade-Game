@@ -23,7 +23,7 @@
     "child_age": 12,
     "adult_age": 18,
     "mature_age": 20,
-    "flags": [ "PART_OF_SOCIETY" ],
+    "flags": [ "part_of_society" ],
     "common_genders": [
       { "type": "NEUTER", "frequency": 2.0 },
       { "type": "EPICENE", "frequency": 25.0 },

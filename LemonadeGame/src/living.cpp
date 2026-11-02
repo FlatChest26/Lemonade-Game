@@ -3,7 +3,7 @@
 
 #include "lemonade_game.h"
 #include "game_settings.h"
-#include "entity.h"
+#include "consumable.h"
 #include "special_actions.h"
 #include "world_state.h"
 
@@ -335,6 +335,19 @@ void Living::wake_up()
 {
 	remove_timer("REST_TIMER");
 	m_asleep = false;
+}
+
+bool Living::take_consumable(const ConsumableEffect& effect)
+{
+	if (!has_stat(effect.modified_stat))
+	{
+		return false;
+	}
+
+	auto& stat = m_stats[effect.modified_stat];
+	stat.value() += effect.amount;
+
+	return true;
 }
 
 void Living::step(const TimeUnit& time_delta)

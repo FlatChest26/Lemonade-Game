@@ -209,36 +209,36 @@ Species Species::from_json(const json& j)
 		{
 			if (!flag_name.is_string())
 			{
-				CERR("Invalid tile flag name in species JSON object: " << flag_name);
+				CERR("Invalid species flag name : " << flag_name);
 				return false;
 			}
 
-			if (!AllSpeciesFlags.contains(flag_name))
+			if (!AllSpeciesFlags.contains(flag_name.get<std::string>()))
 			{
-				CERR(flag_name << " is not a valid tile flag name!");
+				CERR(flag_name << " is not a valid species flag name!");
 				return false;
 			}
 
 			if (add)
 			{
-				if (static_cast<int>(AllSpeciesFlags[flag_name]) > 0)
+				if (static_cast<int>(AllSpeciesFlags[flag_name.get<std::string>()]) > 0)
 				{
-					s.flags |= AllSpeciesFlags[flag_name];
+					s.flags |= AllSpeciesFlags[flag_name.get<std::string>()];
 				}
 				else
 				{
-					s.flags &= AllSpeciesFlags[flag_name];
+					s.flags &= AllSpeciesFlags[flag_name.get<std::string>()];
 				}
 			}
 			else
 			{
-				if (static_cast<int>(AllSpeciesFlags[flag_name]) > 0)
+				if (static_cast<int>(AllSpeciesFlags[flag_name.get<std::string>()]) > 0)
 				{
-					s.flags &= ~AllSpeciesFlags[flag_name];
+					s.flags &= ~AllSpeciesFlags[flag_name.get<std::string>()];
 				}
 				else
 				{
-					s.flags |= ~AllSpeciesFlags[flag_name];
+					s.flags |= ~AllSpeciesFlags[flag_name.get<std::string>()];
 				}
 			}
 

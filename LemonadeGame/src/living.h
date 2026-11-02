@@ -8,8 +8,9 @@
 #include "stat_values.h"
 
 class Entity;
+struct ConsumableEffect;
 
-using MultiValue = StatValue<-100, 100>;
+using PosNegValue = StatValue<-100, 100>;
 using StatID = std::string;
 struct StatDescription
 {
@@ -37,6 +38,7 @@ enum class StatType
 
 struct StatInfo
 {
+	StatID ID;
 	StatType type;
 	std::string positive_name;
 	std::string negative_name;
@@ -49,8 +51,7 @@ class Stat
 {
 protected:
 	StatInfo m_info;
-
-	MultiValue m_value;
+	PosNegValue m_value;
 
 public:
 
@@ -61,8 +62,8 @@ public:
 
 	const StatInfo& info() const { return m_info; }
 
-	MultiValue& value() { return m_value; }
-	const MultiValue& value() const { return m_value; }
+	PosNegValue& value() { return m_value; }
+	const PosNegValue& value() const { return m_value; }
 	StatInt_t get_value() const;
 
 	std::string name() const;
@@ -74,12 +75,12 @@ public:
 
 namespace needs
 {
-	inline StatID AROUSAL = "AROUSAL";
-	inline StatID HUNGER = "HUNGER";
-	inline StatID THIRST = "THIRST";
-	inline StatID HYGIENE = "HYGIENE";
-	inline StatID FATIGUE = "FATIGUE";
-	inline StatID MOOD = "MOOD";
+	inline StatID AROUSAL = "arousal";
+	inline StatID HUNGER = "hunger";
+	inline StatID THIRST = "thirst";
+	inline StatID HYGIENE = "hygiene";
+	inline StatID FATIGUE = "fatigue";
+	inline StatID MOOD = "mood";
 }
 
 using TimerID = std::string;
@@ -217,6 +218,11 @@ public:
 
 	bool should_wake_up() const;
 	bool should_sleep() const;
+
+	// Utilities //
+
+	bool can_act() const { return is_alive() && is_awake(); }
+	bool take_consumable(const ConsumableEffect& effect);
 
 public:
 

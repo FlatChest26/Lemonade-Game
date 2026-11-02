@@ -53,9 +53,9 @@ int Entity::view_range() const
 
 size_t Entity::default_inventory_slots() const
 {
-	if (m_anatomy)
+	if (has_anatomy())
 	{
-		return m_anatomy->count_body_parts_with_flag(BodyPartFlag::GRASP);
+		return get_anatomy()->count_body_parts_with_flag(BodyPartFlag::GRASP);
 	}
 
 	return 1;
@@ -63,9 +63,9 @@ size_t Entity::default_inventory_slots() const
 
 size_t Entity::carry_slots() const
 {
-	if (m_item_def)
+	if (has_item_def())
 	{
-		return m_item_def->carry_slots;
+		return get_item_def()->carry_slots;
 	}
 
 	return 1;
@@ -240,19 +240,19 @@ std::string Entity::description() const
 {
 	std::string desc;
 
-	if (m_creature_soul)
+	if (has_soul())
 	{
-		desc += m_creature_soul->description;
+		desc += get_soul()->description;
 	}
 
-	if (m_item_def)
+	if (has_item_def())
 	{
-		desc += " " + m_item_def->description;
+		desc += " " + get_item_def()->description;
 	}
 
-	if (m_species)
+	if (has_species())
 	{
-		desc += " " + m_species->description;
+		desc += " " + get_species()->description;
 	}
 
 	return trim(desc);
@@ -275,41 +275,41 @@ GrammarNoun Entity::display_noun() const
 
 	Noun display_noun = noun();
 
-	if (m_creature_soul && m_creature_soul->gender->uses_noun)
+	if (has_soul() && get_soul()->gender->uses_noun)
 	{
-		Noun gender_noun = m_creature_soul->gender->mature_noun;
+		Noun gender_noun = get_soul()->gender->mature_noun;
 
 		bool species_mention = false;
 
-		if (m_living)
+		if (has_living())
 		{
-			if (m_living->is_young())
+			if (get_living()->is_young())
 			{
-				if (m_species && m_species->gendered_nouns.has_immature_gendered_noun(m_creature_soul->gender->gender_type))
+				if (has_species() && get_species()->gendered_nouns.has_immature_gendered_noun(get_soul()->gender->gender_type))
 				{
-					gender_noun = m_species->gendered_nouns.get_immature_gendered_noun(m_creature_soul->gender->gender_type);
+					gender_noun = get_species()->gendered_nouns.get_immature_gendered_noun(get_soul()->gender->gender_type);
 					species_mention = true;
 				}
 				else
 				{
-					gender_noun = m_creature_soul->gender->immature_noun;
+					gender_noun = get_soul()->gender->immature_noun;
 				}
 			}
 			else
 			{
-				if (has_species() && get_species()->gendered_nouns.has_mature_gendered_noun(m_creature_soul->gender->gender_type))
+				if (has_species() && get_species()->gendered_nouns.has_mature_gendered_noun(get_soul()->gender->gender_type))
 				{
-					gender_noun = m_species->gendered_nouns.get_mature_gendered_noun(m_creature_soul->gender->gender_type);
+					gender_noun = get_species()->gendered_nouns.get_mature_gendered_noun(get_soul()->gender->gender_type);
 					species_mention = true;
 				}
 				else
 				{
-					gender_noun = m_creature_soul->gender->mature_noun;
+					gender_noun = get_soul()->gender->mature_noun;
 				}
 			}
 		}
 
-		if (species_mention || (m_species && m_species->is_mundane()))
+		if (species_mention || (has_species() && get_species()->is_mundane()))
 		{
 			display_noun = gender_noun;
 		}
@@ -399,9 +399,9 @@ void Entity::set_flag_to(EntityFlag flag, bool set_to)
 
 Renderable Entity::get_renderable_at(Coord offset_x, Coord offset_y, Coord offset_z) const
 {
-	if (m_furniture_def)
+	if (has_furniture_def())
 	{
-		return m_furniture_def->get_renderable_at(offset_x, offset_y, offset_z);
+		return get_furniture_def()->get_renderable_at(offset_x, offset_y, offset_z);
 	}
 
 	return renderable();
@@ -416,26 +416,26 @@ Renderable Entity::renderable() const
 
 	Renderable renderable{ '?', color::get("white"), color::get("black") };
 
-	if (m_creature_soul)
+	if (has_soul())
 	{
-		renderable = m_creature_soul->renderable();
+		renderable = get_soul()->renderable();
 	}
 
-	if (m_item_def)
+	if (has_item_def())
 	{
-		renderable = m_item_def->renderable;
+		renderable = get_item_def()->renderable;
 	}
 
-	if (m_species)
+	if (has_species())
 	{
-		renderable = m_species->renderable;
+		renderable = get_species()->renderable;
 	}
 
 	if (is_named() && is_name_known())
 	{
 		renderable.glyph = nickname()[0];
 
-		if (m_living && m_living->is_young())
+		if (has_living() && get_living()->is_young())
 		{
 			renderable.glyph = tolower(nickname()[0]);
 		}
@@ -445,9 +445,9 @@ Renderable Entity::renderable() const
 		}
 	}
 
-	if (m_creature_soul)
+	if (has_soul())
 	{
-		renderable.fg = m_creature_soul->color;
+		renderable.fg = get_soul()->color;
 	}
 
 	return renderable;
@@ -455,19 +455,19 @@ Renderable Entity::renderable() const
 
 Noun Entity::noun() const
 {
-	if (m_species)
+	if (has_species())
 	{
-		return m_species->noun;
+		return get_species()->noun;
 	}
 
-	if (m_item_def)
+	if (has_item_def())
 	{
-		return m_item_def->noun;
+		return get_item_def()->noun;
 	}
 
-	if (m_creature_soul)
+	if (has_soul())
 	{
-		return m_creature_soul->noun();
+		return get_soul()->noun();
 	}
 
 	return Noun();
@@ -475,9 +475,9 @@ Noun Entity::noun() const
 
 Name Entity::name() const
 {
-	if (m_creature_soul)
+	if (has_soul())
 	{
-		return m_creature_soul->name;
+		return get_soul()->name;
 	}
 
 	return Name();
@@ -485,9 +485,9 @@ Name Entity::name() const
 
 RawMaster::Ref<Pronouns> Entity::pronouns() const
 {
-	if (m_creature_soul)
+	if (has_soul())
 	{
-		return m_creature_soul->gender->pronouns;
+		return get_soul()->gender->pronouns;
 	}
 
 	return is_animate() ? RawMaster::get<Pronouns>("NEUTRAL") : RawMaster::get<Pronouns>("OBJECT");
@@ -550,29 +550,61 @@ bool Entity::is_being_held() const
 
 #include "interactions.h"
 
-std::vector<PotentialAction> Entity::get_valid_interactions_with(Entity* subject)
+bool Entity::can_interact_with(Entity* subject) const
 {
-	std::vector<PotentialAction> potential_actions;
-
-	if (m_inventory)
+	if (has_inventory())
 	{
-		if (m_inventory->has_item(subject))
+		if (get_inventory()->has_item(subject))
 		{
-			potential_actions.push_back(PotentialAction{
+			return true;
+		}
+
+		if (!get_inventory()->has_item(subject) && get_inventory()->can_carry(subject))
+		{
+			return true;
+		}
+	}
+
+	if (subject->has_item_def() && subject->get_item_def()->is_consumable())
+	{
+		return true;
+	}
+
+	return false;
+}
+
+std::vector<InteractionOption> Entity::get_interactions_with(Entity* subject)
+{
+	std::vector<InteractionOption> potential_actions;
+
+	if (has_inventory())
+	{
+		if (get_inventory()->has_item(subject))
+		{
+			potential_actions.push_back({
 				.name = "drop",
 				.input_action = Keybind::Drop,
-				.action = new DropAction(interact_speed(), this, subject)
-				});
+				.action = [](Entity* actor, Entity* subject) { return new DropAction(actor->interact_speed(), actor, subject); }
+			});
 		}
 
-		if (!m_inventory->has_item(subject) && m_inventory->can_carry(subject))
+		if (!get_inventory()->has_item(subject) && get_inventory()->can_carry(subject))
 		{
-			potential_actions.push_back(PotentialAction{
+			potential_actions.push_back({
 				.name = "grab",
 				.input_action = Keybind::Grab,
-				.action = new GrabAction(interact_speed(), this, subject)
-				});
+				.action = [](Entity* actor, Entity* subject) { return new GrabAction(actor->interact_speed(), actor, subject); }
+			});
 		}
+	}
+
+	if (subject->has_item_def() && subject->get_item_def()->is_consumable())
+	{
+		potential_actions.push_back({
+			.name = "consume",
+			.input_action = Keybind::Consume,
+			.action = [](Entity* actor, Entity* subject) { return new ConsumeAction(actor->interact_speed(), actor, subject); }
+		});
 	}
 
 	return potential_actions;
@@ -580,16 +612,16 @@ std::vector<PotentialAction> Entity::get_valid_interactions_with(Entity* subject
 
 Inventory* Entity::setup_inventory()
 {
-	if (!m_inventory)
+	if (!has_inventory())
 	{
-		m_inventory = std::make_unique<Inventory>(this, default_inventory_slots());
+		set_inventory(new Inventory(this, default_inventory_slots()));
 	}
 	else
 	{
-		m_inventory->set_max_slots(default_inventory_slots());
+		get_inventory()->set_max_slots(default_inventory_slots());
 	}
 
-	return m_inventory.get();
+	return get_inventory();
 }
 
 bool Entity::add_to_inventory(Entity* item)
@@ -612,13 +644,13 @@ bool Entity::add_to_inventory(Entity* item)
 		return false;
 	}
 
-	if (!m_inventory)
+	if (!has_inventory())
 	{
 		CERR("Entity has no inventory! " << ID());
 		return false;
 	}
 
-	if (!m_inventory->add_item(item))
+	if (!get_inventory()->add_item(item))
 	{
 		CERR("Item cannot be held! " << item->ID());
 		return false;
@@ -633,7 +665,7 @@ void Entity::remove_from_inventory(Entity* item, bool update_inventory)
 	if (!item)
 		return;
 
-	if (!m_inventory)
+	if (!has_inventory())
 		return;
 
 	if (item->get_entity_holder() != this)
@@ -641,7 +673,7 @@ void Entity::remove_from_inventory(Entity* item, bool update_inventory)
 
 	if (update_inventory)
 	{
-		m_inventory->remove_item(item);
+		get_inventory()->remove_item(item);
 	}
 
 	item->set_location(get_world(), false);
@@ -669,7 +701,7 @@ bool Entity::queue_action(std::unique_ptr<Action> action)
 		return false;
 	}
 
-	m_action_user->action_queue.push_back(std::move(action));
+	get_action_user()->action_queue.push_back(std::move(action));
 	return true;
 }
 
@@ -680,10 +712,10 @@ Action* Entity::get_next_action()
 		return nullptr;
 	}
 
-	if (m_action_user->action_queue.empty())
+	if (get_action_user()->action_queue.empty())
 		return nullptr;
 
-	return m_action_user->action_queue.front().get();
+	return get_action_user()->action_queue.front().get();
 }
 
 void Entity::start_next_action()
@@ -693,11 +725,11 @@ void Entity::start_next_action()
 		return;
 	}
 
-	if (m_action_user->action_queue.empty())
+	if (get_action_user()->action_queue.empty())
 		return;
 
-	auto action = std::move(m_action_user->action_queue.front());
-	m_action_user->action_queue.erase(m_action_user->action_queue.begin());
+	auto action = std::move(get_action_user()->action_queue.front());
+	get_action_user()->action_queue.erase(get_action_user()->action_queue.begin());
 
 	start_action(std::move(action));
 }
@@ -709,9 +741,9 @@ void Entity::start_action(std::unique_ptr<Action> action)
 		return;
 	}
 
-	m_action_user->current_action = std::move(action);
+	get_action_user()->current_action = std::move(action);
 
-	if (m_action_user->current_action->reset_progress(TimeUnit::none()))
+	if (get_action_user()->current_action->reset_progress(TimeUnit::none()))
 	{
 		complete_action();
 	}
@@ -719,7 +751,7 @@ void Entity::start_action(std::unique_ptr<Action> action)
 
 void Entity::reset_actions(std::unique_ptr<Action> action)
 {
-	m_action_user->action_queue.clear();
+	get_action_user()->action_queue.clear();
 	start_action(std::move(action));
 }
 
@@ -730,13 +762,13 @@ void Entity::continue_action(TimeUnit delta)
 		return;
 	}
 
-	if (!m_action_user->current_action)
+	if (!get_action_user()->current_action)
 	{
 		complete_action();
 		return;
 	}
 
-	if (m_action_user->current_action->progress(delta))
+	if (get_action_user()->current_action->progress(delta))
 	{
 		complete_action();
 	}
@@ -749,18 +781,18 @@ void Entity::complete_action()
 		return;
 	}
 
-	if (!m_action_user->current_action)
+	if (!get_action_user()->current_action)
 	{
 		return;
 	}
 
 	if (auto world_state = get_world_game_state())
 	{
-		world_state->handle_action(std::move(m_action_user->current_action));
+		world_state->handle_action(std::move(get_action_user()->current_action));
 	}
 	else
 	{
-		m_action_user->current_action.reset();
+		get_action_user()->current_action.reset();
 	}
 }
 
@@ -836,24 +868,24 @@ bool Entity::is_player() const
 
 void Entity::on_flags_updated()
 {
-	if (can_hold_items() && !m_inventory)
+	if (can_hold_items() && !has_inventory())
 	{
 		setup_inventory();
 	}
 
-	if (!can_hold_items() && m_inventory)
+	if (!can_hold_items() && has_inventory())
 	{
-		m_inventory.reset();
+		remove_component<Inventory>();
 	}
 
-	if (can_do_actions() && !m_action_user)
+	if (can_do_actions() && !has_action_user())
 	{
-		m_action_user = std::make_unique<ActionUser>();
+		set_action_user(new ActionUser());
 	}
 
-	if (!can_do_actions() && m_action_user)
+	if (!can_do_actions() && has_action_user())
 	{
-		m_action_user.reset();
+		remove_component<ActionUser>();
 	}
 }
 
@@ -909,7 +941,7 @@ void Entity::game_message(GameMessage msg)
 
 Position Entity::escape_wall(const Position& pos) const
 {
-	if (!m_movable)
+	if (!has_movable())
 		return pos;
 
 	auto check_block = [&](const Position& other_pos)
@@ -933,58 +965,51 @@ Position Entity::escape_wall(const Position& pos) const
 
 void Entity::step(const TimeUnit& time_delta)
 {
-	// Step person
-
-	if (m_living)
-	{
-		m_living->step(time_delta);
-	}
-
-	if (m_movable)
+	if (has_movable())
 	{
 		// Try to escape wall
-		if (!is_being_held() && can_collide() && free_to_move() && get_tile_map()->get_tile(m_movable->pos())->is_blocked())
+		if (!is_being_held() && can_collide() && free_to_move() && get_tile_map()->get_tile(get_movable()->pos())->is_blocked())
 		{
-			auto new_pos = escape_wall(m_movable->pos());
+			auto new_pos = escape_wall(get_movable()->pos());
 
-			if (new_pos == m_movable->pos())
+			if (new_pos == get_movable()->pos())
 			{
 				CERR("Entity cannot escape wall!");
 			}
 			else
 			{
-				m_movable->pos() = new_pos;
+				get_movable()->pos() = new_pos;
 			}
 		}
 
 		// Fall if not on ground
 		if (can_fall() && !is_on_floor())
 		{
-			if (!m_fall_timer)
+			if (!has_component<FallTimer>())
 			{
-				m_fall_timer = std::make_unique<TimeUnit>();
+				set_component<FallTimer>(new FallTimer());
 			}
 
-			if (*m_fall_timer < TimeUnit::from_seconds(1.0))
+			if (*get_component<FallTimer>() < TimeUnit::from_seconds(1.0))
 			{
-				*m_fall_timer += time_delta;
+				*get_component<FallTimer>() += time_delta;
 			}
 
-			if (*m_fall_timer >= TimeUnit::from_seconds(1.0))
+			if (*get_component<FallTimer>() >= TimeUnit::from_seconds(1.0))
 			{
 				get_movable()->move(0, 0, -1);
-				*m_fall_timer -= TimeUnit::from_seconds(1.0); // Reset the fall timer
+				*get_component<FallTimer>() -= TimeUnit::from_seconds(1.0); // Reset the fall timer
 			}
 		}
 
 		if (is_being_held() && get_entity_holder()->has_movable())
 		{
-			m_movable->pos() = get_entity_holder()->get_movable()->pos();
+			get_movable()->pos() = get_entity_holder()->get_movable()->pos() - get_movable()->get_center();
 		}
 	}
 
 	// Handle current action
-	if (m_action_user)
+	if (has_action_user())
 	{
 		if (has_current_action())
 		{
@@ -996,10 +1021,14 @@ void Entity::step(const TimeUnit& time_delta)
 			continue_action(time_delta);
 		}
 	}
-
-	// Step AI Brain
-	if (m_brain)
+	
+	if (has_living())
 	{
-		m_brain->step(time_delta);
+		get_living()->step(time_delta);
+	}
+
+	if (has_brain())
+	{
+		get_brain()->step(time_delta);
 	}
 }

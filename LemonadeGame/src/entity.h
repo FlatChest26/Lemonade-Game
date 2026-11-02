@@ -8,6 +8,7 @@
 #include "time_units.h"
 #include "inventory.h"
 #include "action.h"
+#include "action_option.h"
 
 #include "movable.h"
 
@@ -87,8 +88,11 @@ enum class EntityFlag : int64_t
 	CAN_INTERACT_WITH_OTHERS = 1 << 15,							// The entity can interact with other things during actions.
 	CANNOT_INTERACT_WITH_OTHERS = ~CAN_INTERACT_WITH_OTHERS,	// The entity can interact with other things during actions.
 
-	NAME_IS_KNOWN = 1 << 16,									// This entity's name is known by others.
+	NAME_IS_KNOWN = 1 << 16,									// This entity's name is known by the player.
 	SHOULD_REMOVE = 1 << 17,									// This entity is queued for removal.
+
+	IS_ENTITY_SPAWN = 1 << 18,									// NPCs generate from this entity.
+	IS_ENTITY_CLEARER = 1 << 19,								// NPCs are removed once they reach this entity.
 };
 
 IS_FLAG_ENUM(EntityFlag);
@@ -115,6 +119,30 @@ struct RenderOverride
 	std::function<bool(const Entity*)> active;
 };
 
+template<typename T>
+using ComponentRef = std::unique_ptr<T>;
+
+using FallTimer = TimeUnit;
+
+using EntityRawRefTuple = std::tuple<
+	RawMaster::Ref<Species>,
+	RawMaster::Ref<ItemDefinition>,
+	RawMaster::Ref<FurnitureDefinition>
+>;
+
+using EntityComponentTuple = std::tuple<
+	ComponentRef<ActionUser>,
+	ComponentRef<CreatureSoul>,
+	ComponentRef<TileMovable>,
+	ComponentRef<Inventory>,
+	ComponentRef<Anatomy>,
+	ComponentRef<Gait>,
+	ComponentRef<Living>,
+	ComponentRef<AIBrain>,
+	ComponentRef<Person>,
+	ComponentRef<FallTimer>
+>;
+
 /* An entity represents anything in the world. */
 class Entity : public Thing
 {
@@ -124,23 +152,8 @@ protected:
 	EntityFlag m_flags;
 	EntityLocation m_location; // What stores the entity. Usually the world but can also be another entity.
 
-	// Components //
-
-	RawMaster::Ref<Species> m_species{ nullptr };
-	RawMaster::Ref<ItemDefinition> m_item_def{ nullptr };
-	RawMaster::Ref<FurnitureDefinition> m_furniture_def{ nullptr };
-
-	std::unique_ptr<ActionUser> m_action_user{ nullptr };
-	std::unique_ptr<CreatureSoul> m_creature_soul{ nullptr };
-	std::unique_ptr<TileMovable> m_movable{ nullptr };
-	std::unique_ptr<Inventory> m_inventory{ nullptr };
-	std::unique_ptr<Anatomy> m_anatomy{ nullptr };
-	std::unique_ptr<Gait> m_gait{ nullptr };
-	std::unique_ptr<Living> m_living{ nullptr };
-	std::unique_ptr<AIBrain> m_brain{ nullptr };
-	std::unique_ptr<Person> m_person{ nullptr };
-	std::unique_ptr<TimeUnit> m_fall_timer = nullptr; // Used to simulate falling over discrete time steps.
-
+	EntityComponentTuple m_components;
+	EntityRawRefTuple m_raw_refs;
 
 public:
 	// -- Virtual Variables -- //
@@ -179,15 +192,63 @@ public:
 	Entity* get_entity_holder() const; // Returns a pointer to the entity holding this entity (if it exists)
 	World* get_world_holder() const; // Returns a pointer to the world holding this entity (if it exists)
 
-	void queue_remove() { add_flag(EntityFlag::SHOULD_REMOVE); }
-	
+public:
+
+	// -- Components -- //
+
+	template<typename T>
+	T* get_component() const { return std::get<ComponentRef<T>>(m_components).get(); }
+
+	template<typename T>
+	bool has_component() const { return std::get<ComponentRef<T>>(m_components) != nullptr; }
+
+	template<typename T>
+	T* set_component(T* new_component)
+	{
+		std::get<ComponentRef<T>>(m_components).reset(new_component);
+		return std::get<ComponentRef<T>>(m_components).get();
+	}
+
+	template<typename T>
+	T* release_component()
+	{
+		ComponentRef<T> removed_component = std::move(std::get<ComponentRef<T>>(m_components));
+		return removed_component.release();
+	}
+
+	template<typename T>
+	void remove_component()
+	{
+		ComponentRef<T> removed_component = std::move(std::get<ComponentRef<T>>(m_components));
+		removed_component.reset();
+	}
+
+	template<typename T>
+	const T* get_raw_ref() const { return std::get<RawMaster::Ref<T>>(m_raw_refs).get(); }
+
+	template<typename T>
+	bool has_raw_ref() const { return std::get<RawMaster::Ref<T>>(m_raw_refs) != nullptr; }
+
+	template<typename T>
+	const T* set_raw_ref(const T* new_component)
+	{
+		std::get<RawMaster::Ref<T>>(m_raw_refs).reset(new_component);
+		return std::get<RawMaster::Ref<T>>(m_raw_refs).get();
+	}
+
+	template<typename T>
+	const T* set_raw_ref(RawMaster::Ref<T> new_component)
+	{
+		std::get<RawMaster::Ref<T>>(m_raw_refs) = new_component;
+		return std::get<RawMaster::Ref<T>>(m_raw_refs).get();
+	}
 
 public:
 	// Actions //
 
-	ActionUser* get_action_user() const { return m_action_user.get(); }
-	bool has_action_user() const { return m_action_user != nullptr; }
-	void set_action_user(ActionUser* action_user) { m_action_user.reset(action_user); }
+	ActionUser* get_action_user() const { return get_component<ActionUser>(); }
+	bool has_action_user() const { return has_component<ActionUser>(); }
+	void set_action_user(ActionUser* action_user) { set_component<ActionUser>(action_user); }
 
 	bool queue_action(std::unique_ptr<Action> action);
 	Action* get_next_action();
@@ -231,22 +292,25 @@ public:
 
 	virtual Action* get_current_action() const { return get_action_user()->current_action.get(); }
 
-	virtual std::vector<PotentialAction> get_valid_interactions_with(Entity* subject);
-
-public:
-
-	// -- Components -- //
+	virtual bool can_interact_with(Entity* subject) const;
+	virtual std::vector<InteractionOption> get_interactions_with(Entity* subject);
 
 	// Inventory  //
 
 	// Adds an `Inventory` component with the set amount of max slots.
 	Inventory* setup_inventory();
+
 	// Adds an item to this entity's `Inventory` component. Returns true if adding the item was successful.
 	bool add_to_inventory(Entity* item);
 	// Removes an item from this entity's `Inventory` component.
 	void remove_from_inventory(Entity* item, bool update_inventory = true);
+
+	// Sets this entity's `Inventory` component to the input. Automatically sets the owner of the inventory to this entity.
+	virtual void set_inventory(Inventory* inventory) { set_component<Inventory>(inventory)->set_owner(this); }
 	// Returns this entity's `Inventory` component, if it exists.
-	virtual Inventory* get_inventory() const { return m_inventory.get(); }
+	virtual Inventory* get_inventory() const { return get_component<Inventory>(); }
+	// Returns true if this entity has an `Inventory` component.
+	virtual bool has_inventory() const { return has_component<Inventory>(); }
 
 	// Location //
 
@@ -258,130 +322,122 @@ public:
 	// Movable //
 
 	// Returns this entity's `Movable` component, if it exists.
-	virtual TileMovable* get_movable() const { return m_movable.get(); }
+	virtual TileMovable* get_movable() const { return get_component<TileMovable>(); }
 	// Returns true if this entity has a `Movable` component.
-	virtual bool has_movable() const { return m_movable != nullptr; }
+	virtual bool has_movable() const { return has_component<TileMovable>(); }
 	// Sets this entity's `Movable` component to the input.
-	virtual void set_movable(const TileTransform& transform) { m_movable = std::make_unique<TileMovable>(transform); }
+	virtual void set_movable(const TileTransform& transform) { set_component<TileMovable>(new TileMovable(transform)); }
 
 	// Species //
 
 	// Returns true if this entity has a `Species` component.
-	virtual bool has_species() const { return m_species != nullptr; }
+	virtual bool has_species() const { return has_raw_ref<Species>(); }
 	// Returns this entity's `Species` component, if it exists.
-	virtual const Species* get_species() const { return m_species.get(); }
+	virtual const Species* get_species() const { return get_raw_ref<Species>(); }
 
 	// Sets this entity's `Species` component to the input.
-	virtual void set_species(const Species* species) { m_species.reset(species); }
+	virtual void set_species(const Species* species) { set_raw_ref<Species>(species); }
 	// Sets this entity's `Species` component to the input.
-	virtual void set_species(RawMaster::Ref<Species> species) { m_species = species; }
-	// Sets this entity's `Species` component to the input (this tme using a species ID).
-	virtual void set_species(RawMaster::RawID species_id) { m_species = RawMaster::get<Species>(species_id); }
+	virtual void set_species(RawMaster::Ref<Species> species) { set_raw_ref<Species>(species); }
+	// Sets this entity's `Species` component to the input (this time using a species ID).
+	virtual void set_species(RawMaster::RawID species_id) { set_raw_ref<Species>(RawMaster::get<Species>(species_id)); }
+
+	// Item Definition //
+
+	// Returns this entity's `ItemDefinition` component, if it exists.
+	virtual const ItemDefinition* get_item_def() const { return get_raw_ref<ItemDefinition>(); }
+	// Sets this entity's `ItemDefinition` component to the input.
+	virtual void set_item_def(RawMaster::Ref<ItemDefinition> item_def) { set_raw_ref<ItemDefinition>(item_def); }
+	// Returns true if this entity has a `ItemDefinition` component.
+	virtual bool has_item_def() const { return has_raw_ref<ItemDefinition>(); }
+
+	// Furniture Definition //
+
+	// Returns this entity's `ItemDefinition` component, if it exists.
+	virtual const FurnitureDefinition* get_furniture_def() const { return get_raw_ref<FurnitureDefinition>(); }
+	// Sets this entity's `ItemDefinition` component to the input.
+	virtual void set_furniture_def(RawMaster::Ref<FurnitureDefinition> furniture_def) { set_raw_ref<FurnitureDefinition>(furniture_def); }
+	// Returns true if this entity has a `FurnitureDefinition` component.
+	virtual bool has_furniture_def() const { return has_raw_ref<FurnitureDefinition>(); }
 
 	// Anatomy //
 
 	// Returns this entity's `Anatomy` component, if it exists.
-	virtual Anatomy* get_anatomy() const { return m_anatomy.get(); }
+	virtual Anatomy* get_anatomy() const { return get_component<Anatomy>(); }
 	// Sets this entity's `Anatomy` component to the input.
-	virtual void set_anatomy(Anatomy* anatomy) { m_anatomy.reset(anatomy); m_anatomy->set_owner(this); }
-
-	// Known name //
-
-	// Returns true if the player knows this entity's name.
-	virtual bool is_name_known() const { return m_flags & EntityFlag::NAME_IS_KNOWN; }
-	// The player learns this entity's name.
-	virtual void learn_name() { add_flag(EntityFlag::NAME_IS_KNOWN); }
-	// The player forgets this entity's name.
-	virtual void forget_name() { remove_flag(EntityFlag::NAME_IS_KNOWN); }
+	virtual void set_anatomy(Anatomy* anatomy) { set_component<Anatomy>(anatomy)->set_owner(this); }
+	// Returns true if this entity has a `Anatomy` component.
+	virtual bool has_anatomy() const { return has_component<Anatomy>(); }
+	
 
 	// Gait //
 
 	// Returns this entity's `Gait` component, if it exists.
-	virtual Gait* get_gait() const { return m_gait.get(); }
+	virtual Gait* get_gait() const { return get_component<Gait>(); }
 	// Sets this entity's `Gait` component to the input.
-	virtual void set_gait(Gait* gait) { m_gait.reset(gait); }
+	virtual void set_gait(Gait* gait) { set_component<Gait>(gait); }
 
 	// Changes this entity's gait type only if they have a `Gait` component.
 	virtual void change_gait_type(std::string gait_id)
 	{
-		if (m_gait)
+		if (has_component<Gait>())
 		{
-			m_gait->set_current_gait(gait_id);
+			get_component<Gait>()->set_current_gait(gait_id);
 		}
 	}
 
 	// Living //
 
 	// Returns true if this entity has a `Living` component.
-	virtual bool has_living() const { return m_living != nullptr; }
+	virtual bool has_living() const { return has_component<Living>(); }
 	// Returns this entity's `Living` component, if it exists.
-	virtual Living* get_living() const { return m_living.get(); }
+	virtual Living* get_living() const { return get_component<Living>(); }
 	// Sets this entity's `Living` component to the input.
-	virtual void set_living(Living* living) { m_living.reset(living); m_living->set_owner(this); }
-
-	// Item Definition //
-
-	// Returns this entity's `ItemDefinition` component, if it exists.
-	virtual const ItemDefinition* get_item_def() const { return m_item_def.get(); }
-	// Sets this entity's `ItemDefinition` component to the input.
-	virtual void set_item_def(RawMaster::Ref<ItemDefinition> item_def) { m_item_def = item_def; }
-
-	// Furniture Definition //
-
-	// Returns this entity's `ItemDefinition` component, if it exists.
-	virtual const FurnitureDefinition* get_furniture_def() const { return m_furniture_def.get(); }
-	// Sets this entity's `ItemDefinition` component to the input.
-	virtual void set_furniture_def(RawMaster::Ref<FurnitureDefinition> furniture_def) { m_furniture_def = furniture_def; }
+	virtual void set_living(Living* living) { set_component<Living>(living)->set_owner(this); }
 
 	// Soul //
 
 	// Sets this entity's `CreatureSoul` component to the input.
 	virtual void add_soul(CreatureSoul* soul)
 	{
-		m_creature_soul.reset(soul);
+		set_component<CreatureSoul>(soul);
 		add_flag(EntityFlag::ANIMATE);
 	}
 
 	// Removes this entity's `CreatureSoul` component and returns its unique_ptr.
-	virtual std::unique_ptr<CreatureSoul> remove_soul()
+	virtual CreatureSoul* release_soul()
 	{
 		remove_flag(EntityFlag::ANIMATE);
-		return std::move(m_creature_soul);
+		return release_component<CreatureSoul>();
 	}
 
 	// Returns true if this entity has a `CreatureSoul` component.
-	virtual bool has_soul() const { return m_creature_soul != nullptr; }
+	virtual bool has_soul() const { return has_component<CreatureSoul>(); }
 	// Returns this entity's `CreatureSoul` component, if it exists.
-	virtual CreatureSoul* get_soul() const { return m_creature_soul.get(); }
+	virtual CreatureSoul* get_soul() const { return get_component<CreatureSoul>(); }
 
 	// Brain //
 
-	virtual AIBrain* add_brain(AIBrain* brain)
+	virtual AIBrain* set_brain(AIBrain* brain)
 	{
-		if (brain == nullptr)
-			return nullptr;
-
-		m_brain.reset(brain);
-		m_brain->set_entity(this);
-
-		return m_brain.get();
+		set_component<AIBrain>(brain)->set_entity(this);
+		return get_component<AIBrain>();
 	}
 
-	virtual std::unique_ptr<AIBrain> remove_brain()
+	virtual AIBrain* remove_brain()
 	{
-		m_brain->set_entity(nullptr);
-		return std::move(m_brain);
+		return release_component<AIBrain>();
 	}
 
-	virtual AIBrain* get_brain() { return m_brain.get(); }
+	virtual AIBrain* get_brain() { return get_component<AIBrain>(); }
 
-	virtual bool has_brain() const { return m_brain != nullptr; }
+	virtual bool has_brain() const { return has_component<AIBrain>(); }
 
 	// Person //
 
-	Person* get_person() const { return m_person.get(); }
-	bool is_person() const { return m_person != nullptr; }
-	void set_person(Person* person) { m_person.reset(person); m_person->set_owner(this); }
+	Person* get_person() const { return get_component<Person>(); }
+	bool is_person() const { return has_component<Person>(); }
+	void set_person(Person* person) { set_component<Person>(person)->set_owner(this); }
 
 public:
 	// Thing //
@@ -424,6 +480,24 @@ public:
 	virtual void remove_flag(EntityFlag flag);
 	// Switch the inputted flag on or off.
 	virtual void set_flag_to(EntityFlag flag, bool set_to);
+
+	// Checks if EntityFlag::IS_CREATURE is set.
+	virtual bool is_creature() const { return m_flags & EntityFlag::IS_CREATURE; }
+	// Checks if EntityFlag::IS_ITEM is set.
+	virtual bool is_item() const { return m_flags & EntityFlag::IS_ITEM; }
+	// Checks if EntityFlag::IS_FURNITURE is set.
+	virtual bool is_furniture() const { return m_flags & EntityFlag::IS_FURNITURE; }
+
+	virtual EntityFlag type_flag() const
+	{
+		if (is_creature())
+			return EntityFlag::IS_CREATURE;
+		if (is_item())
+			return EntityFlag::IS_ITEM;
+		if (is_furniture())
+			return EntityFlag::IS_FURNITURE;
+		return EntityFlag::NONE;
+	}
 
 	// Checks if EntityFlag::CAN_BE_HELD is set.
 	virtual bool can_be_held() const { return m_flags & EntityFlag::CAN_BE_HELD; }
@@ -472,24 +546,6 @@ public:
 	// Checks if EntityFlag::IS_FLASHING is set.
 	virtual bool is_flashing() const { return m_flags & EntityFlag::IS_FLASHING; }
 
-	// Checks if EntityFlag::IS_CREATURE is set.
-	virtual bool is_creature() const { return m_flags & EntityFlag::IS_CREATURE; }
-	// Checks if EntityFlag::IS_ITEM is set.
-	virtual bool is_item() const { return m_flags & EntityFlag::IS_ITEM; }
-	// Checks if EntityFlag::IS_FURNITURE is set.
-	virtual bool is_furniture() const { return m_flags & EntityFlag::IS_FURNITURE; }
-
-	virtual EntityFlag type_flag() const
-	{
-		if (is_creature())
-			return EntityFlag::IS_CREATURE;
-		if (is_item())
-			return EntityFlag::IS_ITEM;
-		if (is_furniture())
-			return EntityFlag::IS_FURNITURE;
-		return EntityFlag::NONE;
-	}
-
 	// Checks if EntityFlag::CAN_DO_ACTIONS is set.
 	virtual bool can_do_actions() const { return m_flags & EntityFlag::CAN_DO_ACTIONS; }
 
@@ -500,6 +556,23 @@ public:
 
 	// Checks if EntityFlag::SHOULD_REMOVE is set.
 	virtual bool should_remove() const { return m_flags & EntityFlag::SHOULD_REMOVE; }
+	// Queues an entity to be removed on the next `step()` call.
+	virtual void queue_remove() { add_flag(EntityFlag::SHOULD_REMOVE); }
+
+	// Checks if EntityFlag::NAME_IS_KNOWN is set.
+	virtual bool is_name_known() const { return m_flags & EntityFlag::NAME_IS_KNOWN; }
+	virtual bool is_name_unknown() const { return !is_name_known(); }
+
+	// The player learns this entity's name.
+	virtual void learn_name() { add_flag(EntityFlag::NAME_IS_KNOWN); }
+	// The player forgets this entity's name.
+	virtual void forget_name() { remove_flag(EntityFlag::NAME_IS_KNOWN); }
+
+	// Checks if EntityFlag::IS_ENTITY_SPAWN is set.
+	virtual bool is_entity_spawn() const { return m_flags & EntityFlag::IS_ENTITY_SPAWN; }
+
+	// Checks if EntityFlag::IS_ENTITY_CLEARER is set.
+	virtual bool is_entity_clearer() const { return m_flags & EntityFlag::IS_ENTITY_CLEARER; }
 
 public:
 	// - Field of View -- //

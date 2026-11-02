@@ -121,13 +121,13 @@ Entity* World::add_entity_at(Entity* entity, Coord x, Coord y, Coord z)
 	if (!new_entity)
 		return nullptr;
 
-	if (!new_entity->has_movable())
+	if (new_entity->has_movable())
 	{
-		new_entity->set_movable(Position(x, y, z));
+		new_entity->get_movable()->pos() = Position(x, y, z);
 	}
 	else
 	{
-		new_entity->get_movable()->pos() = Position(x, y, z);
+		new_entity->set_movable(Position(x, y, z));
 	}
 
 	return new_entity;
@@ -366,13 +366,22 @@ void World::prepare_remove_entity(Entity* entity)
 	{
 		entity_holder->remove_from_inventory(entity);
 	}
+
+	if (auto world_state = get_world_game_state())
+	{
+		if (world_state->get_player() == entity)
+		{
+			world_state->set_player(nullptr);
+		}
+	}
 }
 
 void World::step(const TimeUnit& time_delta)
 {
 	std::vector<size_t> remove_entities;
 
-	for (size_t idx = 0; idx < m_entities.size(); ++idx)
+	// Gather all entities that should be removed
+	for (size_t idx = 0; idx < m_entities.size(); idx++)
 	{
 		auto& entity = m_entities[idx];
 
@@ -382,8 +391,15 @@ void World::step(const TimeUnit& time_delta)
 		}
 	}
 
-	for (const auto& remove_idx : remove_entities)
+	// Remove entities from the world
+	for (const auto& remove_idx : std::views::reverse(remove_entities))
 	{
+		if (remove_idx >= m_entities.size())
+		{
+			CERR("Invalid remove index: " << remove_idx);
+			continue;
+		}
+
 		auto& entity = m_entities[remove_idx];
 
 		if (!has_entity(entity))
@@ -392,10 +408,13 @@ void World::step(const TimeUnit& time_delta)
 		prepare_remove_entity(entity);
 
 		m_entity_by_id.erase(entity->ID());
-		m_entities.erase(m_entities.begin() + remove_idx);
+
+		std::swap(m_entities[remove_idx], m_entities.back());
+		m_entities.pop_back();
 	}
 
-	for (const auto& [ID, entity] : m_entity_by_id)
+	// Step entities
+	for (auto& entity : m_entities)
 	{
 		if (!entity->should_remove())
 		{

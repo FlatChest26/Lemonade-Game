@@ -20,6 +20,12 @@ namespace snowy::rng
 		std::uniform_int_distribution<int> distrib(min, max);
 		return distrib(generator);
 	}
+
+	inline bool flip_coin()
+	{
+		std::bernoulli_distribution distrib(0.5);
+		return distrib(generator);
+	}
 }
 
 #endif // !LEMONADE_GAME_SRC_SNOWY_RNG_H

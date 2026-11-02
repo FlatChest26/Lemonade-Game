@@ -118,6 +118,26 @@ public:
 	/* Returns a copy of this thing's direction.*/
 	virtual Direction get_direction() const { return direction(); }
 
+	// Others
+
+	virtual Position get_center() const
+	{
+		return Position(static_cast<Coord>(width() / 2), static_cast<Coord>(height() / 2), static_cast<Coord>(depth() / 2));
+	}
+
+	virtual Position get_p1() const { return get_pos(); }
+
+	virtual Coord get_x1() const { return get_p1().x; }
+	virtual Coord get_y1() const { return get_p1().y; }
+	virtual Coord get_z1() const { return get_p1().z; }
+
+	virtual Position get_p2() const { return get_pos() + Position(static_cast<Coord>(width()), static_cast<Coord>(height()), static_cast<Coord>(depth())); }
+
+	virtual Coord get_x2() const { return get_p2().x; }
+	virtual Coord get_y2() const { return get_p2().y; }
+	virtual Coord get_z2() const { return get_p2().z; }
+
+
 public:
 	// -- Setters -- //
 
@@ -159,6 +179,8 @@ public:
 	/* Faces this thing in the specified direction. */
 	template<typename T>
 	void face_direction(const T& x, const T& y, const T& z) { face_direction(transforms::pos_as_dir(static_cast<Coord>(x), static_cast<Coord>(y), static_cast<Coord>(z))); }
+
+	
 
 public:
 
