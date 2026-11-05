@@ -18,6 +18,7 @@ enum class Keybind : uint64_t
 	MenuConfirm,
 	MenuBack,
 
+	MoveCenter,
 	MoveNorth,
 	MoveNorthEast,
 	MoveEast,
@@ -30,6 +31,7 @@ enum class Keybind : uint64_t
 	MoveAbove,
 	MoveBelow,
 
+	MoveCenter_Above,
 	MoveNorth_Above,
 	MoveNorthEast_Above,
 	MoveEast_Above,
@@ -39,6 +41,7 @@ enum class Keybind : uint64_t
 	MoveWest_Above,
 	MoveNorthWest_Above,
 
+	MoveCenter_Below,
 	MoveNorth_Below,
 	MoveNorthEast_Below,
 	MoveEast_Below,
@@ -47,7 +50,6 @@ enum class Keybind : uint64_t
 	MoveSouthWest_Below,
 	MoveWest_Below,
 	MoveNorthWest_Below,
-	MoveCenter,
 
 	WaitShort,
 	WaitLong,

@@ -44,12 +44,12 @@ protected:
 	bool m_open{ true };
 
 public:
-	TransformAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, Coord loc_x = 0, Coord loc_y = 0, Coord loc_z = 0, bool open = true) :
-		ActionWithLocation(action_length, actor, loc_x, loc_y, loc_z), m_open(open)
+	TransformAction(Entity* actor = nullptr, Coord loc_x = 0, Coord loc_y = 0, Coord loc_z = 0, bool open = true) :
+		ActionWithLocation(TimeUnit::from_seconds(1.0), actor, loc_x, loc_y, loc_z), m_open(open)
 	{
 	}
-	TransformAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, const Position& location = Position(0, 0, 0), bool open = true) :
-		ActionWithLocation(action_length, actor, location), m_open(open)
+	TransformAction(Entity* actor = nullptr, const Position& location = Position(0, 0, 0), bool open = true) :
+		ActionWithLocation(TimeUnit::from_seconds(1.0), actor, location), m_open(open)
 	{
 	}
 
@@ -61,12 +61,12 @@ public:
 class OpenAction : public TransformAction
 {
 public:
-	OpenAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, Coord loc_x = 0, Coord loc_y = 0, Coord loc_z = 0) :
-		TransformAction(action_length, actor, loc_x, loc_y, loc_z, true)
+	OpenAction(Entity* actor = nullptr, Coord loc_x = 0, Coord loc_y = 0, Coord loc_z = 0) :
+		TransformAction(actor, loc_x, loc_y, loc_z, true)
 	{
 	}
-	OpenAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, const Position& location = Position(0, 0, 0)) :
-		TransformAction(action_length, actor, location, true)
+	OpenAction(Entity* actor = nullptr, const Position& location = Position(0, 0, 0)) :
+		TransformAction(actor, location, true)
 	{
 	}
 
@@ -77,12 +77,12 @@ public:
 class CloseAction : public TransformAction
 {
 public:
-	CloseAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, Coord loc_x = 0, Coord loc_y = 0, Coord loc_z = 0) :
-		TransformAction(action_length, actor, loc_x, loc_y, loc_z, false)
+	CloseAction(Entity* actor = nullptr, Coord loc_x = 0, Coord loc_y = 0, Coord loc_z = 0) :
+		TransformAction(actor, loc_x, loc_y, loc_z, false)
 	{
 	}
-	CloseAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, const Position& location = Position(0, 0, 0)) :
-		TransformAction(action_length, actor, location, false)
+	CloseAction(Entity* actor = nullptr, const Position& location = Position(0, 0, 0)) :
+		TransformAction(actor, location, false)
 	{
 	}
 

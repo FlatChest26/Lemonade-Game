@@ -4,8 +4,14 @@
 #ifndef LEMONADE_GAME_SRC_ACTION_OPTION_H
 #define LEMONADE_GAME_SRC_ACTION_OPTION_H
 
-#include "interactions.h"
 #include <functional>
+#include <string>
+
+#include "keybinds.h"
+
+class Action;
+class Interaction;
+class Entity;
 
 struct ActionOption
 {

@@ -28,8 +28,13 @@ public:
 	{
 	}
 
-	Movable(TransformType transform) :
+	Movable(const TransformType& transform) :
 		m_transform(transform)
+	{
+	}
+
+	Movable(const PositionType& position, const SizeType& size = SizeType{1, 1, 1}) :
+		m_transform({.position = position, .size = size})
 	{
 	}
 

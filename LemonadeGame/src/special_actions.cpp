@@ -8,15 +8,15 @@ bool StartSleepAction::check_action() const
 	if (!EntityAction::check_action())
 		return false;
 
-	if (!m_actor->has_living())
+	if (!get_actor()->has_living())
 	{
-		ACTION_CERR("Actor is not a person (and thus cannot sleep)! " << m_actor->ID());
+		ACTION_CERR("Actor is not a person (and thus cannot sleep)! " << get_actor()->ID());
 		return false;
 	}
 
-	if (m_actor->get_living()->is_asleep())
+	if (get_actor()->get_living()->is_asleep())
 	{
-		ACTION_CERR("Actor is already asleep! " << m_actor->ID());
+		ACTION_CERR("Actor is already asleep! " << get_actor()->ID());
 		return false;
 	}
 
@@ -25,13 +25,14 @@ bool StartSleepAction::check_action() const
 
 ActionResult StartSleepAction::perform()
 {
-	m_actor->get_living()->fall_asleep();
+	auto actor = get_actor();
+	actor->get_living()->fall_asleep();
 
-	auto n1 = m_actor->display_noun();
+	auto n1 = actor->display_noun();
 
-	if (m_actor->is_player())
+	if (actor->is_player())
 	{
-		get_world_game_state()->set_tick_speed(TickSpeed::REAL_TIME_8X);
+		get_world_state()->set_tick_speed(TickSpeed::REAL_TIME_8X);
 	}
 
 	return ActionResult{
@@ -47,15 +48,15 @@ bool EndSleepAction::check_action() const
 	if (!EntityAction::check_action())
 		return false;
 
-	if (!m_actor->has_living())
+	if (!get_actor()->has_living())
 	{
-		ACTION_CERR("Actor is not a person (and thus cannot wake up)! " << m_actor->ID());
+		ACTION_CERR("Actor is not a person (and thus cannot wake up)! " << get_actor()->ID());
 		return false;
 	}
 
-	if (m_actor->get_living()->is_awake())
+	if (get_actor()->get_living()->is_awake())
 	{
-		ACTION_CERR("Actor is awake! " << m_actor->ID());
+		ACTION_CERR("Actor is awake! " << get_actor()->ID());
 		return false;
 	}
 
@@ -64,13 +65,15 @@ bool EndSleepAction::check_action() const
 
 ActionResult EndSleepAction::perform()
 {
-	m_actor->get_living()->wake_up();
+	auto actor = get_actor();
 
-	auto n1 = m_actor->display_noun();
+	actor->get_living()->wake_up();
 
-	if (m_actor->is_player())
+	auto n1 = actor->display_noun();
+
+	if (actor->is_player())
 	{
-		get_world_game_state()->set_tick_speed(TickSpeed::TURN_BASED);
+		get_world_state()->set_tick_speed(TickSpeed::TURN_BASED);
 	}
 
 	return ActionResult{

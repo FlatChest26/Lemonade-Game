@@ -32,21 +32,48 @@ private:
 	std::unique_ptr<GameLog> m_log;
 	std::unique_ptr<Sidebar> m_sidebar;
 
-	Entity* m_player{ nullptr };
+	EntityID m_player_id{ "PLAYER" };
 	Position m_previous_player_pos;
 
-	std::unique_ptr<Position> m_camera_focus{ nullptr };
+	Position m_camera_focus{ 0, 0, 0 };
+	bool m_has_camera_focus{ false };
 
 	TickSpeed m_tick_speed = TickSpeed::TURN_BASED;
 
 public:
-	WorldGameState();
+	WorldGameState() = default;
 
 public:
 	// -- Getters & Setters -- //
 
-	Entity* get_player() const { return m_player; }
-	void set_player(Entity* player) { m_player = player; }
+	const EntityID& get_player_id() const { return m_player_id; }
+	void set_player_id(const EntityID& player_id) { m_player_id = player_id; }
+	bool does_player_exist() const { return m_world->has_entity(m_player_id); }
+
+	const Entity* get_player() const
+	{
+		if (!m_world)
+			return nullptr;
+
+		if (!does_player_exist())
+			return nullptr;
+
+		return m_world->get_entity(m_player_id);
+	}
+
+	Entity* get_player() 
+	{
+		if (!m_world)
+			return nullptr;
+
+		if (!does_player_exist())
+			return nullptr;
+
+		return m_world->get_entity(m_player_id);
+	}
+
+	void set_player(const Entity& player) { m_player_id = player.ID(); }
+	void set_player(Entity* player) { m_player_id = player->ID(); }
 
 	World* get_world() const { return m_world.get(); }
 	Camera* get_camera() const { return m_camera.get(); }
@@ -73,29 +100,20 @@ public:
 
 	void step(const TimeUnit& time_delta);
 
-	void set_camera_focus(Position pos)
+	void set_camera_focus(const Position& pos)
 	{
-		if (m_camera_focus)
-		{
-			*m_camera_focus = pos;
-		}
-		else
-		{
-			m_camera_focus.reset(new Position(pos));
-		}
+		m_camera_focus = pos;
+		m_has_camera_focus = true;
 	}
 
 	void remove_camera_focus()
 	{
-		if (m_camera_focus)
-		{
-			m_camera_focus.reset();
-		}
+		m_has_camera_focus = false;
 	}
 
 	void update_camera();
 
-	virtual void handle_action(QueuedAction action) override;
+	virtual void handle_action(QueuedAction action);
 
 	virtual void handle_input_result(InputResult result) override;
 

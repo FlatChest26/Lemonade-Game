@@ -7,7 +7,7 @@
 #include "thing.h"
 #include "time_units.h"
 #include "inventory.h"
-#include "action.h"
+
 #include "action_option.h"
 
 #include "movable.h"
@@ -97,12 +97,6 @@ enum class EntityFlag : int64_t
 
 IS_FLAG_ENUM(EntityFlag);
 
-struct ActionUser
-{
-	ActionQueue action_queue;
-	std::unique_ptr<Action> current_action{ nullptr };
-};
-
 struct RenderOverride
 {
 	size_t priority{ 0 };
@@ -131,7 +125,6 @@ using EntityRawRefTuple = std::tuple<
 >;
 
 using EntityComponentTuple = std::tuple<
-	ComponentRef<ActionUser>,
 	ComponentRef<CreatureSoul>,
 	ComponentRef<TileMovable>,
 	ComponentRef<Inventory>,
@@ -142,6 +135,11 @@ using EntityComponentTuple = std::tuple<
 	ComponentRef<Person>,
 	ComponentRef<FallTimer>
 >;
+
+using EntityRef = Entity&;
+using EntityPtr = Entity*;
+
+class Action;
 
 /* An entity represents anything in the world. */
 class Entity : public Thing
@@ -155,13 +153,15 @@ protected:
 	EntityComponentTuple m_components;
 	EntityRawRefTuple m_raw_refs;
 
+	ActionQueue m_action_queue;
+
 public:
 	// -- Virtual Variables -- //
 
 	std::vector<RenderOverride> render_overrides;
 
-	virtual TimeUnit move_speed() const; // How long it takes this entity to move a single tile.
-	virtual TimeUnit interact_speed() const; // How long it takes this entity to interact with something.
+	virtual double move_speed() const; // Modifies how long it takes this entity to move a single tile.
+	virtual double interact_speed() const; // Modifies how long it takes this entity to interact with something.
 	virtual int view_range() const; // How far this entity can see
 
 	virtual size_t default_inventory_slots() const; // How many inventory slots this entity has by default
@@ -173,16 +173,22 @@ public:
 	Entity(EntityID ID, EntityFlag entity_flags = EntityFlag::NONE);
 	~Entity();
 
+	Entity(const Entity& other);
+	Entity(Entity&& other);
+
 public:
 
 	// -- Getters & Setters --
 
 	virtual EntityID ID() const { return m_ID; }
 
-	GameState* get_game_state() const;
-	WorldGameState* get_world_game_state() const;
+	WorldGameState* get_world_state() const;
 	Game* get_game() const;
+
 	Entity* get_player() const;
+	EntityID get_player_id() const;
+	bool does_player_exist() const;
+
 	TileMap* get_tile_map() const;
 	World* get_world() const;
 
@@ -246,51 +252,34 @@ public:
 public:
 	// Actions //
 
-	ActionUser* get_action_user() const { return get_component<ActionUser>(); }
-	bool has_action_user() const { return has_component<ActionUser>(); }
-	void set_action_user(ActionUser* action_user) { set_component<ActionUser>(action_user); }
+	virtual void reset_actions(QueuedAction action = nullptr);
+	virtual bool start_action(QueuedAction action);
 
-	bool queue_action(std::unique_ptr<Action> action);
-	Action* get_next_action();
-
-	virtual void start_next_action();
-
-	virtual void start_action(std::unique_ptr<Action> action);
-	virtual void reset_actions(std::unique_ptr<Action> action);
-	virtual void continue_action(TimeUnit delta);
+	virtual void continue_action(const TimeUnit& delta);
 	virtual void complete_action();
 
 	virtual bool can_queue_action() const
 	{
-		if (!has_action_user())
-			return false;
-
-		return max_actions_queued() >= get_action_user()->action_queue.size();
+		return m_action_queue.size() < max_actions_queued();
 	}
 
 	virtual bool has_any_action() const
 	{
-		if (!has_action_user())
-			return false;
 		return has_queued_action() || has_current_action();
 	}
 
 	virtual bool has_queued_action() const
 	{
-		if (!has_action_user())
-			return false;
-		return get_action_user()->action_queue.size() > 0;
+		return m_action_queue.size() > 1;
 	}
 
 	virtual bool has_current_action() const
 	{
-		if (!has_action_user())
-			return false;
-
-		return get_action_user()->current_action != nullptr;
+		return !m_action_queue.empty();
 	}
 
-	virtual Action* get_current_action() const { return get_action_user()->current_action.get(); }
+	virtual const Action* get_current_action() const { return m_action_queue.back(); }
+	virtual Action* get_current_action() { return m_action_queue.back(); }
 
 	virtual bool can_interact_with(Entity* subject) const;
 	virtual std::vector<InteractionOption> get_interactions_with(Entity* subject);
@@ -308,7 +297,8 @@ public:
 	// Sets this entity's `Inventory` component to the input. Automatically sets the owner of the inventory to this entity.
 	virtual void set_inventory(Inventory* inventory) { set_component<Inventory>(inventory)->set_owner(this); }
 	// Returns this entity's `Inventory` component, if it exists.
-	virtual Inventory* get_inventory() const { return get_component<Inventory>(); }
+	virtual Inventory* get_inventory() { return get_component<Inventory>(); }
+	virtual const Inventory* get_inventory() const { return get_component<Inventory>(); }
 	// Returns true if this entity has an `Inventory` component.
 	virtual bool has_inventory() const { return has_component<Inventory>(); }
 
@@ -322,11 +312,15 @@ public:
 	// Movable //
 
 	// Returns this entity's `Movable` component, if it exists.
-	virtual TileMovable* get_movable() const { return get_component<TileMovable>(); }
+	virtual TileMovable* get_movable() { return get_component<TileMovable>(); }
+	virtual const TileMovable* get_movable() const { return get_component<TileMovable>(); }
 	// Returns true if this entity has a `Movable` component.
 	virtual bool has_movable() const { return has_component<TileMovable>(); }
 	// Sets this entity's `Movable` component to the input.
 	virtual void set_movable(const TileTransform& transform) { set_component<TileMovable>(new TileMovable(transform)); }
+	virtual void set_movable(const TileMovable& movable) { set_component<TileMovable>(new TileMovable(movable)); }
+
+	virtual void set_movable(TileMovable* movable) { set_component<TileMovable>(movable); }
 
 	// Species //
 
@@ -363,7 +357,8 @@ public:
 	// Anatomy //
 
 	// Returns this entity's `Anatomy` component, if it exists.
-	virtual Anatomy* get_anatomy() const { return get_component<Anatomy>(); }
+	virtual Anatomy* get_anatomy() { return get_component<Anatomy>(); }
+	virtual const Anatomy* get_anatomy() const { return get_component<Anatomy>(); }
 	// Sets this entity's `Anatomy` component to the input.
 	virtual void set_anatomy(Anatomy* anatomy) { set_component<Anatomy>(anatomy)->set_owner(this); }
 	// Returns true if this entity has a `Anatomy` component.
@@ -372,8 +367,11 @@ public:
 
 	// Gait //
 
+	virtual bool has_gait() const { return has_component<Gait>(); }
+
 	// Returns this entity's `Gait` component, if it exists.
-	virtual Gait* get_gait() const { return get_component<Gait>(); }
+	virtual Gait* get_gait() { return get_component<Gait>(); }
+	virtual const Gait* get_gait() const { return get_component<Gait>(); }
 	// Sets this entity's `Gait` component to the input.
 	virtual void set_gait(Gait* gait) { set_component<Gait>(gait); }
 
@@ -391,7 +389,8 @@ public:
 	// Returns true if this entity has a `Living` component.
 	virtual bool has_living() const { return has_component<Living>(); }
 	// Returns this entity's `Living` component, if it exists.
-	virtual Living* get_living() const { return get_component<Living>(); }
+	virtual Living* get_living() { return get_component<Living>(); }
+	virtual const Living* get_living() const { return get_component<Living>(); }
 	// Sets this entity's `Living` component to the input.
 	virtual void set_living(Living* living) { set_component<Living>(living)->set_owner(this); }
 
@@ -430,14 +429,16 @@ public:
 	}
 
 	virtual AIBrain* get_brain() { return get_component<AIBrain>(); }
+	virtual const AIBrain* get_brain() const { return get_component<AIBrain>(); }
 
 	virtual bool has_brain() const { return has_component<AIBrain>(); }
 
 	// Person //
 
-	Person* get_person() const { return get_component<Person>(); }
-	bool is_person() const { return has_component<Person>(); }
-	void set_person(Person* person) { set_component<Person>(person)->set_owner(this); }
+	virtual Person* get_person() { return get_component<Person>(); }
+	virtual const Person* get_person() const { return get_component<Person>(); }
+	virtual bool is_person() const { return has_component<Person>(); }
+	virtual void set_person(Person* person) { set_component<Person>(person)->set_owner(this); }
 
 public:
 	// Thing //
@@ -588,6 +589,8 @@ public:
 	// -- Utilities -- //
 
 	bool operator==(const Entity& other) const;
+	Entity& operator=(Entity& other);
+	Entity& operator=(const Entity& other);
 
 	virtual Position escape_wall(const Position& pos) const;
 
@@ -605,6 +608,15 @@ public:
 	// -- Game Loop -- //
 
 	virtual void step(const TimeUnit& time_delta);
+
+public:
+
+	void copy_components_from_entity(const Entity& other);
+	void move_components_from_entity(Entity& other);
+	void fix_ownership();
 };
+
+
+
 
 #endif // !LEMONADE_GAME_SRC_ENTITY_H

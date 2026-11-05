@@ -57,12 +57,6 @@ public:
 	// -- Input Handling -- //
 
 	virtual InputResult handle_event(SDL_Event event);
-
-	virtual void handle_action(std::unique_ptr<Action> action)
-	{
-		CERR("This game state does not handle actions.");
-	}
-
 	virtual void handle_input_result(InputResult result);
 
 protected:

@@ -131,7 +131,7 @@ bool Inventory::can_carry(Entity* item) const
 	return true;
 }
 
-void Inventory::clear_items()
+void Inventory::clear_items(bool queue_remove)
 {
 	for (auto& item_slot : get_filled_item_slots())
 	{
@@ -141,6 +141,10 @@ void Inventory::clear_items()
 		if (m_owner) m_owner->remove_from_inventory(item_slot.item, false);
 
 		m_slots_taken -= item_slot.item->carry_slots();
+		
+		if (queue_remove)
+			item_slot.item->queue_remove();
+
 		item_slot.item = nullptr;
 	}
 }

@@ -2,9 +2,14 @@
 #include "entity.h"
 #include "world.h"
 
+void Interaction::set_subject(Entity* subject)
+{
+	m_subject = subject->ID();
+}
+
 Entity* Interaction::get_subject() const
 {
-	return m_subject;
+	return get_world()->get_entity(m_subject);
 }
 
 bool Interaction::check_action() const
@@ -12,7 +17,7 @@ bool Interaction::check_action() const
 	if (!EntityAction::check_action())
 		return false;
 
-	if (m_actor == nullptr || m_subject == nullptr)
+	if (get_actor() == nullptr || get_subject() == nullptr)
 	{
 		ACTION_CERR("Actor or target was null!");
 		return false;
@@ -26,13 +31,13 @@ bool SwapPlacesAction::check_action() const
 	if (!Interaction::check_action())
 		return false;
 
-	if (!m_actor->has_movable() || !m_subject->has_movable())
+	if (!get_actor()->has_movable() || !get_subject()->has_movable())
 	{
 		ACTION_CERR("Actor or target does not have movable!");
 		return false;
 	}
 
-	if (m_actor->fixed_in_place() || m_subject->fixed_in_place())
+	if (get_actor()->fixed_in_place() || get_subject()->fixed_in_place())
 	{
 		ACTION_CERR("Actor or target is fixed in place!");
 		return false;
@@ -46,13 +51,13 @@ bool SwapPlacesAction::check_action() const
 		return false;
 	}
 
-	if (world->is_blocked(m_subject->get_movable()->pos(), m_subject, (m_subject->get_movable()->posz() - m_actor->get_movable()->posz())))
+	if (world->is_blocked(get_subject()->get_movable()->pos(), get_subject(), (get_subject()->get_movable()->posz() - get_actor()->get_movable()->posz())))
 	{
 		ACTION_CERR("Location is blocked!");
 		return false;
 	}
 
-	if (world->is_blocked(m_actor->get_movable()->pos(), m_actor, (m_actor->get_movable()->posz() - m_subject->get_movable()->posz())))
+	if (world->is_blocked(get_actor()->get_movable()->pos(), get_actor(), (get_actor()->get_movable()->posz() - get_subject()->get_movable()->posz())))
 	{
 		ACTION_CERR("Location is blocked!");
 		return false;
@@ -63,10 +68,10 @@ bool SwapPlacesAction::check_action() const
 
 ActionResult SwapPlacesAction::perform()
 {
-	Position orig_pos = m_actor->get_movable()->pos();
+	Position orig_pos = get_actor()->get_movable()->pos();
 
-	m_actor->get_movable()->pos() = m_subject->get_movable()->pos();
-	m_subject->get_movable()->pos() = orig_pos;
+	get_actor()->get_movable()->pos() = get_subject()->get_movable()->pos();
+	get_subject()->get_movable()->pos() = orig_pos;
 
 	return ActionResult(true);
 }
@@ -76,13 +81,13 @@ bool GrabAction::check_action() const
 	if (!Interaction::check_action())
 		return false;
 
-	if (!m_actor->can_hold_items())
+	if (!get_actor()->can_hold_items())
 	{
 		ACTION_CERR("Actor can't hold items!");
 		return false;
 	}
 
-	if (!m_subject->can_be_held())
+	if (!get_subject()->can_be_held())
 	{
 		ACTION_CERR("Target can't be held!");
 		return false;
@@ -93,10 +98,13 @@ bool GrabAction::check_action() const
 
 ActionResult GrabAction::perform()
 {
-	m_actor->add_to_inventory(m_subject);
+	auto actor = get_actor();
+	auto subject = get_subject();
 
-	auto n1 = m_actor->display_noun();
-	auto n2 = m_subject->display_noun();
+	actor->add_to_inventory(subject);
+
+	auto n1 = actor->display_noun();
+	auto n2 = subject->display_noun();
 
 	return ActionResult{
 		.success = true,
@@ -105,7 +113,7 @@ ActionResult GrabAction::perform()
 				"{} {} {}.",
 				grammar::A(n1),
 				(grammar::is_plural(n1) ? "pick up" : "picks up"),
-				m_actor->is_player() ? grammar::the(n2) : grammar::a(n2)
+				actor->is_player() ? grammar::the(n2) : grammar::a(n2)
 			)
 		}
 	};
@@ -116,7 +124,7 @@ bool DropAction::check_action() const
 	if (!Interaction::check_action())
 		return false;
 
-	if (m_subject->get_entity_holder() != m_actor)
+	if (get_subject()->get_entity_holder() != get_actor())
 	{
 		ACTION_CERR("Target is not being held by the actor!");
 		return false;
@@ -127,10 +135,13 @@ bool DropAction::check_action() const
 
 ActionResult DropAction::perform()
 {
-	m_actor->remove_from_inventory(m_subject);
+	auto actor = get_actor();
+	auto subject = get_subject();
 
-	auto n1 = m_actor->display_noun();
-	auto n2 = m_subject->display_noun();
+	actor->remove_from_inventory(subject);
+
+	auto n1 = actor->display_noun();
+	auto n2 = subject->display_noun();
 
 	return ActionResult{
 		.success = true,
@@ -139,7 +150,7 @@ ActionResult DropAction::perform()
 				"{} {} {}.",
 				grammar::A(n1),
 				(grammar::is_plural(n1) ? "drop" : "drops"),
-				m_actor->is_player() ? grammar::the(n2) : grammar::a(n2)
+				actor->is_player() ? grammar::the(n2) : grammar::a(n2)
 			)
 		}
 	};
@@ -150,19 +161,19 @@ bool ConsumeAction::check_action() const
 	if (!Interaction::check_action())
 		return false;
 
-	if (!m_actor->has_living())
+	if (!get_actor()->has_living())
 	{
 		ACTION_CERR("Actor is not a living thing!");
 		return false;
 	}
 
-	if (!m_subject->is_item())
+	if (!get_subject()->is_item())
 	{
 		ACTION_CERR("Target is not an item!");
 		return false;
 	}
 
-	if (!m_subject->get_item_def()->is_consumable())
+	if (!get_subject()->get_item_def()->is_consumable())
 	{
 		ACTION_CERR("Target item is not consumable!");
 		return false;
@@ -173,22 +184,25 @@ bool ConsumeAction::check_action() const
 
 ActionResult ConsumeAction::perform()
 {
+	auto actor = get_actor();
+	auto subject = get_subject();
+
 	std::vector<std::string> taste_descriptions;
 
-	auto living = m_actor->get_living();
+	auto living = actor->get_living();
 
-	for (auto& effect : m_subject->get_item_def()->consumable_effects)
+	for (auto& effect : subject->get_item_def()->consumable_effects)
 	{
 		if (!living->take_consumable(effect))
 			continue;
 		taste_descriptions.push_back(effect.taste);
 	}
 
-	m_actor->remove_from_inventory(m_subject);
-	m_subject->queue_remove();
+	actor->remove_from_inventory(subject);
+	subject->queue_remove();
 
-	auto n1 = m_actor->display_noun();
-	auto n2 = m_subject->display_noun();
+	auto n1 = actor->display_noun();
+	auto n2 = subject->display_noun();
 
 	std::string taste = fmt::format(
 		"It tastes {}!",
@@ -202,7 +216,7 @@ ActionResult ConsumeAction::perform()
 				"{} {} {}.",
 				grammar::A(n1),
 				(grammar::is_plural(n1) ? "consume" : "consumes"),
-				m_actor->is_player() ? grammar::the(n2) : grammar::a(n2)
+				actor->is_player() ? grammar::the(n2) : grammar::a(n2)
 			),
 			GameMessage(taste, color::get("yellow"))
 		}

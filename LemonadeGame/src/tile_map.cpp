@@ -5,10 +5,19 @@
 
 #include "raw_master.h"
 
+
+
 TileMap::TileMap(World* world, Length width, Length height, Length depth) :
 	m_world(world), m_width(width), m_height(height), m_depth(depth)
 {
 	m_void_tile = Tile(RawMaster::get<TileType>("TILE_VOID"));
+
+	m_null_material = Material(Material::initializer{ 
+		.material_type = RawMaster::get<MaterialType>("null"), 
+		.starting_temperature = 60.0_degF,
+		.starting_amount = 0,
+	});
+
 	m_tcod_map_layers.reserve(depth);
 
 	for (Coord z = 0; (Length)z < depth; ++z)
@@ -24,6 +33,7 @@ TileMap::TileMap(World* world, Length width, Length height, Length depth) :
 	}
 
 	m_tiles.resize(size_t(width * height * depth), Tile(fill_tile));
+	m_materials.resize(size_t(width * height * depth), m_null_material);
 
 	for (Coord x = 0; (Length)x < m_width; ++x) for (Coord y = 0; (Length)y < m_height; ++y) for (Coord z = 0; (Length)z < m_depth; ++z)
 	{
@@ -83,6 +93,27 @@ constexpr size_t TileMap::get_index(Coord x, Coord y, Coord z) const
 		+ static_cast<size_t>(z);
 }
 
+
+Material& TileMap::get_material(Coord x, Coord y, Coord z)
+{
+	if (!in_bounds(x, y, z))
+	{
+		return m_null_material; // Return null if material out of bounds
+	}
+
+	return m_materials[get_index(x, y, z)];
+}
+
+const Material& TileMap::get_material(Coord x, Coord y, Coord z) const
+{
+	if (!in_bounds(x, y, z))
+	{
+		return m_null_material; // Return null if material out of bounds
+	}
+
+	return m_materials[get_index(x, y, z)];
+}
+
 void TileMap::set_tile(Coord x, Coord y, Coord z, RawMaster::Ref<TileType> type, bool update)
 {
 	if (!in_bounds(x, y, z))
@@ -91,6 +122,105 @@ void TileMap::set_tile(Coord x, Coord y, Coord z, RawMaster::Ref<TileType> type,
 	}
 
 	m_tiles[get_index(x, y, z)] = Tile(type);
+
+	if (!update)
+	{
+		return;
+	}
+
+	update_tile_at(x, y, z);
+
+	// Update adjacent tiles
+	for (auto& pos : transforms::get_adjacent_locations(Position(x, y, z)))
+	{
+		update_tile_at(pos);
+	}
+
+	request_fov_update();
+	set_update_path(true);
+}
+
+void TileMap::set_material(Coord x, Coord y, Coord z, RawMaster::Ref<MaterialType> type, MaterialAmount amount, units::Temperature temperature, bool update)
+{
+	if (!in_bounds(x, y, z))
+	{
+		return; // Do nothing if tile out of bounds
+	}
+
+#ifdef _DEBUG
+	if (amount > DEFAULT_MAX_MATERIAL_AMOUNT)
+	{
+		CERR("input amount greater than max material amount! " << amount);
+	}
+#endif // _DEBUG
+
+	m_materials[get_index(x, y, z)] = Material(Material::initializer{ 
+		.material_type = type, 
+		.starting_temperature = temperature, 
+		.starting_amount = std::clamp<MaterialAmount>(amount, 0, DEFAULT_MAX_MATERIAL_AMOUNT)
+	});
+
+	if (!update)
+	{
+		return;
+	}
+
+	update_tile_at(x, y, z);
+
+	// Update adjacent tiles
+	for (auto& pos : transforms::get_adjacent_locations(Position(x, y, z)))
+	{
+		update_tile_at(pos);
+	}
+
+	request_fov_update();
+	set_update_path(true);
+}
+
+void TileMap::set_temperature(Coord x, Coord y, Coord z, units::Temperature temperature, bool update)
+{
+	if (!in_bounds(x, y, z))
+	{
+		return; // Do nothing if tile out of bounds
+	}
+
+	m_materials[get_index(x, y, z)].temperature() = temperature;
+
+	if (!update)
+	{
+		return;
+	}
+
+	update_tile_at(x, y, z);
+
+	// Update adjacent tiles
+	for (auto& pos : transforms::get_adjacent_locations(Position(x, y, z)))
+	{
+		update_tile_at(pos);
+	}
+
+	request_fov_update();
+	set_update_path(true);
+}
+
+void TileMap::add_material(Coord x, Coord y, Coord z, RawMaster::Ref<MaterialType> type, MaterialAmount amount, bool update)
+{
+	if (!in_bounds(x, y, z))
+	{
+		return; // Do nothing if tile out of bounds
+	}
+
+	auto& material = m_materials[get_index(x, y, z)];
+
+	if (*material.material_type() == *type)
+	{
+		material.amount() = std::clamp<MaterialAmount>(material.amount() + amount, 0, DEFAULT_MAX_MATERIAL_AMOUNT);
+	}
+	else
+	{
+		auto temperature = material.temperature();
+		return set_material(x, y, z, type, amount, temperature, update);
+	}
 
 	if (!update)
 	{
@@ -163,6 +293,8 @@ void TileMap::update_tile_at(Coord x, Coord y, Coord z)
 		}
 	}
 }
+
+
 
 void TileMap::compute_fov(Coord pov_x, Coord pov_y, Coord pov_z, Coord radius)
 {

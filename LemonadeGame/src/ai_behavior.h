@@ -12,7 +12,7 @@ class AIBrain;
 class Behavior
 {
 public:
-	virtual bool perform(AIBrain* brain, TimeUnit delta = TimeUnit::none()) = 0; // returns true when behavior is complete
+	virtual bool perform(AIBrain* brain, const TimeUnit& delta = TimeUnit::none()) = 0; // returns true when behavior is complete
 };
 
 class Behavior_MoveTo : public Behavior
@@ -29,7 +29,7 @@ public:
 		m_current_pos = Position(-1, -1, -1);
 	}
 
-	virtual bool perform(AIBrain* brain, TimeUnit delta = TimeUnit::none()) override;
+	virtual bool perform(AIBrain* brain, const TimeUnit& delta = TimeUnit::none()) override;
 };
 
 struct Behavior_Wander : public Behavior
@@ -53,7 +53,7 @@ public:
 	{
 	}
 
-	virtual bool perform(AIBrain* brain, TimeUnit delta = TimeUnit::none()) override;
+	virtual bool perform(AIBrain* brain, const TimeUnit& delta = TimeUnit::none()) override;
 };
 
 #endif // !LEMONADE_GAME_SRC_AI_BEHAVIOR_H

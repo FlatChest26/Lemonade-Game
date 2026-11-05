@@ -36,7 +36,7 @@ struct ItemDefinition
 	std::string description; 
 	ItemFlags flags;
 
-	Currency price{ Currency::none() };
+	Currency price{ Currency::from_dollars(1.0) };
 	size_t carry_slots{ 1 };
 
 	std::vector<ConsumableEffect> consumable_effects;

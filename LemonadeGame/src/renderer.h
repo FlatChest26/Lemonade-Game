@@ -39,7 +39,7 @@ public:
 	}
 
 	// -- Getters -- //
-	WorldGameState* get_world_game_state() const;
+	WorldGameState* get_world_state() const;
 	World* get_world() const;
 	Camera* get_camera() const;
 	Entity* get_player() const;

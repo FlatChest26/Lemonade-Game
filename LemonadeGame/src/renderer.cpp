@@ -19,7 +19,7 @@ GameState* Renderer::get_game_state() const
 	return m_game_state;
 }
 
-WorldGameState* WorldRenderer::get_world_game_state() const
+WorldGameState* WorldRenderer::get_world_state() const
 {
 	if (!m_game_state)
 	{
@@ -31,7 +31,7 @@ WorldGameState* WorldRenderer::get_world_game_state() const
 
 World* WorldRenderer::get_world() const
 {
-	if (auto world_state = get_world_game_state())
+	if (auto world_state = get_world_state())
 	{
 		return world_state->get_world();
 	}
@@ -41,7 +41,7 @@ World* WorldRenderer::get_world() const
 
 Camera* WorldRenderer::get_camera() const
 {
-	if (auto world_state = get_world_game_state())
+	if (auto world_state = get_world_state())
 	{
 		return world_state->get_camera();
 	}
@@ -51,7 +51,7 @@ Camera* WorldRenderer::get_camera() const
 
 Entity* WorldRenderer::get_player() const
 {
-	if (auto world_state = get_world_game_state())
+	if (auto world_state = get_world_state())
 	{
 		return world_state->get_player();
 	}
@@ -96,9 +96,9 @@ void WorldRenderer::render(const RenderParams& params) const
 
 void WorldRenderer::render_entities(const RenderParams& params) const
 {
-	auto _render = [&](std::vector<Entity*> entities)
+	auto _render = [&](const std::vector<Entity*>& entities)
 		{
-			for (const auto entity : entities)
+			for (auto& entity : entities)
 			{
 				render_entity(params, entity);
 			}
@@ -298,17 +298,29 @@ void WorldRenderer::render_tile_map(const RenderParams& params) const
 
 		if (params.camera && !params.camera->in_view(x, y, layer))
 			continue;
+		
+		Material& draw_material = tile_map->get_material(x, y, layer);
 
-		const Tile* draw_tile = tile_map->get_tile(x, y, layer);
-		Renderable draw_renderable = draw_tile->renderable();
+		Renderable draw_renderable;
 
-		if (draw_tile->is_air())
+		if (draw_material.amount() > 0)
 		{
-			auto tile_below = tile_map->get_tile(x, y, layer - 1);
+			draw_renderable = draw_material.renderable();
+		}
+		else // draw the tile
+		{
+			const Tile* draw_tile = tile_map->get_tile(x, y, layer);
+			
+			draw_renderable = draw_tile->renderable();
 
-			if (!tile_below->is_air())
+			if (draw_tile->is_air())
 			{
-				draw_renderable = Renderable{ DISTANT_DOT, tile_below->fg(), tile_below->bg() };
+				auto tile_below = tile_map->get_tile(x, y, layer - 1);
+
+				if (!tile_below->is_air())
+				{
+					draw_renderable = Renderable{ DISTANT_DOT, tile_below->fg(), tile_below->bg() };
+				}
 			}
 		}
 

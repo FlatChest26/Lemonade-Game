@@ -46,13 +46,14 @@ bool InputHandler_Player::init()
 		return false;
 	}
 
-	auto player = get_player();
 
-	if (!player)
+	if (!does_player_exist())
 	{
 		CERR("No player found!");
 		return false;
 	}
+
+	auto player = get_player();
 
 	m_game_info_menu = register_sidebar<SidebarMenu_GameInfo>(sidebar_menus::GAME_INFO);
 
@@ -95,13 +96,13 @@ bool InputHandler_Player::init()
 
 InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 {
-	auto player = get_player();
-
-	if (!player)
+	if (!does_player_exist())
 	{
 		CERR("No player found.");
 		return InputResult();
 	}
+
+	auto player = get_player();
 
 	auto world = get_world();
 
@@ -138,12 +139,14 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 
 	bool can_act = !is_sleeping && is_alive;
 
+	Position player_pos = player->get_movable()->pos();
+
 	// Check if movement keys are pressed
 	Position move_dir = InputMap::get_input_direction(event);
 
 	if (can_act && !move_dir.empty())
 	{
-		return InputResult(std::make_unique<BumpAction>(player, move_dir.unit()));
+		return InputResult(new BumpAction(player, move_dir.unit()));
 	}
 
 	// Check action keys
@@ -168,51 +171,9 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 	{
 		std::unordered_map<Position, std::vector<Entity*>> interactable_entities;
 
-		for (auto& entity : world->get_entities_at(player->get_movable()->pos(), { .ignore_entities = { player } }))
+		for (auto p : transforms::get_surrounding_locations(player_pos, false, false, true))
 		{
-			if (player->can_interact_with(entity))
-			{
-				interactable_entities[player->get_movable()->pos()].push_back(entity);
-			}
-		}
-
-		if (!interactable_entities[player->get_movable()->pos()].empty())
-		{
-			if (interactable_entities[player->get_movable()->pos()].size() == 1)
-			{
-				return InputResult(new InputHandler_Interaction({ .actor = player, .subject = interactable_entities[player->get_movable()->pos()].front() }));
-			}
-			else
-			{
-				return InputResult(new InputHandler_ListSelector({ 
-					.title = "Interact with what?",
-					.input_keybind = Keybind::Interact,
-					.display_input_keybind = false,
-					.items = [&]()
-					{
-						std::vector<ListSelectorItem> items;
-						for (auto& entity : interactable_entities[player->get_movable()->pos()])
-						{
-							items.push_back(ListSelectorItem(
-								entity->display_name(), entity->fg(), entity->bg(),
-								[=]()
-								{
-									return InputResult(new InputHandler_Interaction({ .actor = player, .subject = entity }));
-								}
-							));
-						}
-						return items;
-					}(),
-				}));
-			}
-		}
-
-		for (auto p : transforms::get_surrounding_locations(player->get_movable()->pos()))
-		{
-			if (p == player->get_movable()->pos())
-				continue;
-
-			for (auto& entity : world->get_entities_at(p, { .ignore_entities = { player } }))
+			for (auto& entity : world->get_entities_at(p, { .ignore_held = true, .ignore_ids = { player->ID() }}))
 			{
 				if (player->can_interact_with(entity))
 				{
@@ -221,80 +182,84 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 			}
 		}
 		
-		if (!interactable_entities.empty())
+		if (interactable_entities.empty())
+			return InputResult();
+
+		auto position_callback = [=](const Position& pos)
+			{
+				if (!interactable_entities.contains(pos))
+					return InputResult();
+
+				auto& entities = interactable_entities.at(pos);
+
+				if (entities.empty())
+					return InputResult();
+
+				if (entities.size() == 1)
+				{
+					return InputResult(new InputHandler_Interaction({ .actor = player, .subject = entities.front() }));
+				}
+
+				return InputResult(new InputHandler_ListSelector(
+					{
+						.title = "Interact with what?",
+						.input_keybind = Keybind::Interact,
+						.display_input_keybind = false,
+						.items = [&]()
+						{
+							std::vector<ListSelectorItem> items;
+							for (auto& entity : entities)
+							{
+								items.push_back(ListSelectorItem(
+									entity->display_name(), entity->fg(), entity->bg(),
+									[=]()
+									{
+										return InputResult(new InputHandler_Interaction({ .actor = player, .subject = entity }));
+									}
+								));
+							}
+							return items;
+						}(),
+					}
+				));
+			};
+
+		if (interactable_entities.size() == 1 && !interactable_entities.begin()->second.empty())
 		{
-			return InputResult(new InputHandler_PositionSelector({
+			return position_callback(interactable_entities.begin()->first);
+		}
+		
+		return InputResult(new InputHandler_PositionSelector(
+			{
 				.title = "Interact where?",
 				.input_keybind = Keybind::Interact,
-				.center = player->get_movable()->pos(),
+				.center = player_pos,
 				.valid_positions = [&]()
 				{
 					std::set<Position> positions;
-					std::set<Entity*> already_added_entities;
 
 					for (auto& [pos, entities] : interactable_entities)
 					{
-						if (pos == player->get_movable()->pos())
-							continue;
-
 						if (entities.empty())
 							continue;
 
-						if (std::any_of(entities.begin(), entities.end(), [&](const auto& entity) { return !already_added_entities.contains(entity); }))
-						{
-							positions.insert(pos);
-							already_added_entities.insert(entities.begin(), entities.end());
-						}
+						positions.insert(pos);
 					}
 
 					return positions;
 				}(),
-				.callback = [=](const Position& pos)
-				{
-					if (!interactable_entities.contains(pos))
-						return InputResult();
-					
-					auto& entities = interactable_entities.at(pos);
 
-					if (entities.size() == 1)
-					{
-						return InputResult(new InputHandler_Interaction({ .actor = player, .subject = entities.front() }));
-					}
-					else
-					{
-						return InputResult(new InputHandler_ListSelector({
-							.title = "Interact with what?",
-							.input_keybind = Keybind::Interact,
-							.display_input_keybind = false,
-							.items = [&]()
-							{
-								std::vector<ListSelectorItem> items;
-								for (auto& entity : entities)
-								{
-									items.push_back(ListSelectorItem(
-										entity->display_name(), entity->fg(), entity->bg(),
-										[=]()
-										{
-											return InputResult(new InputHandler_Interaction({ .actor = player, .subject = entity }));
-										}
-									));
-								}
-								return items;
-							}(),
-						}));
-					}
-					return InputResult();
-				}
-			}));
-		}
-	}
+				.callback = position_callback
+			}
+		));
+	};
 	
 	if (can_act && InputMap::is_action_pressed(Keybind::Open, event))
 	{
 		std::set<Position> open_positions;
 		std::unordered_map<Position, Tile*> added_tiles;
 
-		for (auto p : transforms::get_surrounding_locations(player->get_movable()->pos()))
+		for (auto p : transforms::get_surrounding_locations(player_pos, false, false, true))
 		{
 			if (!world->get_tile(p)->can_open())
 				continue;
@@ -322,18 +287,18 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 
 		if (open_positions.size() == 1)
 		{
-			return InputResult(std::make_unique<OpenAction>(player->interact_speed(), player, *open_positions.begin()));
+			return InputResult(new OpenAction(player, *open_positions.begin()));
 		}
 		else if (open_positions.size() > 1)
 		{
 			return InputResult(new InputHandler_PositionSelector({
 				.title = "Open where?",
 				.input_keybind = Keybind::Open,
-				.center = player->get_movable()->pos(),
+				.center = player_pos,
 				.valid_positions = open_positions,
 				.callback = [=](const Position& pos)
 				{
-					return InputResult(std::make_unique<OpenAction>(player->interact_speed(), player, pos));
+					return InputResult(new OpenAction(player, pos));
 				}
 			}));
 		}
@@ -346,7 +311,7 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 		std::set<Position> close_positions;
 		std::unordered_map<Position, Tile*> added_tiles;
 
-		for (auto p : transforms::get_surrounding_locations(player->get_movable()->pos()))
+		for (auto p : transforms::get_surrounding_locations(player_pos, false, false, true))
 		{
 			if (!world->get_tile(p)->can_close())
 				continue;
@@ -374,18 +339,18 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 
 		if (close_positions.size() == 1)
 		{
-			return InputResult(std::make_unique<CloseAction>(player->interact_speed(), player, *close_positions.begin()));
+			return InputResult(new CloseAction(player, *close_positions.begin()));
 		}
 		else if (close_positions.size() > 1)
 		{
 			return InputResult(new InputHandler_PositionSelector({
 				.title = "Close where?",
 				.input_keybind = Keybind::Close,
-				.center = player->get_movable()->pos(), 
+				.center = player_pos,
 				.valid_positions = close_positions,
-				.callback = [=](const Position& pos)
+				.callback = [=, &player](const Position& pos)
 				{
-					return InputResult(std::make_unique<CloseAction>(player->interact_speed(), player, pos));
+					return InputResult(new CloseAction(player, pos));
 				}
 			}));
 		}
@@ -408,7 +373,7 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 				return InputResult();
 			}
 
-			return InputResult(std::make_unique<StartSleepAction>(player->interact_speed(), player));
+			return InputResult(new StartSleepAction(player));
 		}
 		else
 		{
@@ -418,18 +383,18 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 				return InputResult();
 			}
 
-			return InputResult(std::make_unique<EndSleepAction>(player->interact_speed(), player));
+			return InputResult(new EndSleepAction(player));
 		}
 	}
 	
 	if (InputMap::is_action_pressed(Keybind::WaitShort, event))
 	{
-		return InputResult(std::make_unique<WaitAction>(TimeUnit::from_seconds(1.0)));
+		return InputResult(new WaitAction(TimeUnit::from_seconds(1.0)));
 	}
 	
 	if (InputMap::is_action_pressed(Keybind::WaitLong, event))
 	{
-		return InputResult(std::make_unique<WaitAction>(TimeUnit::from_seconds(10.0)));
+		return InputResult(new WaitAction(TimeUnit::from_seconds(10.0)));
 	}
 	
 	if (can_act && InputMap::is_action_pressed(Keybind::Grab, event))
@@ -451,7 +416,7 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 		auto items_at = world->get_entities_at(
 			player->get_movable()->pos(), 
 			EntityFilter{ 
-				.ignore_entities = { player }, 
+				.ignore_ids = { player->ID() },
 				.required_flags = EntityFlag::CAN_BE_HELD 
 			}
 		);
@@ -465,7 +430,7 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 		{
 			if (inventory->can_carry(item))
 			{
-				return InputResult(std::make_unique<GrabAction>(player->interact_speed(), player, item));
+				return InputResult(new GrabAction(player, item));
 			}
 		}
 
@@ -542,7 +507,7 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 
 void InputHandler_Player::step(const TimeUnit& delta_time)
 {
-	if (m_look_menu && get_player() && m_look_menu->follow_player)
+	if (m_look_menu && does_player_exist() && m_look_menu->follow_player)
 	{
 		m_look_menu->look_position = get_player()->get_movable()->pos();
 	}
@@ -593,7 +558,14 @@ void InputHandler_Look::remove()
 
 InputResult InputHandler_Look::ev_key_down(SDL_Event event)
 {
+	if (!does_player_exist())
+	{
+		CERR("Player does not exist!");
+		return InputResult();
+	}
+
 	auto player = get_player();
+
 	auto world_state = get_world_state();
 	auto world = get_world();
 
@@ -627,7 +599,7 @@ InputResult InputHandler_Look::ev_key_down(SDL_Event event)
 		m_examine_menu->examined_tile = nullptr;
 		m_examine_menu->hide();
 
-		for (const auto& e : world->get_entities_at(m_look_menu->look_position))
+		for (auto& e : world->get_entities_at(m_look_menu->look_position))
 		{
 			m_examine_menu->examined_entities.push_back(e);
 			m_examine_menu->show();
@@ -711,7 +683,14 @@ void InputHandler_Inventory::remove()
 
 InputResult InputHandler_Inventory::ev_key_down(SDL_Event event)
 {
+	if (!does_player_exist())
+	{
+		CERR("Player does not exist!");
+		return InputResult();
+	}
+
 	auto player = get_player();
+
 	auto inventory = player->get_inventory();
 	auto world_state = get_world_state();
 
@@ -772,7 +751,7 @@ InputResult InputHandler_Inventory::ev_key_down(SDL_Event event)
 	{
 		if (auto selected_item = inventory->get_item(m_inventory_menu->selected_slot))
 		{
-			return InputResult(std::make_unique<DropAction>(player->interact_speed(), player, selected_item), new InputResult(InputResult::Type::Pop_InputHandler));
+			return InputResult(new DropAction(player, selected_item), new InputResult(InputResult::Type::Pop_InputHandler));
 		}
 
 		return InputResult();
@@ -814,7 +793,7 @@ InputResult InputHandler_Inventory::ev_key_down(SDL_Event event)
 			return InputResult();
 		}
 
-		return InputResult(std::make_unique<ConsumeAction>(player->interact_speed(), player, selected_item), new InputResult(InputResult::Type::Pop_InputHandler));
+		return InputResult(new ConsumeAction(player, selected_item), new InputResult(InputResult::Type::Pop_InputHandler));
 	}
 	
 	if (InputMap::is_action_pressed(Keybind::PinSidebarMenu, event))
@@ -833,13 +812,6 @@ InputResult InputHandler_Inventory::ev_key_down(SDL_Event event)
 	return InputHandler_Player::ev_key_down(event);
 }
 
-void InputHandler_Inventory::step(const TimeUnit& delta_time)
-{
-	InputHandler_Player::step(delta_time);
-
-	auto player = get_player();
-	auto inventory = player->get_inventory();
-}
 
 bool InputHandler_Interaction::init()
 {
@@ -919,7 +891,7 @@ InputResult InputHandler_Interaction::ev_key_down(SDL_Event event)
 				return InputResult();
 			}
 
-			return InputResult(std::unique_ptr<Action>(action), new InputResult(InputResult::Type::Pop_InputHandler));
+			return InputResult(action, new InputResult(InputResult::Type::Pop_InputHandler));
 
 		}
 
@@ -937,7 +909,7 @@ InputResult InputHandler_Interaction::ev_key_down(SDL_Event event)
 				return InputResult();
 			}
 
-			return InputResult(std::unique_ptr<Action>(action), new InputResult(InputResult::Type::Pop_InputHandler));
+			return InputResult(action, new InputResult(InputResult::Type::Pop_InputHandler));
 		}
 	}
 

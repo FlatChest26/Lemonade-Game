@@ -17,6 +17,7 @@
 #include "item_def.h"
 #include "furniture_def.h"
 #include "snowy_grammar.h"
+#include "material_def.h"
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -33,6 +34,7 @@ namespace RawMaster
 	using SpeciesDB = snowy::SingletonDatabase<Ref<Species>>;
 	using ItemDefsDB = snowy::SingletonDatabase<Ref<ItemDefinition>>;
 	using FurnitureDefsDB = snowy::SingletonDatabase<Ref<FurnitureDefinition>>;
+	using MaterialTypesDB = snowy::SingletonDatabase<Ref<MaterialType>>;
 
 	using PronounsDB = snowy::SingletonDatabase<Ref<Pronouns>>;
 	using GendersDB = snowy::SingletonDatabase<Ref<Gender>>;
@@ -50,6 +52,7 @@ namespace RawMaster
 		"furniture_definition",
 		"pronouns",
 		"gender",
+		"material_type",
 	};
 
 	static void initialize_databases()
@@ -117,6 +120,11 @@ namespace RawMaster
 
 		ItemDefsDB::init();
 		FurnitureDefsDB::init();
+
+		MaterialTypesDB::init();
+		MaterialTypesDB::add({
+			{ "null",  std::make_shared<MaterialType>(material_types::NullMaterial) }
+		});
 	}
 
 	static void load_colors(std::vector<json> json)
@@ -230,14 +238,11 @@ namespace RawMaster
 		COUT("Loading name sets\n");
 		load_raw_type<NameSet>(raw_data["name_set"]);
 
+		COUT("Loading material types\n");
+		load_raw_type<MaterialType>(raw_data["material_type"]);
+
 		COUT("Loading tile types\n");
 		load_raw_type<TileType>(raw_data["tile_type"]);
-
-		COUT("Loading item definitions\n");
-		load_raw_type<ItemDefinition>(raw_data["item_definition"]);
-
-		COUT("Loading furniture definitions\n");
-		load_raw_type<FurnitureDefinition>(raw_data["furniture_definition"]);
 
 		COUT("Loading body part types\n");
 		load_raw_type<BodyPartType>(raw_data["body_part_type"]);
@@ -247,6 +252,12 @@ namespace RawMaster
 
 		COUT("Loading body mods\n");
 		load_raw_type<BodyMod>(raw_data["body_mod"]);
+
+		COUT("Loading item definitions\n");
+		load_raw_type<ItemDefinition>(raw_data["item_definition"]);
+
+		COUT("Loading furniture definitions\n");
+		load_raw_type<FurnitureDefinition>(raw_data["furniture_definition"]);
 
 		COUT("Loading species\n");
 		load_raw_type<Species>(raw_data["species"]);

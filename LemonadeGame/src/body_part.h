@@ -72,6 +72,8 @@ inline std::map<std::string, BodyPartRelativePosition> AllBodyPartRelativePositi
 	{ "RIGHT", BodyPartRelativePosition::RIGHT },
 };
 
+using BodyPartID = std::string;
+
 class BodyPart : public Thing
 {
 protected:
@@ -79,7 +81,7 @@ protected:
 	Entity* m_owner;
 	RawMaster::Ref<BodyPartType> m_type;
 
-	ThingID m_ID;
+	BodyPartID m_ID;
 
 	double m_rel_size;
 	BodyPartPosition m_position;
@@ -88,7 +90,7 @@ protected:
 
 	// Components //
 
-	std::unique_ptr<Allure> m_allure;
+	Allure m_allure;
 
 public:
 	BodyPart(Entity* owner = nullptr, ThingID ID = "", RawMaster::Ref<BodyPartType> type = nullptr, double rel_size = 25.0, BodyPartPosition position = BodyPartPosition::CENTER, std::string prefix = "");
@@ -97,6 +99,7 @@ public:
 
 	const BodyPartType* get_type() const { ASSERT(m_type, "Body part has no type"); return m_type.get(); }
 
+	void set_owner(Entity* entity);
 	Entity* get_owner() const;
 	Anatomy* get_anatomy() const;
 
@@ -114,39 +117,24 @@ public:
 
 	// -- Allure -- //
 
-	virtual Allure* get_allure() const { return m_allure.get(); }
-	bool has_allure() const { return m_allure != nullptr; }
-
 	StatInt_t get_lewdness() const
 	{
-		if (!has_allure())
-			return 0;
-
-		return m_allure->lewdness * m_type->base_allure.lewdness;
+		return m_allure.lewdness * m_type->base_allure.lewdness;
 	}
 
 	StatInt_t get_suggestiveness() const
 	{
-		if (!has_allure())
-			return 0;
-
-		return m_allure->suggestiveness * m_type->base_allure.suggestiveness;
+		return m_allure.suggestiveness * m_type->base_allure.suggestiveness;
 	}
 
 	StatInt_t get_kinkiness() const
 	{
-		if (!has_allure())
-			return 0;
-
-		return m_allure->kinkiness * m_type->base_allure.kinkiness;
+		return m_allure.kinkiness * m_type->base_allure.kinkiness;
 	}
 
 	StatInt_t get_beauty() const
 	{
-		if (!has_allure())
-			return 0;
-
-		return m_allure->beauty * m_type->base_allure.beauty;
+		return m_allure.beauty * m_type->base_allure.beauty;
 	}
 
 public:
@@ -154,7 +142,7 @@ public:
 
 	BodyPartFlag flags() const { return m_type->flags; }
 
-	bool has_flag(BodyPartFlag flag) { return m_type->flags & flag; }
+	bool has_flag(BodyPartFlag flag) const { return m_type->flags & flag; }
 
 	bool is_sensory() const { return m_type->flags & BodyPartFlag::SENSORY; }
 

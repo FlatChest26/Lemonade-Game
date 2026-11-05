@@ -914,11 +914,6 @@ public:
 	SizeType size{ DEFAULT_SIZE };
 	Direction direction{ DEFAULT_DIRECTION };
 
-	constexpr Transform(const PositionType& position = DEFAULT_POSITION, const SizeType& size = DEFAULT_SIZE, const Direction& direction = DEFAULT_DIRECTION) :
-		position(position), size(size), direction(direction)
-	{
-	}
-
 	constexpr bool operator==(const Transform& other) const
 	{
 		return position == other.position && size == other.size && direction == other.direction;
@@ -988,14 +983,19 @@ namespace transforms
 
 	inline bool is_adjacent(const Position& p1, const Position& p2)
 	{
-		return (p2 - p1).length() < 1.4f;
+		return (p2 - p1).length_squared() < (1.4f * 1.4f);
 	}
 
-	inline std::vector<Position> get_adjacent_locations(const Position& origin = Position(0, 0, 0), bool above = false, bool below = false)
+	inline std::vector<Position> get_adjacent_locations(const Position& origin = Position(0, 0, 0), bool above = false, bool below = false, bool include_orgin = false)
 	{
 		std::vector<Position> positions;
 
-		positions.reserve(size_t(4 + (above ? 4 : 0) + (below ? 4 : 0)));
+		positions.reserve(size_t(4 + (above ? 4 : 0) + (below ? 4 : 0) + (include_orgin ? 1 : 0)));
+
+		if (include_orgin)
+		{
+			positions.push_back(origin);
+		}
 
 		positions.push_back(origin + Position(1, 0, 0));
 		positions.push_back(origin + Position(0, 1, 0));
@@ -1021,11 +1021,16 @@ namespace transforms
 		return positions;
 	}
 
-	inline std::vector<Position> get_diagonal_locations(const Position& origin = Position(0, 0, 0), bool above = false, bool below = false)
+	inline std::vector<Position> get_diagonal_locations(const Position& origin = Position(0, 0, 0), bool above = false, bool below = false, bool include_orgin = false)
 	{
 		std::vector<Position> positions;
 
-		positions.reserve(size_t(4 + (above ? 4 : 0) + (below ? 4 : 0)));
+		positions.reserve(size_t(4 + (above ? 4 : 0) + (below ? 4 : 0) + (include_orgin ? 1 : 0)));
+
+		if (include_orgin)
+		{
+			positions.push_back(origin);
+		}
 
 		positions.push_back(origin + Position(1, 1, 0));
 		positions.push_back(origin + Position(-1, 1, 0));
@@ -1051,12 +1056,12 @@ namespace transforms
 		return positions;
 	}
 
-	inline std::vector<Position> get_surrounding_locations(const Position& origin = Position(0, 0, 0), bool above = false, bool below = false)
+	inline std::vector<Position> get_surrounding_locations(const Position& origin = Position(0, 0, 0), bool above = false, bool below = false, bool include_orgin = false)
 	{
 		std::vector<Position> positions;
 
-		auto adjacent = get_adjacent_locations(origin, above, below);
-		auto diagonal = get_diagonal_locations(origin, above, below);
+		auto adjacent = get_adjacent_locations(origin, above, below, include_orgin);
+		auto diagonal = get_diagonal_locations(origin, above, below, false);
 
 		positions.insert(positions.end(), adjacent.begin(), adjacent.end());
 		positions.insert(positions.end(), diagonal.begin(), diagonal.end());

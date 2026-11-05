@@ -58,7 +58,7 @@ public:
 	bool add_item(Entity* item);
 	bool remove_item(Entity* item);
 	
-	void clear_items();
+	void clear_items(bool queue_remove = false);
 
 	bool can_carry(Entity* item) const;
 

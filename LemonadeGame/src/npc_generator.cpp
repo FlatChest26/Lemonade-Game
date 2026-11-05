@@ -110,7 +110,7 @@ namespace npc_generator
 	}
 }
 
-Entity* NPCGenerator::generate_npc()
+Entity NPCGenerator::generate_npc()
 {
 	// Random color
 	color_t random_color = get_weighted_random(npc_generator::ValidColors, snowy::rng::generator);

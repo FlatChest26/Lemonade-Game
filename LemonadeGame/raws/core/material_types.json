@@ -1,0 +1,74 @@
+[
+  {
+    "type": "material_type",
+    "ID": "water",
+    "boiling_point": { "celsius": 100.0 },
+    "melting_point": { "celsius": 0.0 },
+    "states": {
+      "liquid": {
+        "noun": { "singular": "water", "plural": "water" },
+        "prefix": "water",
+        "color": "blue",
+        "description": "A clear, refreshing liquid.",
+        "value": 0.5,
+        "flags": [ "consumable" ],
+        "consumable_effects": [ { "modified_stat": "thirst", "amount": -12.0 }, { "modified_stat": "mood", "amount": 2.0, "taste": "refreshing" } ]
+      },
+      "solid": {
+        "noun": { "singular": "ice", "plural": "ice" },
+        "prefix": "ice",
+        "color": "light_cyan",
+        "value": 0.6,
+        "description": "Frozen water.",
+        "consumable_effects": [ { "modified_stat": "thirst", "amount": -8.0 }, { "modified_stat": "mood", "amount": -2.0, "taste": "crunchy" } ]
+      },
+      "gas": {
+        "noun": { "singular": "steam", "plural": "steam" },
+        "prefix": "steam",
+        "color": "light_gray",
+        "value": 0.3,
+        "description": "Water in its gaseous state."
+      },
+      "powder": {
+        "noun": { "singular": "snow", "plural": "snow" },
+        "prefix": "snow",
+        "color": "white",
+        "value": 0.8,
+        "description": "Frozen water in the form of snow.",
+        "consumable_effects": [ { "modified_stat": "thirst", "amount": -8.0 }, { "modified_stat": "mood", "amount": 0.0, "taste": "powdery" } ]
+      }
+    }
+  },
+  {
+    "type": "material_type",
+    "ID": "lemonade",
+    "boiling_point": { "celsius": 100.0 },
+    "melting_point": { "celsius": 0.0 },
+    "states": {
+      "liquid": {
+        "noun": { "singular": "lemonade", "plural": "lemonade" },
+        "prefix": "lemonade",
+        "color": "light_yellow",
+        "description": "A sweet, refreshing drink, made of sugar, water, and squeezed lemons.",
+        "value": 1.0,
+        "flags": [ "consumable" ],
+        "consumable_effects": [ { "modified_stat": "thirst", "amount": -15.0 }, { "modified_stat": "mood", "amount": 9.0, "taste": "refreshing" } ]
+      },
+      "solid": {
+        "noun": { "singular": "frozen lemonade", "plural": "frozen lemonade" },
+        "prefix": "frozen lemonade",
+        "color": "light_yellow",
+        "value": 0.6,
+        "description": "Frozen lemonade.",
+        "consumable_effects": [ { "modified_stat": "thirst", "amount": -15.0 }, { "modified_stat": "mood", "amount": -7.0, "taste": "crunchy" } ]
+      },
+      "gas": {
+        "noun": { "singular": "boiling lemonade", "plural": "boiling lemonade" },
+        "prefix": "boiling lemonade",
+        "color": "light_yellow",
+        "value": 0.3,
+        "description": "Lemonade in its gaseous state."
+      }
+    }
+  }
+]

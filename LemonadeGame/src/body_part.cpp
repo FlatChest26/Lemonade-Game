@@ -5,10 +5,12 @@
 BodyPart::BodyPart(Entity* owner, ThingID ID, RawMaster::Ref<BodyPartType> type, double rel_size, BodyPartPosition position, std::string prefix) :
 	m_owner(owner), m_ID(ID), m_type(type), m_rel_size(rel_size), m_position(position), m_prefix(prefix)
 {
-	if (is_lewd() || is_suggestive() || is_kinky() || is_pretty())
-	{
-		m_allure = std::make_unique<Allure>();
-	}
+	
+}
+
+void BodyPart::set_owner(Entity* entity)
+{
+	m_owner = entity;
 }
 
 Entity* BodyPart::get_owner() const

@@ -35,7 +35,7 @@ public:
 public:
 	// -- Utilities -- //
 
-	Entity* generate_npc();
+	Entity generate_npc();
 };
 
 #endif // !LEMONADE_GAME_SRC_NPC_GENERATOR_H

@@ -7,7 +7,7 @@
 #include "snowy_rng.h"
 #include "world.h"
 
-bool Behavior_MoveTo::perform(AIBrain* brain, TimeUnit delta)
+bool Behavior_MoveTo::perform(AIBrain* brain, const TimeUnit& delta)
 {
 	auto entity = brain->get_entity();
 
@@ -71,13 +71,13 @@ bool Behavior_MoveTo::perform(AIBrain* brain, TimeUnit delta)
 
 		Position delta = m_current_pos - entity->get_movable()->pos();
 
-		entity->start_action(std::make_unique<BumpAction>(entity, delta.unit()));
+		entity->start_action(new BumpAction(entity, delta.unit()));
 	}
 
 	return m_path.empty();
 }
 
-bool Behavior_Wander::perform(AIBrain* brain, TimeUnit delta)
+bool Behavior_Wander::perform(AIBrain* brain, const TimeUnit& delta)
 {
 	auto entity = brain->get_entity();
 

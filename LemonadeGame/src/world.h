@@ -22,10 +22,10 @@ inline constexpr size_t MAX_ENTITY_COUNT = 64;
 class World
 {
 private:
-	GameState* m_game_state;
+	WorldGameState* m_world_state;
 
-	std::vector<Entity*> m_entities;
-	std::unordered_map<EntityID, std::unique_ptr<Entity>> m_entity_by_id;
+	std::vector<std::unique_ptr<Entity>> m_entities;
+	std::unordered_map<EntityID, size_t> m_entity_by_id;
 
 	std::unique_ptr<TileMap> m_tile_map;
 
@@ -33,16 +33,13 @@ private:
 	TimeDate m_current_time = TimeDate(TimeUnit::from_hours(12.0), 11, 6, 2025);
 
 public:
-	World(GameState* game_state = {});
+	World(WorldGameState* world_state);
 
 	// -- Getters & Setters -- //
 
-	GameState* get_game_state() const;
-	WorldGameState* get_world_game_state() const;
+	WorldGameState* get_world_state() const;
 	Game* get_game() const;
 	TileMap* get_tile_map() const { return m_tile_map.get(); }
-
-	std::vector<Entity*> get_entities() const;
 
 	void set_tile_map(std::unique_ptr<TileMap> tile_map) { m_tile_map = std::move(tile_map); m_tile_map->set_world(this); }
 
@@ -54,30 +51,28 @@ public:
 	// -- Entity Utilities -- //
 
 	// Adds an entity to the world. Returns a pointer to the entity if successful.
-	Entity* add_entity(Entity* entity);
+	Entity* add_entity(const Entity& entity);
 
 	// Adds an entity to the world at the given coordinates. Returns a pointer to the entity if successful.
-	Entity* add_entity_at(Entity* entity, Coord x, Coord y, Coord z);
+	Entity* add_entity_at(const Entity& entity, Coord x, Coord y, Coord z);
 	// Adds an entity to the world at the given position. Returns a pointer to the entity if successful.
-	Entity* add_entity_at(Entity* entity, const Position& pos)
-	{
-		return add_entity_at(std::move(entity), pos.x, pos.y, pos.z);
-	}
-
+	Entity* add_entity_at(const Entity& entity, const Position& pos) { return add_entity_at(entity, pos.x, pos.y, pos.z); }
 
 	// Sets the given entity to be removed on the next frame.
-	void queue_remove(Entity* entity);
+	void queue_remove(Entity& entity);
 	void queue_remove(const EntityID& ID);
 
 	// -- Entity Filter -- //
 
 	bool has_entity(const EntityID& ID) const;
-	bool has_entity(const Entity* entity) const;
-	EntityID get_id(const Entity* entity) const;
+	bool has_entity(const Entity& entity) const;
+	EntityID get_id(const Entity& entity) const;
 
-	Entity* get_entity(const EntityID& ID) const;
+	const Entity* get_entity(const EntityID& ID) const;
+	Entity* get_entity(const EntityID& ID);
 
-	std::vector<Entity*> get_entities(const EntityFilter& filter) const;
+	std::vector<const Entity*> get_entities(const EntityFilter& filter = {}) const;
+	std::vector<Entity*> get_entities(const EntityFilter& filter = {});
 
 	bool has_entities(const EntityFilter& filter) const;
 	size_t count_entities(const EntityFilter& filter) const;
@@ -138,7 +133,7 @@ public:
 	void step(const TimeUnit& time_delta); // Tick the world's time forward
 
 protected:
-	void prepare_remove_entity(Entity* entity);
+	void prepare_remove_entity(EntityRef entity);
 };
 
 #endif // !LEMONADE_GAME_SRC_WORLD_H

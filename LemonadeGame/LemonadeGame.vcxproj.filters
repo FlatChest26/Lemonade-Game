@@ -266,6 +266,9 @@
     <ClInclude Include="src\action_option.h">
       <Filter>Code\Header Files\Actions</Filter>
     </ClInclude>
+    <ClInclude Include="src\material_def.h">
+      <Filter>Code\Header Files\Entity\Components</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -398,6 +401,9 @@
       <Filter>Code\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\consumable.cpp">
+      <Filter>Code\Source Files\Entity\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\material_def.cpp">
       <Filter>Code\Source Files\Entity\Components</Filter>
     </ClCompile>
   </ItemGroup>

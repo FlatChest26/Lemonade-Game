@@ -65,7 +65,6 @@ class InputHandler_Inventory : public InputHandler_Player
 public:
 	virtual bool init() override;
 	virtual void remove() override;
-	virtual void step(const TimeUnit& delta_time) override;
 
 protected:
 	// -- Input Handling -- //

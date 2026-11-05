@@ -25,7 +25,7 @@ bool BumpAction::check_action() const
 	if (!ActionWithDirection::check_action())
 		return false;
 
-	if (!m_actor->has_movable())
+	if (!get_actor()->has_movable())
 	{
 		ACTION_CERR("Actor has no movable! " << m_actor->ID());
 		return false;
@@ -42,6 +42,7 @@ bool BumpAction::check_action() const
 
 ActionResult BumpAction::perform()
 {
+	auto actor = get_actor();
 	auto world = get_world();
 
 	auto dest_tile = world->get_tile(destination());
@@ -51,17 +52,17 @@ ActionResult BumpAction::perform()
 		return ActionResult
 		{
 			.success = true,
-			.next = { new OpenAction(m_actor->move_speed(), m_actor, destination()) }
+			.next = { new OpenAction(actor, destination()) }
 		};
 	}
 
-	if (m_actor->can_collide())
+	if (actor->can_collide())
 	{
 		auto blocking_entities = world->get_entities(
 			EntityFilter
 			{
 				.ignore_held = true,
-				.ignore_entities = { m_actor },
+				.ignore_ids = { actor->ID() },
 				.ignore_flags = EntityFlag::FIXED_IN_PLACE,
 
 				.required_flags = EntityFlag::IS_BLOCKING,
@@ -73,12 +74,12 @@ ActionResult BumpAction::perform()
 		{
 			return ActionResult(false); // Space is too packed
 		}
-		else if (blocking_entities.size() > 0 && blocking_entities.front() != m_actor)
+		else if (blocking_entities.size() > 0 && blocking_entities.front() != actor)
 		{
 			return ActionResult
 			{
 				.success = true,
-				.next = { new SwapPlacesAction(m_actor->move_speed(), m_actor, blocking_entities.front()) }
+				.next = { new SwapPlacesAction(actor, blocking_entities.front()) }
 			};
 		}
 	}
@@ -86,7 +87,7 @@ ActionResult BumpAction::perform()
 	return ActionResult
 	{
 		.success = true,
-		.next = { new MovementAction(m_actor->move_speed(), m_actor, m_dx, m_dy, m_dz) }
+		.next = { new MovementAction(actor, m_dx, m_dy, m_dz) }
 	};
 }
 
@@ -95,15 +96,15 @@ bool MovementAction::check_action() const
 	if (!ActionWithDirection::check_action())
 		return false;
 
-	if (!m_actor->has_movable())
+	if (!get_actor()->has_movable())
 	{
-		ACTION_CERR("Actor has no movable! " << m_actor->ID());
+		ACTION_CERR("Actor has no movable! " << get_actor()->ID());
 		return false;
 	}
 
-	if (m_actor->fixed_in_place())
+	if (get_actor()->fixed_in_place())
 	{
-		ACTION_CERR("Actor is fixed in place! " << m_actor->ID());
+		ACTION_CERR("Actor is fixed in place! " << get_actor()->ID());
 		return false;
 	}
 
@@ -121,22 +122,24 @@ bool MovementAction::check_action() const
 ActionResult MovementAction::perform()
 {
 	auto world = get_world();
-	auto tile_map = m_actor->get_tile_map();
+	auto actor = get_actor();
 
-	Coord start_x = m_actor->get_movable()->posx();
-	Coord start_y = m_actor->get_movable()->posy();
-	Coord start_z = m_actor->get_movable()->posz();
+	auto tile_map = actor->get_tile_map();
+
+	Coord start_x = actor->get_movable()->posx();
+	Coord start_y = actor->get_movable()->posy();
+	Coord start_z = actor->get_movable()->posz();
 
 	Coord final_x = start_x + m_dx;
 	Coord final_y = start_y + m_dy;
 	Coord final_z = start_z + m_dz;
 
-	if (get_action_length() > TimeUnit::from_seconds(0.0f) && m_actor->can_fall() && !m_actor->is_on_floor())
+	if (get_action_length() > TimeUnit::from_seconds(0.0f) && actor->can_fall() && !actor->is_on_floor())
 	{
 		return ActionResult(false);
 	}
 
-	if (tile_map && m_actor->is_map_bound())
+	if (tile_map && actor->is_map_bound())
 	{
 		final_x = std::clamp(final_x, 0, Coord(tile_map->get_width()) - 1);
 		final_y = std::clamp(final_y, 0, Coord(tile_map->get_height()) - 1);
@@ -147,11 +150,11 @@ ActionResult MovementAction::perform()
 	Coord delta_y = final_y - start_y;
 	Coord delta_z = final_z - start_z;
 
-	if (m_actor->can_collide())
+	if (actor->can_collide())
 	{
 		bool has_collision = false;
 
-		if (world->is_blocked(final_x, final_y, final_z, m_actor, delta_z))
+		if (world->is_blocked(final_x, final_y, final_z, actor, delta_z))
 		{
 			has_collision = true;
 		}
@@ -159,29 +162,29 @@ ActionResult MovementAction::perform()
 		// Attempt to slide along wall
 		if (has_collision)
 		{
-			if (abs(delta_z) > 0 && world->is_blocked(final_x, start_y, start_z, m_actor, delta_z))
+			if (abs(delta_z) > 0 && world->is_blocked(final_x, start_y, start_z, actor, delta_z))
 			{
 				final_x = start_x;
 			}
 
-			if (abs(delta_y) > 0 && world->is_blocked(start_x, final_y, start_z, m_actor, delta_z))
+			if (abs(delta_y) > 0 && world->is_blocked(start_x, final_y, start_z, actor, delta_z))
 			{
 				final_y = start_y;
 			}
 
-			if (abs(delta_x) > 0 && world->is_blocked(start_x, start_y, final_z, m_actor, delta_z))
+			if (abs(delta_x) > 0 && world->is_blocked(start_x, start_y, final_z, actor, delta_z))
 			{
 				final_z = start_z;
 			}
 		}
 
-		if (world->is_blocked(final_x, final_y, final_z, m_actor, delta_z))
+		if (world->is_blocked(final_x, final_y, final_z, actor, delta_z))
 		{
 			return ActionResult(false);
 		}
 	}
 
-	if (tile_map && delta_z > 0 && m_actor->can_fall())
+	if (tile_map && delta_z > 0 && actor->can_fall())
 	{
 		if (!tile_map->get_tile(start_x, start_y, start_z)->can_ascend())
 		{
@@ -189,7 +192,7 @@ ActionResult MovementAction::perform()
 		}
 	}
 
-	m_actor->get_movable()->set_position(final_x, final_y, final_z);
+	actor->get_movable()->set_position(final_x, final_y, final_z);
 
 	return ActionResult(true);
 }

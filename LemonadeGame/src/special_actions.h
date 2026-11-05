@@ -8,8 +8,8 @@
 class StartSleepAction : public EntityAction
 {
 public:
-	StartSleepAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr) :
-		EntityAction(action_length, actor)
+	StartSleepAction(Entity* actor = nullptr) :
+		EntityAction(TimeUnit::from_seconds(1.0), actor)
 	{
 	}
 
@@ -22,8 +22,8 @@ public:
 class EndSleepAction : public EntityAction
 {
 public:
-	EndSleepAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr) :
-		EntityAction(action_length, actor)
+	EndSleepAction(Entity* actor = nullptr) :
+		EntityAction(TimeUnit::from_seconds(1.0), actor)
 	{
 	}
 

@@ -10,6 +10,7 @@
 #include "keybinds.h"
 
 #include "input_result.h"
+#include "entity_id.h"
 
 #define DEF_HANDLER_EVENT(x) virtual InputResult ev_##x( SDL_Event event )
 #define OVERRIDE_HANDLER_EVENT(x) virtual InputResult ev_##x( SDL_Event event ) override
@@ -36,7 +37,11 @@ public:
 
 	GameState* get_game_state() const;
 	WorldGameState* get_world_state() const;
+
 	Entity* get_player() const;
+	EntityID get_player_id() const;
+	bool does_player_exist() const;
+
 	World* get_world() const;
 	Camera* get_camera() const;
 

@@ -269,6 +269,10 @@ BodyPartPlan BodyPartPlan::from_json(const json& j)
 	{
 		bpp.rel_size = j.at("rel_size").get<double>();
 	}
+	else
+	{
+		bpp.rel_size = -1.0;
+	}
 
 	if (checker->is_valid_property("position", j))
 	{

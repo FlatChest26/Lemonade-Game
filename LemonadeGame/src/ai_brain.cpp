@@ -39,15 +39,17 @@ void AIBrain::step(TimeUnit time_delta)
 	}
 	else
 	{
-		//add_behavior(new Behavior_Wander(2, Position(-1, -1, -1), TimeUnit::from_seconds(0.5), TimeUnit::from_seconds(4.0)));
+		auto entity_pos = entity->get_movable()->pos();
+		auto sidewalk_1 = m_manager->get_sidewalk_end();
+		auto sidewalk_2 = m_manager->get_sidewalk_end() + Position(1, 0, 0);
 
-		double required_distance_squared = 1.0f + DBL_EPSILON;
-		double dist_1 = (m_manager->get_sidewalk_end() - entity->get_movable()->pos()).length_squared();
-		double dist_2 = ((m_manager->get_sidewalk_end() + Position(1, 0, 0)) - entity->get_movable()->pos()).length_squared();
-
-		if (dist_1 <= required_distance_squared && dist_2 <= required_distance_squared)
+		if (transforms::is_adjacent(entity_pos, sidewalk_1) || transforms::is_adjacent(entity_pos, sidewalk_2))
 		{
 			entity->queue_remove();
+		}
+		else
+		{
+			add_behavior(new Behavior_Wander(2, Position(-1, -1, -1), TimeUnit::from_seconds(0.5), TimeUnit::from_seconds(4.0)));
 		}
 	}
 }
@@ -69,7 +71,7 @@ void AIBrain::add_behavior(Behavior* behavior)
 		return;
 	}
 
-	m_behavior_stack.emplace_back(behavior);
+	m_behavior_stack.push_back(behavior);
 }
 
 Behavior* AIBrain::current_behavior()
@@ -79,7 +81,17 @@ Behavior* AIBrain::current_behavior()
 		return nullptr;
 	}
 
-	return m_behavior_stack.back().get();
+	return m_behavior_stack.back();
+}
+
+const Behavior* AIBrain::current_behavior() const
+{
+	if (m_behavior_stack.empty())
+	{
+		return nullptr;
+	}
+
+	return m_behavior_stack.back();
 }
 
 void AIBrain::cancel_behavior()

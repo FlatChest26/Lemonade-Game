@@ -16,11 +16,6 @@
 
 #include <utility>
 
-WorldGameState::WorldGameState() :
-	m_player(nullptr)
-{
-}
-
 void WorldGameState::new_game()
 {
 	// Create World
@@ -48,7 +43,7 @@ void WorldGameState::new_game()
 
 	// Create Creatures
 
-	m_player = m_world->add_entity_at(
+	m_player_id = m_world->add_entity_at(
 		EntityBuilder::create_creature(
 			"PLAYER",
 			{
@@ -73,9 +68,9 @@ void WorldGameState::new_game()
 			}
 		), 
 		lemonade_stand_pos + Position(-1, 1, 0)
-	);
+	)->ID();
 
-	m_player->learn_name();
+	get_player()->learn_name();
 
 	m_world->add_entity_at(
 		EntityBuilder::create_item(
@@ -273,11 +268,15 @@ void WorldGameState::new_game()
 
 	m_ai_manager->set_spawn_npcs(true);
 
+	// Material
+
+	tile_map->add_material(lemonade_stand_pos - Position(4, 0, 0), RawMaster::get<MaterialType>("lemonade"), 4);
+
 	// Add AI Brains
-	for (const auto& entity : m_world->get_entities(
+	for (auto& entity : m_world->get_entities(
 		EntityFilter
 		{
-			.ignore_entities = { m_player },
+			.ignore_ids = { m_player_id },
 			.required_flags = EntityFlag::ANIMATE
 		}
 	))
@@ -291,11 +290,23 @@ void WorldGameState::new_game()
 
 	// Create Input Handler
 	handle_input_result(InputResult{ new InputHandler_Player() });
+
+	// Update camera size
+
+	m_camera->set_size(
+		Size
+		{
+			m_world->get_tile_map()->get_width(),
+			m_world->get_tile_map()->get_height(),
+			CAMERA_VIEW_DEPTH
+		}
+	);
 }
 
 void WorldGameState::update(double delta_time)
 {
 	TimeUnit time_progress = TimeUnit::from_seconds(delta_time * 6.0f);
+
 	int step_count = 0;
 
 	switch (m_tick_speed)
@@ -322,18 +333,9 @@ void WorldGameState::update(double delta_time)
 	}
 	}
 
-	if (get_player()->has_any_action())
+	if (does_player_exist() && get_player()->has_current_action())
 	{
-		if (get_player()->has_current_action())
-		{
-			step_count = std::min(1, step_count);
-			time_progress = get_player()->get_current_action()->get_action_length();
-		}
-		else if (get_player()->has_queued_action())
-		{
-			step_count = std::min(1, step_count);
-			time_progress = get_player()->get_next_action()->get_action_length();
-		}
+		step(get_player()->get_current_action()->get_action_length());
 	}
 
 	while (step_count > 0)
@@ -345,6 +347,7 @@ void WorldGameState::update(double delta_time)
 	for (auto& entity : m_world->get_entities())
 	{
 		auto prev = entity->is_flashing();
+
 		entity->set_flag_to(EntityFlag::IS_FLASHING, entity->should_flash());
 
 		if (prev != entity->is_flashing())
@@ -368,7 +371,7 @@ void WorldGameState::render() const
 	{
 		.camera = m_camera.get(),
 		.world_render_frame = { Vec2D<Coord>(0, 0), Vec2D<Length>(tile_map_width + 2, tile_map_height + 2), 1 },
-		.use_fov = m_player != nullptr,
+		.use_fov = m_world->has_entity(m_player_id),
 		.show_explored_tiles = GameSettings::SHOW_EXPLORED_TILES,
 		.render_world = true,
 		.render_entities = true,
@@ -415,20 +418,27 @@ void WorldGameState::step(const TimeUnit& time_delta)
 {
 	ASSERT(m_world, "WorldGameState::step() called but world is null");
 
-	TimeUnit elloted_time = time_delta;
-
-	while (elloted_time > TimeUnit::none())
+	if (time_delta > TimeUnit::none())
 	{
-		TimeUnit step_time = std::min(elloted_time, TimeUnit::from_seconds(1.0));
-		
-		m_world->step(step_time);
+		TimeUnit elloted_time = time_delta;
 
-		if (m_ai_manager)
+		while (elloted_time > TimeUnit::none())
 		{
-			m_ai_manager->step(step_time);
-		}
+			TimeUnit step_time = std::min(elloted_time, TimeUnit::from_seconds(1.0));
 
-		elloted_time -= step_time;
+			m_world->step(step_time);
+
+			if (m_ai_manager)
+			{
+				m_ai_manager->step(step_time);
+			}
+
+			elloted_time -= step_time;
+		}
+	}
+	else
+	{
+		m_world->step(time_delta);
 	}
 
 	auto tile_map = m_world->get_tile_map();
@@ -440,9 +450,11 @@ void WorldGameState::step(const TimeUnit& time_delta)
 
 	update_camera();
 
-	if (m_player && tile_map)
+
+	if (does_player_exist() && tile_map)
 	{
-		auto player_pos = m_player->get_movable()->pos();
+		auto player = get_player();
+		auto player_pos = player->get_movable()->pos();
 
 		if (m_previous_player_pos != player_pos)
 		{
@@ -451,11 +463,11 @@ void WorldGameState::step(const TimeUnit& time_delta)
 		}
 
 		// Update FOV for player
-		if (m_player->has_field_of_view() && tile_map->should_update_fov())
+		if (player->has_field_of_view() && tile_map->should_update_fov())
 		{
 			tile_map->compute_fov(
 				player_pos.x, player_pos.y, player_pos.z,
-				m_player->view_range()
+				player->view_range()
 			);
 		}
 	}
@@ -479,62 +491,32 @@ void WorldGameState::update_camera()
 	{
 		return;
 	}
+	
+	Position focus{ 0, 0, 0 };
 
-	if (GameSettings::FIXED_CAMERA || !m_player)
+	if (m_has_camera_focus)
 	{
-		Position focus = Position(0, 0, 0);
-
-		if (m_player)
-		{
-			focus.z = m_player->get_movable()->posz();
-		}
-
-		if (m_camera_focus)
-		{
-			focus.z = m_camera_focus->z;
-		}
-
-		m_camera->set_position(focus);
-		m_camera->set_size(
-			Size
-			{
-				m_world->get_tile_map()->get_width(),
-				m_world->get_tile_map()->get_height(),
-				CAMERA_VIEW_DEPTH
-			}
-		);
+		focus = m_camera_focus;
 	}
-	else
+	else if (does_player_exist())
 	{
-		Position focus = Position(m_player->get_movable()->pos());
-
-		if (m_camera_focus)
-		{
-			focus = *m_camera_focus;
-		}
-
-		m_camera->set_center(focus);
-		m_camera->set_size(
-			Size
-			{
-				m_world->get_tile_map()->get_width(),
-				m_world->get_tile_map()->get_height(),
-				CAMERA_VIEW_DEPTH
-			}
-		);
+		focus = get_player()->get_movable()->pos();
 	}
+
+	if (GameSettings::FIXED_CAMERA)
+	{
+		focus.x = 0;
+		focus.y = 0;
+	}
+
+	m_camera->set_position(focus);
 }
 
 #include "snowy_macros.h"
 
 void WorldGameState::handle_action(QueuedAction action)
 {
-	if (action == nullptr)
-	{
-		return;
-	}
-
-	if (!action->check_action())
+	if (!action || !action->check_action())
 	{
 		return;
 	}
@@ -559,22 +541,11 @@ void WorldGameState::handle_action(QueuedAction action)
 		if (action->has_actor())
 		{
 			auto actor = action->get_actor();
-
-			if (actor->can_queue_action())
-			{
-				if (actor == get_player())
-				{
-					handle_input_result(InputResult(std::unique_ptr<Action>(next_action)));
-				}
-				else
-				{
-					actor->queue_action(std::unique_ptr<Action>(next_action));
-				}
-			}
+			actor->start_action(next_action);
 		}
 		else
 		{
-			handle_input_result(InputResult(std::unique_ptr<Action>(next_action)));
+			handle_input_result(InputResult(next_action));
 		}
 	}
 }
@@ -583,25 +554,19 @@ void WorldGameState::handle_input_result(InputResult result)
 {
 	if (result.type == InputResult::Type::Action && result.next_action && result.next_action->check_action())
 	{
-		QueuedAction new_action = std::move(result.next_action);
-
-		if (new_action->has_actor())
+		if (result.next_action->has_actor())
 		{
-			auto actor = new_action->get_actor();
-			auto action_length = new_action->get_action_length();
+			auto actor = result.next_action->get_actor();
+			auto action_length = result.next_action->get_action_length();
 
-			actor->start_action(std::move(new_action));
-
-			if (actor == m_player)
-			{
-				step(action_length);
-			}
+			actor->start_action(result.next_action);
 		}
 		else
 		{
-			auto action_length = new_action->get_action_length();
+			auto action_length = result.next_action->get_action_length();
 			step(action_length);
-			handle_action(std::move(new_action));
+
+			handle_action(QueuedAction(result.next_action));
 		}
 	}
 	else

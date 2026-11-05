@@ -8,6 +8,147 @@
 
 #include "action.h"
 
+#include "snowy_utilities.h"
+#include "action.h"
+
+
+void Entity::copy_components_from_entity(const Entity& other)
+{
+	if (other.has_soul())
+	{
+		add_soul(new CreatureSoul(*other.get_soul()));
+	}
+
+	if (other.has_movable())
+	{
+		set_movable(new TileMovable(*other.get_movable()));
+	}
+
+	if (other.has_anatomy())
+	{
+		set_anatomy(new Anatomy(*other.get_anatomy()));
+	}
+
+	if (other.has_inventory())
+	{
+		if (!has_inventory())
+		{
+			setup_inventory();
+		}
+		else
+		{
+			get_inventory()->clear_items(true);
+		}
+
+		for (const auto& item : other.get_inventory()->get_items())
+		{
+			add_to_inventory(item);
+		}
+	}
+
+	if (other.has_gait())
+	{
+		set_gait(new Gait(*other.get_gait()));
+	}
+
+	if (other.has_living())
+	{
+		set_living(new Living(*other.get_living()));
+	}
+
+	if (other.is_person())
+	{
+		set_person(new Person(*other.get_person()));
+	}
+
+	if (other.has_brain())
+	{
+		set_brain(new AIBrain(*other.get_brain()));
+	}
+}
+
+void Entity::move_components_from_entity(Entity& other)
+{
+	if (other.has_soul())
+	{
+		add_soul(other.release_soul());
+	}
+
+	if (other.has_movable())
+	{
+		set_movable(other.release_component<TileMovable>());
+	}
+
+	if (other.has_inventory())
+	{
+		set_inventory(other.release_component<Inventory>());
+	}
+
+	if (other.has_anatomy())
+	{
+		set_anatomy(other.release_component<Anatomy>());
+	}
+
+	if (other.has_gait())
+	{
+		set_gait(other.release_component<Gait>());
+	}
+
+	if (other.has_living())
+	{
+		set_living(other.release_component<Living>());
+	}
+
+	if (other.is_person())
+	{
+		set_person(other.release_component<Person>());
+	}
+
+	if (other.has_brain())
+	{
+		set_brain(other.release_component<AIBrain>());
+	}
+}
+
+void Entity::fix_ownership()
+{
+	if (has_anatomy())
+	{
+		get_anatomy()->set_owner(this);
+	}
+
+	if (has_inventory())
+	{
+		get_inventory()->set_owner(this);
+
+		for (auto& item : get_inventory()->get_items())
+		{
+			item->set_location(this);
+		}
+	}
+
+	if (has_living())
+	{
+		get_living()->set_owner(this);
+	}
+
+	if (is_person())
+	{
+		get_person()->set_owner(this);
+	}
+
+	if (has_brain())
+	{
+		get_brain()->set_entity(this);
+	}
+
+	for (auto& action : m_action_queue)
+	{
+		action->set_actor(this);
+	}
+}
+
+
 Entity::Entity(EntityID ID, EntityFlag entity_flags) :
 	m_ID(ID), m_flags(entity_flags)
 {
@@ -18,27 +159,87 @@ Entity::~Entity()
 {
 }
 
-TimeUnit Entity::move_speed() const
+Entity::Entity(const Entity& other)
+{
+	m_ID = other.m_ID;
+	m_flags = other.m_flags;
+
+	m_location = other.m_location;
+	m_action_queue = other.m_action_queue;
+
+	m_raw_refs = other.m_raw_refs;
+	copy_components_from_entity(other);
+
+	on_flags_updated();
+}
+
+Entity::Entity(Entity&& other)
+{
+	m_ID = other.m_ID;
+	m_flags = other.m_flags;
+
+	m_location = other.m_location;
+	m_action_queue = other.m_action_queue;
+
+	m_raw_refs = other.m_raw_refs;
+	move_components_from_entity(other);
+
+	on_flags_updated();
+}
+
+Entity& Entity::operator=(const Entity& other)
+{
+	m_ID = other.m_ID;
+	m_flags = other.m_flags;
+
+	m_location = other.m_location;
+	m_action_queue = other.m_action_queue;
+
+	m_raw_refs = other.m_raw_refs;
+	copy_components_from_entity(other);
+
+	on_flags_updated();
+
+	return *this;
+}
+
+Entity& Entity::operator=(Entity& other)
+{
+	m_ID = other.m_ID;
+	m_flags = other.m_flags;
+
+	m_location = other.m_location;
+	m_action_queue = other.m_action_queue;
+
+	m_raw_refs = other.m_raw_refs;
+	move_components_from_entity(other);
+
+	on_flags_updated();
+
+	return *this;
+}
+
+double Entity::move_speed() const
 {
 	if (auto gait = get_gait())
 	{
-		return TimeUnit::from_seconds(gait->get_current_speed());
+		return gait->get_current_speed();
 	}
 	else if (is_player())
 	{
-		return TimeUnit::from_seconds(0.7);
+		return 0.7;
 	}
 	else if (is_creature())
 	{
-		return TimeUnit::from_seconds(1.2);
+		return 1.2;
 	}
 
-	return TimeUnit::from_seconds(1.0f);
+	return 1.0f;
 }
 
-TimeUnit Entity::interact_speed() const
+double Entity::interact_speed() const
 {
-	return TimeUnit::from_seconds(0.5f);
+	return 0.5f;
 }
 
 int Entity::view_range() const
@@ -55,7 +256,7 @@ size_t Entity::default_inventory_slots() const
 {
 	if (has_anatomy())
 	{
-		return get_anatomy()->count_body_parts_with_flag(BodyPartFlag::GRASP);
+		return get_anatomy()->count_body_parts({ .required_flags = BodyPartFlag::GRASP });
 	}
 
 	return 1;
@@ -73,7 +274,7 @@ size_t Entity::carry_slots() const
 
 size_t Entity::max_actions_queued() const
 {
-	return 1;
+	return 2;
 }
 
 Inventory* Entity::get_holder_inventory() const
@@ -123,54 +324,34 @@ World* Entity::get_world_holder() const
 	return {};
 }
 
-GameState* Entity::get_game_state() const
+WorldGameState* Entity::get_world_state() const
 {
-	if (auto world = get_world())
-	{
-		return world->get_game_state();
-	}
-
-	return {};
-}
-
-WorldGameState* Entity::get_world_game_state() const
-{
-	if (auto world = get_world())
-	{
-		return world->get_world_game_state();
-	}
-
-	return {};
+	return get_world()->get_world_state();
 }
 
 Game* Entity::get_game() const
 {
-	if (auto world = get_world())
-	{
-		return world->get_game();
-	}
-
-	return {};
+	return get_world()->get_game();
 }
 
 Entity* Entity::get_player() const
 {
-	if (auto world_game_state = get_world_game_state())
-	{
-		return world_game_state->get_player();
-	}
+	return get_world_state()->get_player();
+}
 
-	return nullptr;
+EntityID Entity::get_player_id() const
+{
+	return get_world_state()->get_player_id();
+}
+
+bool Entity::does_player_exist() const
+{
+	return get_world_state()->does_player_exist();
 }
 
 TileMap* Entity::get_tile_map() const
 {
-	if (auto world = get_world())
-	{
-		return world->get_tile_map();
-	}
-
-	return nullptr;
+	return get_world()->get_tile_map();
 }
 
 bool Entity::set_location(World* world, bool change_holder)
@@ -505,9 +686,9 @@ bool Entity::is_visible_to_player() const
 		return true;
 	}
 
-	if (auto player = get_player())
+	if (does_player_exist())
 	{
-		return player->can_see(this);
+		return get_player()->can_see(this);
 	}
 
 	return false;
@@ -584,7 +765,7 @@ std::vector<InteractionOption> Entity::get_interactions_with(Entity* subject)
 			potential_actions.push_back({
 				.name = "drop",
 				.input_action = Keybind::Drop,
-				.action = [](Entity* actor, Entity* subject) { return new DropAction(actor->interact_speed(), actor, subject); }
+				.action = [](Entity* actor, Entity* subject) { return new DropAction(actor, subject); }
 			});
 		}
 
@@ -593,7 +774,7 @@ std::vector<InteractionOption> Entity::get_interactions_with(Entity* subject)
 			potential_actions.push_back({
 				.name = "grab",
 				.input_action = Keybind::Grab,
-				.action = [](Entity* actor, Entity* subject) { return new GrabAction(actor->interact_speed(), actor, subject); }
+				.action = [](Entity* actor, Entity* subject) { return new GrabAction(actor, subject); }
 			});
 		}
 	}
@@ -603,7 +784,7 @@ std::vector<InteractionOption> Entity::get_interactions_with(Entity* subject)
 		potential_actions.push_back({
 			.name = "consume",
 			.input_action = Keybind::Consume,
-			.action = [](Entity* actor, Entity* subject) { return new ConsumeAction(actor->interact_speed(), actor, subject); }
+			.action = [](Entity* actor, Entity* subject) { return new ConsumeAction(actor, subject); }
 		});
 	}
 
@@ -679,10 +860,23 @@ void Entity::remove_from_inventory(Entity* item, bool update_inventory)
 	item->set_location(get_world(), false);
 }
 
-bool Entity::queue_action(std::unique_ptr<Action> action)
+bool Entity::start_action(QueuedAction action)
 {
-	if (!has_action_user())
+	if (!action)
 	{
+		CERR("Failed to start action! Action was null. " << ID());
+		return false;
+	}
+
+	if (!can_do_actions())
+	{
+		CERR("Failed to start action! Entity cannot do actions. " << ID());
+		return false;
+	}
+
+	if (!can_queue_action())
+	{
+		CERR("Failed to start action! Too many actions queued. " << ID());
 		return false;
 	}
 
@@ -691,84 +885,43 @@ bool Entity::queue_action(std::unique_ptr<Action> action)
 		return false;
 	}
 
-	if (!can_queue_action())
-	{
-		return false;
-	}
-
 	if (action->has_subject() && cannot_interact_with_others())
 	{
+		CERR("Failed to start action! Entity cannot interact with others. " << ID());
 		return false;
 	}
 
-	get_action_user()->action_queue.push_back(std::move(action));
+	m_action_queue.push_back(action);
+
+	if (action->progress(TimeUnit::none()))
+		complete_action();
+
 	return true;
 }
 
-Action* Entity::get_next_action()
+void Entity::reset_actions(Action* action)
 {
-	if (!has_action_user())
+	m_action_queue.clear();
+
+	if (action)
 	{
-		return nullptr;
-	}
-
-	if (get_action_user()->action_queue.empty())
-		return nullptr;
-
-	return get_action_user()->action_queue.front().get();
-}
-
-void Entity::start_next_action()
-{
-	if (!has_action_user())
-	{
-		return;
-	}
-
-	if (get_action_user()->action_queue.empty())
-		return;
-
-	auto action = std::move(get_action_user()->action_queue.front());
-	get_action_user()->action_queue.erase(get_action_user()->action_queue.begin());
-
-	start_action(std::move(action));
-}
-
-void Entity::start_action(std::unique_ptr<Action> action)
-{
-	if (!has_action_user())
-	{
-		return;
-	}
-
-	get_action_user()->current_action = std::move(action);
-
-	if (get_action_user()->current_action->reset_progress(TimeUnit::none()))
-	{
-		complete_action();
+		start_action(action);
 	}
 }
 
-void Entity::reset_actions(std::unique_ptr<Action> action)
+void Entity::continue_action(const TimeUnit& delta)
 {
-	get_action_user()->action_queue.clear();
-	start_action(std::move(action));
-}
-
-void Entity::continue_action(TimeUnit delta)
-{
-	if (!has_action_user())
-	{
+	if (!has_current_action())
 		return;
+
+	double action_speed = interact_speed();
+
+	if (get_current_action()->is_movement_action())
+	{
+		action_speed = move_speed();
 	}
 
-	if (!get_action_user()->current_action)
-	{
-		complete_action();
-		return;
-	}
-
-	if (get_action_user()->current_action->progress(delta))
+	if (get_current_action()->progress(delta * action_speed))
 	{
 		complete_action();
 	}
@@ -776,23 +929,15 @@ void Entity::continue_action(TimeUnit delta)
 
 void Entity::complete_action()
 {
-	if (!has_action_user())
-	{
+	if (!has_current_action())
 		return;
-	}
 
-	if (!get_action_user()->current_action)
-	{
-		return;
-	}
+	auto completed_action = get_current_action();
+	m_action_queue.pop_back();
 
-	if (auto world_state = get_world_game_state())
+	if (auto world_state = get_world_state())
 	{
-		world_state->handle_action(std::move(get_action_user()->current_action));
-	}
-	else
-	{
-		get_action_user()->current_action.reset();
+		world_state->handle_action(completed_action);
 	}
 }
 
@@ -857,12 +1002,14 @@ bool Entity::operator==(const Entity& other) const
 	return m_ID == other.m_ID;
 }
 
+
 bool Entity::is_player() const
 {
-	if (auto player = get_player())
+	if (does_player_exist())
 	{
-		return this->ID() == player->ID();
+		return ID() == get_player_id();
 	}
+
 	return false;
 }
 
@@ -878,14 +1025,14 @@ void Entity::on_flags_updated()
 		remove_component<Inventory>();
 	}
 
-	if (can_do_actions() && !has_action_user())
+	if (can_do_actions())
 	{
-		set_action_user(new ActionUser());
+		m_action_queue.reserve(max_actions_queued());
 	}
 
-	if (!can_do_actions() && has_action_user())
+	if (!can_do_actions())
 	{
-		remove_component<ActionUser>();
+		m_action_queue.clear();
 	}
 }
 
@@ -907,7 +1054,7 @@ bool Entity::should_flash()
 			.ignore_held = true,
 			.required_flags = type_flag(),
 			.required_positions = { get_movable()->pos() }
-			});
+		});
 
 		if (entities_in_tile.size() < 2)
 		{
@@ -918,7 +1065,10 @@ bool Entity::should_flash()
 			entities_in_tile.begin(),
 			std::find_if(
 				entities_in_tile.begin(), entities_in_tile.end(),
-				[&](const auto& entity) { return entity == this; }
+				[&](Entity* entity)
+				{
+					return entity == this;
+				}
 			)
 		);
 
@@ -933,7 +1083,7 @@ bool Entity::should_flash()
 
 void Entity::game_message(GameMessage msg)
 {
-	if (auto world_state = get_world_game_state())
+	if (auto world_state = get_world_state())
 	{
 		world_state->game_message(msg);
 	}
@@ -1009,17 +1159,9 @@ void Entity::step(const TimeUnit& time_delta)
 	}
 
 	// Handle current action
-	if (has_action_user())
+	if (can_do_actions())
 	{
-		if (has_current_action())
-		{
-			continue_action(time_delta);
-		}
-		else if (has_queued_action())
-		{
-			start_next_action();
-			continue_action(time_delta);
-		}
+		continue_action(time_delta);
 	}
 	
 	if (has_living())

@@ -61,8 +61,8 @@ struct InputResult
 	{
 	}
 
-	InputResult(std::unique_ptr<Action> action) :
-		type(Type::Action), next_action(std::move(action))
+	InputResult(Action* action) :
+		type(Type::Action), next_action(action)
 	{
 	}
 
@@ -91,8 +91,8 @@ struct InputResult
 	{
 	}
 
-	InputResult(std::unique_ptr<Action> action, InputResult* next) :
-		type(Type::Action), next_action(std::move(action)), next_input_result(next)
+	InputResult(Action* action, InputResult* next) :
+		type(Type::Action), next_action(action), next_input_result(next)
 	{
 	}
 };

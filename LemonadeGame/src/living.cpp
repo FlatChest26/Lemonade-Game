@@ -355,12 +355,12 @@ void Living::step(const TimeUnit& time_delta)
 	// Manage sleep
 	if (is_asleep() && should_wake_up())
 	{
-		m_owner->start_action(std::make_unique<EndSleepAction>(m_owner->interact_speed(), m_owner));
+		m_owner->start_action(QueuedAction(new EndSleepAction(m_owner)));
 	}
 
 	if (!is_asleep() && should_sleep())
 	{
-		m_owner->start_action(std::make_unique<StartSleepAction>(m_owner->interact_speed(), m_owner));
+		m_owner->start_action(QueuedAction(new StartSleepAction(m_owner)));
 	}
 
 	// Manage stats

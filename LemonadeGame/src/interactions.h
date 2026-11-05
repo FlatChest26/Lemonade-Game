@@ -2,20 +2,23 @@
 
 #ifndef LEMONADE_GAME_SRC_MISC_ACTIONS_H
 #define LEMONADE_GAME_SRC_MISC_ACTIONS_H
+
 #include "action.h"
+#include "entity.h"
 
 /* An action between two entities, an actor and a subject. */
 class Interaction : public EntityAction
 {
 protected:
-	Entity* m_subject;
+	EntityID m_subject;
 
 public:
 	Interaction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, Entity* subject = nullptr) :
-		EntityAction(action_length, actor), m_subject(subject)
+		EntityAction(action_length, actor), m_subject(subject->ID())
 	{
 	}
 
+	void set_subject(Entity* subject) override;
 	virtual Entity* get_subject() const override;
 
 	virtual bool check_action() const override;
@@ -25,8 +28,8 @@ public:
 class SwapPlacesAction : public Interaction
 {
 public:
-	SwapPlacesAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, Entity* subject = nullptr) :
-		Interaction(action_length, actor, subject)
+	SwapPlacesAction(Entity* actor = nullptr, Entity* subject = nullptr) :
+		Interaction(TimeUnit::from_seconds(1.0), actor, subject)
 	{
 	}
 
@@ -39,8 +42,8 @@ public:
 class GrabAction : public Interaction
 {
 public:
-	GrabAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, Entity* subject = nullptr) :
-		Interaction(action_length, actor, subject)
+	GrabAction(Entity* actor = nullptr, Entity* subject = nullptr) :
+		Interaction(TimeUnit::from_seconds(1.0), actor, subject)
 	{
 	}
 
@@ -52,8 +55,8 @@ public:
 class DropAction : public Interaction
 {
 public:
-	DropAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, Entity* subject = nullptr) :
-		Interaction(action_length, actor, subject)
+	DropAction(Entity* actor = nullptr, Entity* subject = nullptr) :
+		Interaction(TimeUnit::from_seconds(1.0), actor, subject)
 	{
 	}
 
@@ -66,8 +69,8 @@ public:
 class ConsumeAction : public Interaction
 {
 public:
-	ConsumeAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, Entity* subject = nullptr) :
-		Interaction(action_length, actor, subject)
+	ConsumeAction(Entity* actor = nullptr, Entity* subject = nullptr) :
+		Interaction(TimeUnit::from_seconds(1.0), actor, subject)
 	{
 	}
 

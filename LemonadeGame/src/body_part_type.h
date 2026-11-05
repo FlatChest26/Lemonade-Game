@@ -112,7 +112,7 @@ inline std::map<std::string, BodyPartCategory> AllBodyPartCategories
 	{ "LOWER_BODY", BodyPartCategory::LOWER_BODY },
 	{ "UPPER_ARM",	BodyPartCategory::UPPER_ARM },
 	{ "LOWER_ARM",	BodyPartCategory::LOWER_ARM },
-	{ "HAND	",		BodyPartCategory::HAND },
+	{ "HAND",		BodyPartCategory::HAND },
 	{ "GROIN",		BodyPartCategory::GROIN },
 	{ "UPPER_LEG",	BodyPartCategory::UPPER_LEG },
 	{ "LOWER_LEG",	BodyPartCategory::LOWER_LEG },

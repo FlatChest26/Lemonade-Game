@@ -16,13 +16,18 @@
 
 struct InputAction
 {
-	SDL_KeyCode sym;
-	SDL_Keymod mod = KMOD_NONE;
-	SDL_Keymod nmod = KMOD_NONE; // mods that must be OFF
+	SDL_KeyCode sym{ SDLK_UNKNOWN };
+	SDL_Keymod mod{ KMOD_NONE };
+	SDL_Keymod nmod{ KMOD_NONE }; // mods that must be OFF
 
 	constexpr bool operator==(const InputAction& other) const
 	{
 		return sym == other.sym && mod == other.mod && nmod == other.nmod;
+	}
+
+	constexpr bool operator!=(const InputAction& other) const
+	{
+		return sym != other.sym || mod != other.mod || nmod != other.nmod;
 	}
 
 	std::string to_string() const
@@ -89,12 +94,12 @@ public:
 
 	static void add_input_action(ActionName name, SDL_KeyCode sym, SDL_Keymod mod = KMOD_NONE, SDL_Keymod nmod = KMOD_NONE)
 	{
-		if (!has_action(name))
-		{
-			get().m_input_actions[name] = {};
-		}
-
 		get().m_input_actions[name].push_back(InputAction(sym, mod, nmod));
+	}
+
+	static void add_input_action(ActionName name, InputAction input_action)
+	{
+		get().m_input_actions[name].push_back(input_action);
 	}
 
 	static void add_input_direction(ActionName name, Position direction)
@@ -102,19 +107,14 @@ public:
 		get().m_input_direction[name] = direction;
 	}
 
-	static std::vector<InputAction> get_actions(ActionName name)
+	static std::vector<InputAction>& get_actions(ActionName name)
 	{
-		if (!has_action(name))
-		{
-			return {};
-		}
-
-		return get().m_input_actions[name];
+		return get().m_input_actions.at(name);
 	}
 
 	static bool has_action(ActionName name)
 	{
-		return get().m_input_actions.find(name) != get().m_input_actions.end();
+		return get().m_input_actions.contains(name);
 	}
 
 	static Position get_input_direction(SDL_Event event)
@@ -124,7 +124,7 @@ public:
 			return Position(0, 0, 0);
 		}
 
-		Position input_dir;
+		Position input_dir = Position(0, 0, 0);
 
 		for (auto [action_name, move_dir] : get().m_input_direction)
 		{

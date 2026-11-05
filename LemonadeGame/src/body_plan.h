@@ -20,7 +20,7 @@ using json = nlohmann::json;
 struct BodyPartPlan
 {
 	RawMaster::RawID type;
-	ThingID ID{ type };
+	BodyPartID ID{ type };
 	double rel_size{ 1.0f };
 	BodyPartPosition position{ BodyPartPosition::CENTER };
 

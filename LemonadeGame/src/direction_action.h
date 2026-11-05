@@ -54,18 +54,19 @@ public:
 class MovementAction : public ActionWithDirection
 {
 public:
-	MovementAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, Coord dx = 0, Coord dy = 0, Coord dz = 0) :
-		ActionWithDirection(action_length, actor, dx, dy, dz)
+	MovementAction(Entity* actor = nullptr, Coord dx = 0, Coord dy = 0, Coord dz = 0) :
+		ActionWithDirection(TimeUnit::from_seconds(1.0), actor, dx, dy, dz)
 	{
 	}
-	MovementAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, Position delta = { 0, 0, 0 }) :
-		ActionWithDirection(action_length, actor, delta.x, delta.y, delta.z)
+	MovementAction(Entity* actor = nullptr, Position delta = { 0, 0, 0 }) :
+		ActionWithDirection(TimeUnit::from_seconds(1.0), actor, delta.x, delta.y, delta.z)
 	{
 	}
 
 	virtual bool check_action() const override;
 	virtual ActionResult perform() override;
 	static std::string action_name() { return "movement action"; }
+	virtual bool is_movement_action() const override { return true; }
 };
 
 #endif // !LEMONADE_GAME_SRC_DIRECTION_ACTION_H

@@ -26,7 +26,7 @@ class World;
 class WorldGameState;
 class TileMap;
 
-using QueuedAction = std::unique_ptr<Action>;
+using QueuedAction = Action*;
 using ActionQueue = std::vector<QueuedAction>;
 using ActionResponse = GameMessage;
 
@@ -34,19 +34,19 @@ struct ActionResult
 {
 	bool success{ false };
 	std::vector<ActionResponse> responses{};
-	std::vector<Action*> next;
+	ActionQueue next;
 
 	constexpr bool has_next_action() const
 	{
 		return !next.empty();
 	}
 
-	void add_next_action(Action* action)
+	void add_next_action(QueuedAction action)
 	{
 		next.push_back(action);
 	}
 
-	Action* get_next_action()
+	QueuedAction get_next_action()
 	{
 		if (next.front())
 		{
@@ -93,6 +93,9 @@ public:
 	static std::string action_name() { return "<unnamed action>"; }
 	virtual bool check_action() const { return true; }
 
+	virtual void set_actor(Entity* actor);
+	virtual void set_subject(Entity* subject);
+
 	virtual bool has_actor() const;
 	virtual bool has_subject() const;
 
@@ -101,7 +104,9 @@ public:
 
 	virtual World* get_world() const;
 	virtual TileMap* get_tile_map() const;
-	virtual WorldGameState* get_world_game_state() const;
+	virtual WorldGameState* get_world_state() const;
+
+	virtual bool is_movement_action() const { return false; }
 };
 
 class WaitAction : public Action
@@ -128,6 +133,7 @@ public:
 	{
 	}
 
+	virtual void set_actor(Entity* actor) override;
 	virtual bool check_action() const override;
 	virtual Entity* get_actor() const override;
 

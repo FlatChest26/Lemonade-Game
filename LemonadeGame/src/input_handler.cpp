@@ -42,6 +42,26 @@ Entity* InputHandler::get_player() const
 	return nullptr;
 }
 
+EntityID InputHandler::get_player_id() const
+{
+	if (auto world_state = get_world_state())
+	{
+		return world_state->get_player_id();
+	}
+
+	return {};
+}
+
+bool InputHandler::does_player_exist() const
+{
+	if (auto world_state = get_world_state())
+	{
+		return get_world_state()->does_player_exist();
+	}
+
+	return false;
+}
+
 World* InputHandler::get_world() const
 {
 	if (auto world_state = get_world_state())

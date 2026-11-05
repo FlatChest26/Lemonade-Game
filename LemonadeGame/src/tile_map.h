@@ -8,6 +8,7 @@
 #include "render_params.h"
 #include "tile_type.h"
 #include "raw_master.h"
+#include "material_def.h"
 
 #include <libtcod.hpp>
 
@@ -24,12 +25,14 @@ class TileMap
 protected:
 	World* m_world{ nullptr };
 	std::vector<Tile> m_tiles{};
+	std::vector<Material> m_materials{};
 
 	Length m_width{ DEFAULT_MAP_WIDTH };
 	Length m_height{ DEFAULT_MAP_HEIGHT };
 	Length m_depth{ DEFAULT_MAP_DEPTH };
 
 	Tile m_void_tile;
+	Material m_null_material;
 
 	std::vector<std::unique_ptr<TCODMap>> m_tcod_map_layers{};
 
@@ -66,6 +69,16 @@ public:
 	// Returns a constant pointer to the `Tile` at the given position. If the position is out of bounds, returns a constant pointer to the void tile.
 	const Tile* get_tile(const Position& position) const { return get_tile(position.x, position.y, position.z); }
 
+	// Returns a constant pointer to the `Material` at the given coordinates.
+	Material& get_material(Coord x, Coord y, Coord z);
+	// Returns a constant pointer to the `Material` at the given position.
+	Material& get_material(const Position& position) { return get_material(position.x, position.y, position.z); }
+
+	// Returns a constant pointer to the `Material` at the given coordinates.
+	const Material& get_material(Coord x, Coord y, Coord z) const;
+	// Returns a constant pointer to the `Material` at the given position.
+	const Material& get_material(const Position& position) const { return get_material(position.x, position.y, position.z); }
+
 	// Returns true if the given coordinates are in bounds.
 	constexpr bool in_bounds(Coord x, Coord y, Coord z) const;
 	// Returns true if the given position is in bounds.
@@ -88,6 +101,25 @@ public:
 	void set_tile(Coord x, Coord y, Coord z, RawMaster::Ref<TileType> type, bool update = true);
 	// Sets the tile at the given position to the type, and optionally updates the tiles around it.
 	void set_tile(const Position& pos, RawMaster::Ref<TileType> type, bool update = true) { set_tile(pos.x, pos.y, pos.z, type, update); }
+
+	// Sets the material at the given coordinates to the type, and optionally updates the tiles around it.
+	void set_material(Coord x, Coord y, Coord z, RawMaster::Ref<MaterialType> type, MaterialAmount amount = 1, units::Temperature temperature = 60.0_degF, bool update = true);
+	void set_material(const Position& pos, RawMaster::Ref<MaterialType> type, MaterialAmount amount = 1, units::Temperature temperature = 60.0_degF, bool update = true)
+	{
+		set_material(pos.x, pos.y, pos.z, type, amount, temperature, update);
+	}
+
+	void set_temperature(Coord x, Coord y, Coord z, units::Temperature temperature, bool update = true);
+	void set_temperature(const Position& pos, units::Temperature temperature, bool update = true)
+	{
+		set_temperature(pos.x, pos.y, pos.z, temperature, update);
+	}
+
+	void add_material(Coord x, Coord y, Coord z, RawMaster::Ref<MaterialType> type, MaterialAmount amount, bool update = true);
+	void add_material(const Position& pos, RawMaster::Ref<MaterialType> type, MaterialAmount amount, bool update = true)
+	{
+		add_material(pos.x, pos.y, pos.z, type, amount, update);
+	}
 
 	// Updates the tile at the given coordinates.
 	void update_tile_at(Coord x, Coord y, Coord z);

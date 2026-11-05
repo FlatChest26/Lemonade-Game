@@ -19,7 +19,7 @@ protected:
 	AIManager* m_manager{ nullptr };
 	Entity* m_entity{ nullptr };
 
-	std::vector<std::unique_ptr<Behavior>> m_behavior_stack;
+	std::vector<Behavior*> m_behavior_stack;
 
 public:
 	AIBrain(AIManager* manager = nullptr, Entity* entity = nullptr) :
@@ -36,6 +36,7 @@ public:
 
 	void add_behavior(Behavior* behavior);
 	Behavior* current_behavior();
+	const Behavior* current_behavior() const;
 	void cancel_behavior();
 };
 

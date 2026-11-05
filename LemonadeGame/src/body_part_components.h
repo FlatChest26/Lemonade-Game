@@ -28,11 +28,6 @@ struct Allure
 	AllureStat suggestiveness;
 	AllureStat kinkiness;
 	AllureStat beauty;
-
-	Allure(AllureStat lewdness = 0, AllureStat suggestiveness = 0, AllureStat kinkiness = 0, AllureStat beauty = 0) :
-		lewdness(lewdness), suggestiveness(suggestiveness), kinkiness(kinkiness), beauty(beauty)
-	{
-	}
 };
 
 #endif // !LEMONADE_GAME_SRC_BODY_PART_COMPONENTS_H
