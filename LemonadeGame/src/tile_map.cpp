@@ -1,6 +1,8 @@
 #include "tile_map.h"
 #include "tile_type.h"
 #include "fov.h"
+#include "world.h"
+
 #include <cmath>
 
 #include "raw_master.h"
@@ -203,7 +205,7 @@ void TileMap::set_temperature(Coord x, Coord y, Coord z, units::Temperature temp
 	set_update_path(true);
 }
 
-void TileMap::add_material(Coord x, Coord y, Coord z, RawMaster::Ref<MaterialType> type, MaterialAmount amount, bool update)
+void TileMap::add_material(Coord x, Coord y, Coord z, RawMaster::Ref<MaterialType> type, MaterialAmount amount, units::Temperature temperature, bool update)
 {
 	if (!in_bounds(x, y, z))
 	{
@@ -214,11 +216,11 @@ void TileMap::add_material(Coord x, Coord y, Coord z, RawMaster::Ref<MaterialTyp
 
 	if (*material.material_type() == *type)
 	{
+		material.temperature() = temperature;
 		material.amount() = std::clamp<MaterialAmount>(material.amount() + amount, 0, DEFAULT_MAX_MATERIAL_AMOUNT);
 	}
 	else
 	{
-		auto temperature = material.temperature();
 		return set_material(x, y, z, type, amount, temperature, update);
 	}
 
@@ -249,7 +251,7 @@ void TileMap::update_tile_at(Coord x, Coord y, Coord z)
 	auto tile = get_tile(x, y, z);
 
 	auto tcod_map = get_tcod_map_layer((size_t)z);
-	tcod_map->setProperties(x, y, tile->is_transparent(), tile->is_walkable());
+	tcod_map->setProperties(x, y, !is_opaque(x, y, z), !is_blocked(x, y, z));
 
 	// Update wall textures
 	if (tile->is_wall_texture())
@@ -292,6 +294,8 @@ void TileMap::update_tile_at(Coord x, Coord y, Coord z)
 			tile->set_texture_idx(0);
 		}
 	}
+
+	add_dirty_tile(x, y, z);
 }
 
 
@@ -350,4 +354,134 @@ bool TileMap::is_explored(Coord x, Coord y, Coord z) const
 	}
 
 	return get_tile(x, y, z)->is_explored();
+}
+
+bool TileMap::is_blocked(Coord x, Coord y, Coord z) const
+{
+	if (!in_bounds(x, y, z))
+	{
+		return true;
+	}
+
+	auto& material = get_material(x, y, z);
+
+	if (material.amount() > 3 && material.current_state_definition()->is_blocked())
+	{
+		return true;
+	}
+
+	return get_tile(x, y, z)->is_blocked();
+}
+
+bool TileMap::is_opaque(Coord x, Coord y, Coord z) const
+{
+	if (!in_bounds(x, y, z))
+	{
+		return true;
+	}
+
+	auto& material = get_material(x, y, z);
+
+	if (material.amount() > 3 && material.current_state_definition()->is_opaque())
+	{
+		return true;
+	}
+		
+	return get_tile(x, y, z)->is_opaque();
+}
+
+void TileMap::add_dirty_tile(const Position& position)
+{
+	if (!m_already_added_dirty_tiles.contains(position))
+	{
+		m_already_added_dirty_tiles.insert(position);
+		m_dirty_tiles.push_back(position);
+	}
+}
+
+void TileMap::step(const TimeUnit& time_delta)
+{
+	auto world = get_world();
+
+	// Update materials
+
+	std::vector<Position> current_dirty_tiles = std::move(m_dirty_tiles);
+
+	m_already_added_dirty_tiles.clear();
+
+	for (auto& pos : current_dirty_tiles)
+	{
+		auto tile = get_tile(pos);
+		auto tile_below = get_tile(pos + Position(0, 0, -1));
+
+		auto& material = get_material(pos);
+		material.update_state();
+
+		material.current_step() += time_delta;
+		TimeUnit spill_time = TimeUnit::from_seconds(0.5);
+
+		bool stay_dirty = false;
+
+		auto can_spill_to_tile = [&](const Position& other_pos, bool ignore_time = false)
+			{
+				auto dz = other_pos.z - pos.z;
+
+				if (get_world()->is_blocked(other_pos, nullptr, dz))
+					return false;
+
+				if (!ignore_time && material.current_step() < spill_time)
+					return false;
+
+				auto other_material = get_material(other_pos);
+
+				if (other_material.amount() >= material.amount())
+					return false;
+
+				if (dz < 0)
+					return material.amount() > 0;
+				
+				return material.amount() > 1;
+			};
+
+		switch (material.current_state())
+		{
+		case MaterialStateType::GAS:
+		case MaterialStateType::LIQUID:
+		{
+			auto spread_positions = transforms::get_surrounding_locations(pos, material.current_state() == MaterialStateType::GAS, material.current_state() == MaterialStateType::LIQUID);
+			
+			while (material.current_step() >= spill_time)
+			{
+				std::shuffle(spread_positions.begin(), spread_positions.end(), snowy::rng::generator);
+				for (auto& p : spread_positions)
+				{
+					if (can_spill_to_tile(p))
+					{
+						add_material(p, material.get_material_type(), 1, material.temperature(), true);
+						material.amount()--;
+						break;
+					}
+				}
+
+				material.current_step() -= spill_time;
+			}
+
+			for (auto& p : spread_positions)
+			{
+				if (can_spill_to_tile(p, true))
+				{
+					stay_dirty = true;
+					break;
+				}
+			}
+
+			break;
+		}
+		}
+		
+		if (stay_dirty)
+		{
+			add_dirty_tile(pos);
+		}
+	}
 }

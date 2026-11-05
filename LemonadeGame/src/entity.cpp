@@ -157,6 +157,7 @@ Entity::Entity(EntityID ID, EntityFlag entity_flags) :
 
 Entity::~Entity()
 {
+	reset_actions();
 }
 
 Entity::Entity(const Entity& other)
@@ -169,6 +170,8 @@ Entity::Entity(const Entity& other)
 
 	m_raw_refs = other.m_raw_refs;
 	copy_components_from_entity(other);
+
+	render_overrides = other.render_overrides;
 
 	on_flags_updated();
 }
@@ -184,6 +187,8 @@ Entity::Entity(Entity&& other)
 	m_raw_refs = other.m_raw_refs;
 	move_components_from_entity(other);
 
+	render_overrides = std::move(other.render_overrides);
+
 	on_flags_updated();
 }
 
@@ -197,6 +202,8 @@ Entity& Entity::operator=(const Entity& other)
 
 	m_raw_refs = other.m_raw_refs;
 	copy_components_from_entity(other);
+
+	render_overrides = other.render_overrides;
 
 	on_flags_updated();
 
@@ -213,6 +220,8 @@ Entity& Entity::operator=(Entity& other)
 
 	m_raw_refs = other.m_raw_refs;
 	move_components_from_entity(other);
+
+	render_overrides = std::move(other.render_overrides);
 
 	on_flags_updated();
 
@@ -710,13 +719,14 @@ bool Entity::is_on_floor() const
 
 	auto tile = world->get_tile(get_movable()->pos());
 
-	if (!tile)
+	if (tile->has_floor() || tile->can_descend())
 	{
-		CERR("No tile found at entity " << ID());
-		return false;
+		return true;
 	}
 
-	if (tile->has_floor() || tile->can_descend())
+	auto tile_below = world->get_tile(get_movable()->pos() + Position(0, 0, -1));
+
+	if (tile_below->has_ceiling())
 	{
 		return true;
 	}
@@ -860,23 +870,40 @@ void Entity::remove_from_inventory(Entity* item, bool update_inventory)
 	item->set_location(get_world(), false);
 }
 
-bool Entity::start_action(QueuedAction action)
+double Entity::get_action_speed(Action* action) const
+{
+	double action_speed = interact_speed();
+
+	if (get_current_action()->is_movement_action())
+	{
+		action_speed = move_speed();
+	}
+
+	return action_speed;
+}
+
+bool Entity::can_queue_action(QueuedAction action, bool print_errors) const
 {
 	if (!action)
 	{
-		CERR("Failed to start action! Action was null. " << ID());
+		if (print_errors) CERR("Failed to start action! Action was null. " << ID());
 		return false;
 	}
 
 	if (!can_do_actions())
 	{
-		CERR("Failed to start action! Entity cannot do actions. " << ID());
+		if (print_errors) CERR("Failed to start action! Entity cannot do actions. " << ID());
 		return false;
 	}
 
 	if (!can_queue_action())
 	{
-		CERR("Failed to start action! Too many actions queued. " << ID());
+		if (print_errors) CERR("Failed to start action! Too many actions queued. " << ID());
+		return false;
+	}
+
+	if (has_action_name(action->action_name()))
+	{
 		return false;
 	}
 
@@ -887,7 +914,17 @@ bool Entity::start_action(QueuedAction action)
 
 	if (action->has_subject() && cannot_interact_with_others())
 	{
-		CERR("Failed to start action! Entity cannot interact with others. " << ID());
+		if (print_errors) CERR("Failed to start action! Entity cannot interact with others. " << ID());
+		return false;
+	}
+
+	return true;
+}
+
+bool Entity::start_action(QueuedAction action)
+{
+	if (!can_queue_action(action, true))
+	{
 		return false;
 	}
 
@@ -899,8 +936,25 @@ bool Entity::start_action(QueuedAction action)
 	return true;
 }
 
-void Entity::reset_actions(Action* action)
+bool Entity::has_action_name(std::string action_name) const
 {
+	for (auto& other_action : m_action_queue)
+	{
+		if (other_action->action_name() == action_name)
+			return true;
+	}
+
+	return false;
+}
+
+void Entity::reset_actions(QueuedAction action)
+{
+	if (action && !can_queue_action(action, true))
+		return;
+
+	for (auto& action : m_action_queue)
+		delete action;
+
 	m_action_queue.clear();
 
 	if (action)
@@ -914,14 +968,7 @@ void Entity::continue_action(const TimeUnit& delta)
 	if (!has_current_action())
 		return;
 
-	double action_speed = interact_speed();
-
-	if (get_current_action()->is_movement_action())
-	{
-		action_speed = move_speed();
-	}
-
-	if (get_current_action()->progress(delta * action_speed))
+	if (get_current_action()->progress(delta * get_action_speed(get_current_action())))
 	{
 		complete_action();
 	}
@@ -938,6 +985,10 @@ void Entity::complete_action()
 	if (auto world_state = get_world_state())
 	{
 		world_state->handle_action(completed_action);
+	}
+	else
+	{
+		delete completed_action;
 	}
 }
 

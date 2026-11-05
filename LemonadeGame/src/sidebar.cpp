@@ -174,11 +174,16 @@ int SidebarMenu_Look::render(const RenderParams& params, const SidebarParams& sb
 	auto tile_map = sb_params.sidebar->get_tile_map();
 
 	auto tile = tile_map->get_tile(look_position);
+	auto& material = tile_map->get_material(look_position);
 	auto entities_at = world->get_entities_at(look_position);
 
 	// Write info at look focus
 
-	if (tile->get_type())
+	if (material.amount() > 0 && (!params.use_fov || tile->is_visible()))
+	{
+		print_text(material.display_name() + fmt::format(" ({}/{})", material.amount(), DEFAULT_MAX_MATERIAL_AMOUNT), material.fg());
+	}
+	else if (tile->get_type())
 	{
 		if (!params.use_fov || tile->is_visible())
 		{

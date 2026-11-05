@@ -33,4 +33,44 @@ public:
 	static std::string action_name() { return "wake up"; }
 };
 
+class DeathAction : public EntityAction
+{
+public:
+	DeathAction(Entity* actor = nullptr) :
+		EntityAction(TimeUnit::from_seconds(1.0), actor)
+	{
+	}
+
+	virtual bool check_action() const override;
+	virtual ActionResult perform();
+
+	static std::string action_name() { return "die"; }
+};
+
+class StarveToDeathAction : public DeathAction
+{
+public:
+	StarveToDeathAction(Entity* actor = nullptr) :
+		DeathAction(actor)
+	{
+	}
+
+	virtual ActionResult perform();
+
+	static std::string action_name() { return "starve to death"; }
+};
+
+class DieOfDehydrationAction : public DeathAction
+{
+public:
+	DieOfDehydrationAction(Entity* actor = nullptr) :
+		DeathAction(actor)
+	{
+	}
+
+	virtual ActionResult perform();
+
+	static std::string action_name() { return "die of dehydration"; }
+};
+
 #endif // !LEMONADE_GAME_SRC_SPECIAL_ACTIONS_H

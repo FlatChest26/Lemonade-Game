@@ -266,33 +266,33 @@ bool World::is_blocked(Coord x, Coord y, Coord z, const Entity* fit, Coord z_dir
 		return true;
 	}
 
-	if (m_tile_map->get_tile(x, y, z)->is_blocked())
+	if (m_tile_map->is_blocked(x, y, z))
 	{
 		return true;
 	}
 
 	if (z_dir > 0) // Moving up
 	{
-		if (m_tile_map->get_tile(x, y, z)->has_floor()) // Check if destination tile has floor.
+		if (m_tile_map->get_tile(x, y, z)->has_floor() || m_tile_map->is_blocked(x, y, z)) // Check if destination tile has floor.
 			return true;
 
-		if (m_tile_map->get_tile(x, y, z - 1)->has_ceiling()) // Check if tile below destination tile has ceiling.
+		if (m_tile_map->get_tile(x, y, z - 1)->has_ceiling() || m_tile_map->is_blocked(x, y, z - 1)) // Check if tile below destination tile has ceiling.
 			return true;
 	}
 
 	if (z_dir < 0) // Moving down
 	{
-		if (m_tile_map->get_tile(x, y, z)->has_ceiling()) // Check if destination tile has ceiling.
+		if (m_tile_map->get_tile(x, y, z)->has_ceiling() || m_tile_map->is_blocked(x, y, z)) // Check if destination tile has ceiling.
 			return true;
 
-		if (m_tile_map->get_tile(x, y, z + 1)->has_floor()) // Check if tile above destination tile has floor.
+		if (m_tile_map->get_tile(x, y, z + 1)->has_floor() || m_tile_map->is_blocked(x, y, z + 1)) // Check if tile above destination tile has floor.
 			return true;
 	}
 
 	return has_entities(
 		EntityFilter{
 			.ignore_held = true,
-			.ignore_ids{ fit->ID() },
+			.ignore_ids{ fit != nullptr ? fit->ID() : "" },
 
 			.required_flags = { EntityFlag::IS_BLOCKING },
 			.required_positions = { Position(x, y, z) }
@@ -308,7 +308,7 @@ bool World::is_opaque(Coord x, Coord y, Coord z, const Entity* fit, Coord z_dir)
 		return false;
 	}
 
-	if (m_tile_map->get_tile(x, y, z)->is_opaque())
+	if (m_tile_map->is_opaque(x, y, z))
 	{
 		return true;
 	}
@@ -351,6 +351,15 @@ void World::prepare_remove_entity(EntityRef entity)
 
 void World::step(const TimeUnit& time_delta)
 {
+	// Step tile map
+
+	if (m_tile_map)
+	{
+		m_tile_map->step(time_delta);
+	}
+
+	// Step entities
+
 	std::vector<size_t> remove_entities;
 
 	for (auto& entity : m_entities)
@@ -395,5 +404,6 @@ void World::step(const TimeUnit& time_delta)
 		//swap_entity.fix_ownership();
 	}
 
+	// Step current time
 	m_current_time.add(time_delta * GameSettings::WORLD_RELATIVE_SPEED);
 }

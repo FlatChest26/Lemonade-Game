@@ -271,6 +271,7 @@ void WorldGameState::new_game()
 	// Material
 
 	tile_map->add_material(lemonade_stand_pos - Position(4, 0, 0), RawMaster::get<MaterialType>("lemonade"), 4);
+	tile_map->add_material(lemonade_stand_pos - Position(4, -3, 0), RawMaster::get<MaterialType>("water"), 7, -50.0_degC);
 
 	// Add AI Brains
 	for (auto& entity : m_world->get_entities(
@@ -335,13 +336,16 @@ void WorldGameState::update(double delta_time)
 
 	if (does_player_exist() && get_player()->has_current_action())
 	{
-		step(get_player()->get_current_action()->get_action_length());
+		auto current_action = get_player()->get_current_action();
+		step(current_action->remaining_action_length() / get_player()->get_action_speed(current_action));
 	}
-
-	while (step_count > 0)
+	else
 	{
-		step(time_progress);
-		step_count--;
+		while (step_count > 0)
+		{
+			step(time_progress);
+			step_count--;
+		}
 	}
 
 	for (auto& entity : m_world->get_entities())
@@ -439,6 +443,11 @@ void WorldGameState::step(const TimeUnit& time_delta)
 	else
 	{
 		m_world->step(time_delta);
+
+		if (m_ai_manager)
+		{
+			m_ai_manager->step(time_delta);
+		}
 	}
 
 	auto tile_map = m_world->get_tile_map();
@@ -449,7 +458,6 @@ void WorldGameState::step(const TimeUnit& time_delta)
 	}
 
 	update_camera();
-
 
 	if (does_player_exist() && tile_map)
 	{
@@ -516,8 +524,14 @@ void WorldGameState::update_camera()
 
 void WorldGameState::handle_action(QueuedAction action)
 {
-	if (!action || !action->check_action())
+	if (!action)
 	{
+		return;
+	}
+
+	if (!action->check_action())
+	{
+		delete action;
 		return;
 	}
 
@@ -532,7 +546,10 @@ void WorldGameState::handle_action(QueuedAction action)
 	}
 
 	if (!action_result.success)
+	{
+		delete action;
 		return;
+	}
 
 	while (action_result.has_next_action())
 	{
@@ -548,6 +565,8 @@ void WorldGameState::handle_action(QueuedAction action)
 			handle_input_result(InputResult(next_action));
 		}
 	}
+
+	delete action;
 }
 
 void WorldGameState::handle_input_result(InputResult result)
@@ -558,7 +577,6 @@ void WorldGameState::handle_input_result(InputResult result)
 		{
 			auto actor = result.next_action->get_actor();
 			auto action_length = result.next_action->get_action_length();
-
 			actor->start_action(result.next_action);
 		}
 		else

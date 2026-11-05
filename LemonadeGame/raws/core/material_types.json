@@ -8,7 +8,7 @@
       "liquid": {
         "noun": { "singular": "water", "plural": "water" },
         "prefix": "water",
-        "color": "blue",
+        "color": "light_blue",
         "description": "A clear, refreshing liquid.",
         "value": 0.5,
         "flags": [ "consumable" ],
@@ -20,6 +20,7 @@
         "color": "light_cyan",
         "value": 0.6,
         "description": "Frozen water.",
+        "flags": [ "consumable", "is_blocked" ],
         "consumable_effects": [ { "modified_stat": "thirst", "amount": -8.0 }, { "modified_stat": "mood", "amount": -2.0, "taste": "crunchy" } ]
       },
       "gas": {
@@ -60,6 +61,7 @@
         "color": "light_yellow",
         "value": 0.6,
         "description": "Frozen lemonade.",
+        "flags": [ "consumable", "is_blocked" ],
         "consumable_effects": [ { "modified_stat": "thirst", "amount": -15.0 }, { "modified_stat": "mood", "amount": -7.0, "taste": "crunchy" } ]
       },
       "gas": {

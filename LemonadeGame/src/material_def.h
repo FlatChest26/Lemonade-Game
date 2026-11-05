@@ -41,13 +41,17 @@ enum class MaterialFlag : uint64_t
 	NONE = 0,
 
 	IS_CONSUMABLE = 1 << 0,
+	IS_BLOCKED = 1 << 1,
+	IS_OPAQUE = 1 << 2,
 };
 
 IS_FLAG_ENUM(MaterialFlag);
 
 inline std::map<std::string, MaterialFlag> AllMaterialFlags
 {
-	{ "consumable",		MaterialFlag::IS_CONSUMABLE }
+	{ "consumable",		MaterialFlag::IS_CONSUMABLE },
+	{ "is_blocked",		MaterialFlag::IS_BLOCKED },
+	{ "is_opaque",		MaterialFlag::IS_OPAQUE },
 };
 
 
@@ -65,6 +69,12 @@ struct MaterialStateDefinition
 
 	static std::shared_ptr<RawObjectChecker> get_checker();
 	static MaterialStateDefinition from_json(const json& j);
+
+public:
+
+	bool is_consumable() const { return flags & MaterialFlag::IS_CONSUMABLE; }
+	bool is_blocked() const { return flags & MaterialFlag::IS_BLOCKED; }
+	bool is_opaque() const { return flags & MaterialFlag::IS_OPAQUE; }
 };
 
 struct MaterialType
@@ -102,8 +112,9 @@ class Material : public Thing
 {
 protected:
 	RawMaster::Ref<MaterialType> m_mat_type;
-	MaterialStateType m_state;
+	TimeUnit m_current_step;
 	units::Temperature m_temperature;
+	MaterialStateType m_state;
 	MaterialAmount m_amount;
 
 public:
@@ -126,6 +137,7 @@ public:
 
 public:
 	const MaterialType* material_type() const { return m_mat_type.get(); }
+	RawMaster::Ref<MaterialType> get_material_type() const { return m_mat_type; }
 
 	const units::Temperature& boiling_point() const { return m_mat_type->boiling_point; }
 	const units::Temperature& condensation_point() const { return m_mat_type->boiling_point; }
@@ -139,12 +151,15 @@ public:
 	MaterialAmount& amount() { return m_amount; }
 	const MaterialAmount& amount() const { return m_amount; }
 
+	TimeUnit& current_step() { return m_current_step; }
+	const TimeUnit& current_step() const { return m_current_step; }
+
 
 	// Current State //
 
 	MaterialStateType& current_state()
 	{
-		update_state(); 
+		update_state();
 		return m_state;
 	}
 
@@ -205,6 +220,66 @@ public:
 		}
 
 		return renderable;
+	}
+
+	virtual GrammarNoun display_noun() const override
+	{
+		std::string noun = singular_noun();
+
+		if (current_state() == MaterialStateType::LIQUID)
+		{
+			if (amount() == 1)
+			{
+				noun = "spattering of " + singular_noun();
+			}
+			else if (amount() > 3)
+			{
+				noun = "pool of " + singular_noun();
+			}
+			else
+			{
+				noun = "puddle of " + singular_noun();
+			}
+		}
+		else if (current_state() == MaterialStateType::SOLID)
+		{
+			if (amount() == 1)
+			{
+				noun = "sheet of " + singular_noun();
+			}
+			else if (amount() > 3)
+			{
+				noun = "block of " + singular_noun();
+			}
+			else
+			{
+				noun = "chunk of " + singular_noun();
+			}
+		}
+		else if (current_state() == MaterialStateType::GAS)
+		{
+			if (amount() > 2)
+			{
+				noun = "cloud of " + singular_noun();
+			}
+			else
+			{
+				noun = "puff of " + singular_noun();
+			}
+		}
+		else if (current_state() == MaterialStateType::POWDER)
+		{
+			if (amount() > 3)
+			{
+				noun = "pile of " + singular_noun();
+			}
+			else
+			{
+				noun = "sheet of " + singular_noun();
+			}
+		}
+
+		return grammar::a(noun);
 	}
 
 public:

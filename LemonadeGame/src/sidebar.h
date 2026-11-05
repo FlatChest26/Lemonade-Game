@@ -147,11 +147,14 @@ public:
 	virtual int render(const RenderParams& params, const SidebarParams& sb_params) const override;
 };
 
+class Material;
+
 class SidebarMenu_Examine : public SidebarMenu
 {
 public:
 	std::vector<Entity*> examined_entities;
 	Tile* examined_tile;
+	Material* examined_material;
 	virtual int render(const RenderParams& params, const SidebarParams& sb_params) const override;
 };
 

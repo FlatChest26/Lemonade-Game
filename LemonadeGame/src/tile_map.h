@@ -39,6 +39,9 @@ protected:
 	bool m_should_update_path{ false };
 	bool m_should_update_fov{ false };
 
+	std::set<Position> m_already_added_dirty_tiles;
+	std::vector<Position> m_dirty_tiles;
+
 public:
 	TileMap(World* world = {}, Length width = DEFAULT_MAP_WIDTH, Length height = DEFAULT_MAP_HEIGHT, Length depth = DEFAULT_MAP_DEPTH);
 	~TileMap();
@@ -115,10 +118,10 @@ public:
 		set_temperature(pos.x, pos.y, pos.z, temperature, update);
 	}
 
-	void add_material(Coord x, Coord y, Coord z, RawMaster::Ref<MaterialType> type, MaterialAmount amount, bool update = true);
-	void add_material(const Position& pos, RawMaster::Ref<MaterialType> type, MaterialAmount amount, bool update = true)
+	void add_material(Coord x, Coord y, Coord z, RawMaster::Ref<MaterialType> type, MaterialAmount amount, units::Temperature temperature = 60.0_degF, bool update = true);
+	void add_material(const Position& pos, RawMaster::Ref<MaterialType> type, MaterialAmount amount, units::Temperature temperature = 60.0_degF, bool update = true)
 	{
-		add_material(pos.x, pos.y, pos.z, type, amount, update);
+		add_material(pos.x, pos.y, pos.z, type, amount, temperature, update);
 	}
 
 	// Updates the tile at the given coordinates.
@@ -135,6 +138,16 @@ public:
 
 	// -- Checks -- //
 
+	// Returns true if the given coordinates are not walkable.
+	bool is_blocked(Coord x, Coord y, Coord z) const;
+	// Returns true if the given position is not walkable.
+	bool is_blocked(const Position& pos) const { return is_blocked(pos.x, pos.y, pos.z); }
+
+	// Returns true if the given coordinates are not walkable.
+	bool is_opaque(Coord x, Coord y, Coord z) const;
+	// Returns true if the given position is not walkable.
+	bool is_opaque(const Position& pos) const { return is_opaque(pos.x, pos.y, pos.z); }
+
 	// Returns true if the given coordinates are visible to the previously computed FOV.
 	bool is_visible(Coord x, Coord y, Coord z) const;
 	// Returns true if the given position is visible to the previously computed FOV.
@@ -150,6 +163,18 @@ public:
 
 	bool should_update_path() const { return m_should_update_path; }
 	void set_update_path(bool should_update_path) { m_should_update_path = should_update_path; }
+
+	void add_dirty_tile(const Position& position);
+	void add_dirty_tile(Coord x, Coord y, Coord z)
+	{
+		add_dirty_tile(Position(x, y, z));
+	}
+
+public:
+
+	void step(const TimeUnit& time_delta);
+
+
 };
 
 #endif // !LEMONADE_GAME_SRC_TILE_MAP_H

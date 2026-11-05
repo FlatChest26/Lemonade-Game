@@ -211,7 +211,11 @@ public:
 
 	bool is_alive() const { return m_alive; }
 	bool is_dead() const { return !m_alive; }
+
 	void set_alive(bool alive) { m_alive = alive; }
+
+	void revive() { set_alive(true); }
+	void die() { set_alive(false); }
 
 	bool can_sleep() const;
 	bool can_wake_up() const;

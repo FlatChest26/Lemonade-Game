@@ -75,15 +75,19 @@ void AIManager::step(TimeUnit time_delta)
 		std::uniform_real_distribution<float> time_dis(15, 30);
 		m_time_until_next_NPC = TimeUnit::from_seconds(time_dis(snowy::rng::generator));
 
+
 		std::vector<double> spawn_group_weights = { 4.0, 5.0, 1.0, 3.0 };
 
 		std::discrete_distribution<int> npc_count_dis(spawn_group_weights.begin(), spawn_group_weights.end());
-		for (int spawn_count = npc_count_dis(snowy::rng::generator) + 1; spawn_count > 0; spawn_count--)
+		int spawn_count = npc_count_dis(snowy::rng::generator) + 1;
+		bool is_odd = spawn_count % 2 != 0;
+
+		for (; spawn_count > 0; spawn_count--)
 		{
 			Coord x = ((spawn_count - 1) % m_sidewalk_width);
 			Coord y = ((spawn_count - 1) / m_sidewalk_width);
 
-			if (spawn_count == 1 && snowy::rng::flip_coin())
+			if (is_odd && spawn_count == 1 && snowy::rng::flip_coin())
 			{
 				x++;
 			}

@@ -89,6 +89,7 @@ public:
 	virtual bool is_action_complete() const { return m_time_spent_on_action >= m_action_length; }
 
 	virtual TimeUnit get_action_length() const { return m_action_length; }
+	virtual TimeUnit remaining_action_length() const { return m_action_length - m_time_spent_on_action; }
 
 	static std::string action_name() { return "<unnamed action>"; }
 	virtual bool check_action() const { return true; }

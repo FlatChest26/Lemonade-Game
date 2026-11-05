@@ -17,9 +17,22 @@ void EntityBuilder::default_entity_render_overrides(std::vector<RenderOverride>&
 			{
 				return !entity->is_on_floor();
 			}
-		});
+	});
 
-	return;
+	// Dead bg
+
+	render_overrides.push_back({
+		.priority = 4,
+		.renderable = Renderable{ .bg = color::get("red") },
+		.override_bg = true,
+		.flash_frames_on = 20,
+		.active = [](const Entity* entity)
+			{
+				if (entity->has_living())
+					return entity->get_living()->is_dead();
+				return false;
+			}
+	});
 }
 
 Entity EntityBuilder::create_creature(EntityID ID, CreatureInitializer init)
@@ -87,7 +100,6 @@ Entity EntityBuilder::create_creature(EntityID ID, CreatureInitializer init)
 		CERR("Creature: " << ID << " has no species assigned!");
 	}
 
-	
 	default_entity_render_overrides(new_creature.render_overrides);
 
 	return new_creature;

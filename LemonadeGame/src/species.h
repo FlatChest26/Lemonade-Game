@@ -5,6 +5,7 @@
 #include "snowy_database.h"
 #include "body_plan.h"
 #include "gait.h"
+#include "living.h"
 
 #include "raw_master.h"
 #include "raw_object_checker.h"

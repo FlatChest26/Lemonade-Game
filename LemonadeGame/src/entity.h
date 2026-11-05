@@ -252,6 +252,7 @@ public:
 public:
 	// Actions //
 
+	virtual bool can_queue_action(QueuedAction action, bool print_errors = false) const;
 	virtual void reset_actions(QueuedAction action = nullptr);
 	virtual bool start_action(QueuedAction action);
 
@@ -277,6 +278,10 @@ public:
 	{
 		return !m_action_queue.empty();
 	}
+
+	virtual bool has_action_name(std::string action_name) const;
+
+	virtual double get_action_speed(Action* action) const;
 
 	virtual const Action* get_current_action() const { return m_action_queue.back(); }
 	virtual Action* get_current_action() { return m_action_queue.back(); }
@@ -423,10 +428,7 @@ public:
 		return get_component<AIBrain>();
 	}
 
-	virtual AIBrain* remove_brain()
-	{
-		return release_component<AIBrain>();
-	}
+	virtual AIBrain* remove_brain() { return release_component<AIBrain>(); }
 
 	virtual AIBrain* get_brain() { return get_component<AIBrain>(); }
 	virtual const AIBrain* get_brain() const { return get_component<AIBrain>(); }

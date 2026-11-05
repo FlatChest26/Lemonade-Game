@@ -123,7 +123,7 @@ void Living::add_defaults()
 			},
 		},
 		StatRate{ .amount = -1, .tick = TimeUnit::from_minutes(20.0f) }
-		);
+	);
 
 	add_stat(
 		needs::HUNGER,
@@ -140,8 +140,8 @@ void Living::add_defaults()
 				{ "starving",		80, 101, color::get("red") },
 			},
 		},
-		StatRate{ .amount = 1, .tick = TimeUnit::from_minutes(20.0f) }
-		);
+		StatRate{ .amount = 1, .tick = TimeUnit::from_minutes(26.0f) }
+	);
 
 	add_stat(
 		needs::THIRST,
@@ -157,8 +157,8 @@ void Living::add_defaults()
 				{ "dehydrated",		70, 101, color::get("dark_blue") },
 			},
 		},
-		StatRate{ .amount = 1, .tick = TimeUnit::from_minutes(16.0f) }
-		);
+		StatRate{ .amount = 1, .tick = TimeUnit::from_minutes(22.0f) }
+	);
 
 	add_stat(
 		needs::HYGIENE,
@@ -352,15 +352,39 @@ bool Living::take_consumable(const ConsumableEffect& effect)
 
 void Living::step(const TimeUnit& time_delta)
 {
+	// Check if dead
+	if (is_dead())
+	{
+		return;
+	}
+
+	auto hunger = stat(needs::HUNGER);
+
+	if (hunger.value() > 95)
+	{
+		m_owner->reset_actions(QueuedAction(new StarveToDeathAction(m_owner)));
+		return;
+	}
+
+	auto thirst = stat(needs::THIRST);
+
+	if (thirst.value() > 95)
+	{
+		m_owner->reset_actions(QueuedAction(new DieOfDehydrationAction(m_owner)));
+		return;
+	}
+
 	// Manage sleep
 	if (is_asleep() && should_wake_up())
 	{
-		m_owner->start_action(QueuedAction(new EndSleepAction(m_owner)));
+		m_owner->reset_actions(QueuedAction(new EndSleepAction(m_owner)));
+		return;
 	}
 
 	if (!is_asleep() && should_sleep())
 	{
-		m_owner->start_action(QueuedAction(new StartSleepAction(m_owner)));
+		m_owner->reset_actions(QueuedAction(new StartSleepAction(m_owner)));
+		return;
 	}
 
 	// Manage stats
@@ -374,7 +398,7 @@ void Living::step(const TimeUnit& time_delta)
 			while (timer >= rate.tick)
 			{
 				stat.value() += rate.amount;
-				timer -= rate.tick;
+				timer -= std::min(rate.tick, timer);
 			}
 		}
 
