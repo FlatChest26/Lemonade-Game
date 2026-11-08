@@ -56,7 +56,7 @@ MaterialStateDefinition MaterialStateDefinition::from_json(const json& j)
 			}
 			else
 			{
-				CERR("Invalid item flag name : " << flag);
+				CERR("Invalid material flag name : " << flag);
 			}
 		}
 	}
@@ -162,4 +162,142 @@ MaterialType MaterialType::from_json(const json& j)
 	}
 
 	return mt;
+}
+
+Renderable Material::renderable() const
+{
+	Renderable renderable = { ' ', color::get("white"), color::get("black") };
+
+	switch (current_state())
+	{
+	case MaterialStateType::SOLID:
+		renderable.glyph = 219; // █
+		break;
+	case MaterialStateType::LIQUID:
+		renderable.glyph = 247; // ≈
+		break;
+	case MaterialStateType::GAS:
+		renderable.glyph = 177; // ▒
+		break;
+	case MaterialStateType::POWDER:
+		renderable.glyph = 247; // ≈
+		break;
+	}
+
+	if (auto state_def = current_state_definition())
+	{
+		renderable.fg = state_def->color;
+	}
+
+	return renderable;
+}
+
+GrammarNoun Material::display_noun() const
+{
+	std::string noun = singular_noun();
+
+	switch (current_state())
+	{
+	case MaterialStateType::LIQUID:
+	{
+		if (amount() > 6)
+		{
+			noun = "wall of " + singular_noun();
+		}
+		else if (amount() > 3)
+		{
+			noun = "pool of " + singular_noun();
+
+		}
+		else if (amount() > 1)
+		{
+			noun = "puddle of " + singular_noun();
+		}
+		else if (amount() > 0)
+		{
+			if (should_stain())
+			{
+				noun = singular_noun() + " stain";
+			}
+			else
+			{
+				noun = "spattering of " + singular_noun();
+			}
+		}
+		break;
+	}
+	case MaterialStateType::SOLID:
+	{
+		if (amount() > 6)
+		{
+			noun = "wall of " + singular_noun();
+		}
+		else if (amount() > 3)
+		{
+			noun = "block of " + singular_noun();
+		}
+		else if (amount() > 1)
+		{
+			noun = "chunk of " + singular_noun();
+		}
+		else if (amount() > 0)
+		{
+			noun = "sheet of " + singular_noun();
+		}
+		break;
+	}
+	case MaterialStateType::GAS:
+	{
+		if (amount() > 6)
+		{
+			noun = "wall of " + singular_noun();
+		}
+		else if (amount() > 2)
+		{
+			noun = "cloud of " + singular_noun();
+		}
+		else if (amount() > 0)
+		{
+			noun = "puff of " + singular_noun();
+		}
+		break;
+	}
+	case MaterialStateType::POWDER:
+	{
+		if (amount() > 6)
+		{
+			noun = "wall of " + singular_noun();
+		}
+		else if (amount() > 3)
+		{
+			noun = "pile of " + singular_noun();
+		}
+		else if (amount() > 0)
+		{
+			noun = "sheet of " + singular_noun();
+		}
+		break;
+	}
+	}
+
+	return grammar::a(noun);
+}
+
+void Material::update_state()
+{
+	if (!m_mat_type || m_mat_type->states.empty())
+		return;
+
+	if (m_mat_type->states.contains(MaterialStateType::GAS) && m_temperature >= m_mat_type->boiling_point)
+	{
+		m_state = MaterialStateType::GAS;
+	}
+	else if (m_mat_type->states.contains(MaterialStateType::LIQUID) && m_temperature >= m_mat_type->melting_point)
+	{
+		m_state = MaterialStateType::LIQUID;
+	}
+	else if (m_mat_type->states.contains(MaterialStateType::SOLID) && m_state != MaterialStateType::POWDER)
+	{
+		m_state = MaterialStateType::SOLID;
+	}
 }

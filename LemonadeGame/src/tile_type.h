@@ -111,6 +111,7 @@ struct TileType
 	ThingID transforms_to{ "" };
 
 	double move_cost{ 1.0f };
+	double sleep_quality{ 1.0f };
 
 	static std::shared_ptr<RawObjectChecker> get_checker();
 	static TileType from_json(const json& j);

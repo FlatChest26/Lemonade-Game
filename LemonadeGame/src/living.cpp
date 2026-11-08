@@ -274,7 +274,28 @@ void Living::remove_stat(const StatID& ID)
 
 double Living::get_sleep_quality() const
 {
-	return 1.0f;
+	double sleep_quality = 1.0;
+
+	if (get_owner()->has_movable())
+	{
+		auto tile = get_owner()->get_tile_map()->get_tile(get_owner()->get_movable()->pos());
+		sleep_quality = tile->get_type()->sleep_quality;
+
+		auto furniture_at = get_owner()->get_world()->get_entities_at(
+			get_owner()->get_movable()->pos(),
+			EntityFilter{
+				.ignore_ids = { get_owner()->ID() },
+				.required_flags = { EntityFlag::IS_FURNITURE },
+			}
+		);
+
+		if (!furniture_at.empty())
+		{
+			sleep_quality = furniture_at.front()->get_furniture_def()->sleep_quality;
+		}
+	}
+
+	return sleep_quality;
 }
 
 bool Living::can_sleep() const
@@ -327,7 +348,7 @@ bool Living::should_wake_up() const
 
 void Living::fall_asleep()
 {
-	add_timer("REST_TIMER", StatRate{ .amount = -1, .tick = TimeUnit::from_minutes(5.0) });
+	add_timer("REST_TIMER", StatRate{ .amount = -1, .tick = TimeUnit::from_minutes(12.0) });
 	m_asleep = true;
 }
 
@@ -418,7 +439,7 @@ void Living::step(const TimeUnit& time_delta)
 
 			while (timer >= rate.tick)
 			{
-				stat.value() += rate.amount;
+				stat.value() += rate.amount * get_sleep_quality();
 				timer -= rate.tick;
 			}
 		}

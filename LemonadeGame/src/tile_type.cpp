@@ -33,6 +33,8 @@ std::shared_ptr<RawObjectChecker> TileType::get_checker()
 	checker->add_property("transforms_to", RawValueType::RAW_String, false);
 	checker->add_property("move_cost", RawValueType::RAW_Number, false);
 
+	checker->add_property("sleep_quality", RawValueType::RAW_Number, false);
+
 	return checker;
 }
 
@@ -214,6 +216,11 @@ TileType TileType::from_json(const json& j)
 	if (checker->is_valid_property("move_cost", j))
 	{
 		t.move_cost = j.at("move_cost").get<double>();
+	}
+
+	if (checker->is_valid_property("sleep_quality", j))
+	{
+		t.sleep_quality = j.at("sleep_quality").get<double>();
 	}
 
 	return t;

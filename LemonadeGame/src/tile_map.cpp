@@ -437,7 +437,7 @@ void TileMap::step(const TimeUnit& time_delta)
 				if (other_material.amount() >= material.amount())
 					return false;
 
-				if (dz < 0)
+				if (dz < 0 || material.current_state() == MaterialStateType::GAS)
 					return material.amount() > 0;
 				
 				return material.amount() > 1;
@@ -478,7 +478,28 @@ void TileMap::step(const TimeUnit& time_delta)
 			break;
 		}
 		}
-		
+
+		if (material.current_state() == MaterialStateType::GAS)
+		{
+			bool dissipate = true;
+			auto spread_positions = transforms::get_surrounding_locations(pos, true, true);
+
+			for (auto& p : spread_positions)
+			{
+				auto material_at = get_material(p);
+				if (material_at.amount() > 1 && material_at.get_material_type() == material.get_material_type())
+				{
+					dissipate = false;
+					break;
+				}
+			}
+
+			if (dissipate)
+			{
+				material.amount() = 0;
+			}
+		}
+
 		if (stay_dirty)
 		{
 			add_dirty_tile(pos);

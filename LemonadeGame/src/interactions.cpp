@@ -4,12 +4,12 @@
 
 void Interaction::set_subject(Entity* subject)
 {
-	m_subject = subject->ID();
+	m_subject = subject;
 }
 
 Entity* Interaction::get_subject() const
 {
-	return get_world()->get_entity(m_subject);
+	return m_subject;
 }
 
 bool Interaction::check_action() const

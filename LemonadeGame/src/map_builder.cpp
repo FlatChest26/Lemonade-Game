@@ -1,6 +1,9 @@
 #include "map_builder.h"
 #include "tile_map.h"
 #include "raw_master.h"
+#include "world.h"
+#include "entity_builder.h"
+#include "furniture_def.h"
 
 namespace MapBuilder
 {
@@ -70,8 +73,16 @@ namespace MapBuilder
 		}
 	}
 
-	void make_from_ascii_map(TileMap* tile_map, ASCIIMap ascii_map, bool leave_out_spaces, Position position)
+	void make_from_ascii_map(World* world, ASCIIMap ascii_map, bool leave_out_spaces, Position position)
 	{
+		if (!world)
+		{
+			CERR("world is null!");
+			return;
+		}
+
+		auto tile_map = world->get_tile_map();
+
 		if (!tile_map)
 		{
 			CERR("tile_map is nullptr!");
@@ -102,10 +113,49 @@ namespace MapBuilder
 					continue;
 				}
 
-				tile_map->set_tile(x, y, z, RawMaster::get<TileType>(ascii_map.tile_mappings[character]));
+
+				auto mapping_type = ascii_map.tile_mappings[character];
+
+				if (!mapping_type.tile.empty())
+				{
+					tile_map->set_tile(x, y, z, RawMaster::get<TileType>(mapping_type.tile));
+				}
+
+				if (!mapping_type.furniture.empty())
+				{
+					world->add_entity_at(EntityBuilder::create_furniture("", { RawMaster::get<FurnitureDefinition>(mapping_type.furniture) }), x, y, z);
+				}
+
+				if (!mapping_type.item.empty())
+				{
+					world->add_entity_at(EntityBuilder::create_item("", { RawMaster::get<ItemDefinition>(mapping_type.item) }), x, y, z);
+				}
+
+				if (!mapping_type.material.empty())
+				{
+					tile_map->add_material(x, y, z, RawMaster::get<MaterialType>(mapping_type.material), mapping_type.material_amount, mapping_type.temperature);
+				}
 			}
 
 			y += 1;
+		}
+	}
+
+
+	void make_from_layered_ascii_map(World* world, LayeredASCIIMap layered_map, bool leave_out_spaces, Position position)
+	{
+		Coord z = 0;
+
+		for (auto& layer : layered_map.map_string_layers)
+		{
+			make_from_ascii_map(
+				world, 
+				ASCIIMap{ .tile_mappings = layered_map.tile_mappings, .map_string = layer }, 
+				leave_out_spaces, 
+				position + Position(0, 0, z)
+			);
+
+			z++;
 		}
 	}
 }

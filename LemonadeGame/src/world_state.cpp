@@ -23,7 +23,9 @@ void WorldGameState::new_game()
 	m_world->set_time(TimeDate(TimeUnit::from_hours(7.0), 11, 6, 2025));
 
 	// Create Tile Map
-	auto tile_map = std::make_unique<TileMap>(m_world.get());
+	auto tile_map = new TileMap(m_world.get());
+	m_world->set_tile_map(tile_map);
+
 	Length road_width = 10;
 	Length sidewalk_width = 2;
 
@@ -79,7 +81,6 @@ void WorldGameState::new_game()
 		lemonade_stand_pos + Position(-1, 2, 0)
 	);
 
-
 	m_world->add_entity_at(
 		EntityBuilder::create_item(
 			"LEMONADE_GLASS_1", { .item_definition = RawMaster::get<ItemDefinition>("LEMONADE_GLASS") }
@@ -96,34 +97,12 @@ void WorldGameState::new_game()
 
 	m_world->add_entity_at(
 		EntityBuilder::create_furniture(
-			"LEMONADE_STAND", { .furniture_definition = RawMaster::get<FurnitureDefinition>("LEMONADE_STAND") }
+			"LEMONADE_STAND_1", { .furniture_definition = RawMaster::get<FurnitureDefinition>("LEMONADE_STAND") }
 		),
-		lemonade_stand_pos
+		lemonade_stand_pos, 
+		EAST
 	);
 
-	m_world->add_entity_at(
-		EntityBuilder::create_furniture(
-			"BED_1", { .furniture_definition = RawMaster::get<FurnitureDefinition>("BED") }
-		),
-		25, 15, 1
-	);
-
-	m_world->add_entity_at(
-		EntityBuilder::create_furniture(
-			"BED_2", { .furniture_definition = RawMaster::get<FurnitureDefinition>("BED") }
-		),
-		25, 16, 1
-	);
-
-	m_world->add_entity_at(
-		EntityBuilder::create_furniture(
-			"BED_3", { .furniture_definition = RawMaster::get<FurnitureDefinition>("BED") }
-		),
-		14, 11, 1
-	);
-
-
-	/*
 	auto Snow = m_world->add_entity_at(
 		EntityBuilder::create_creature(
 			"SNOW",
@@ -152,111 +131,124 @@ void WorldGameState::new_game()
 	);
 
 	Snow->learn_name();
-	*/
 
 	// Build Map
-	MapBuilder::set_floor(tile_map.get(), RawMaster::get<TileType>("TILE_GRASS"), 0);
+	MapBuilder::set_floor(tile_map, RawMaster::get<TileType>("TILE_GRASS"), 0);
 
 	MapBuilder::make_building(
-		tile_map.get(),
+		tile_map,
 		Position(tile_map->get_width() - (road_width + sidewalk_width), 0, 0),
 		Size(road_width + sidewalk_width, tile_map->get_height(), 1),
 		RawMaster::get<TileType>("TILE_SIDEWALK")
 	);
 
 	MapBuilder::make_building(
-		tile_map.get(),
+		tile_map,
 		Position(tile_map->get_width() - (road_width), 0, 0),
 		Size(road_width, tile_map->get_height(), 1),
 		RawMaster::get<TileType>("TILE_ROAD")
 	);
 
+
+	TileMapping tile_mapping
+	{
+		{ ' ',{ "TILE_AIR" } },
+		{ ',',{ "TILE_GRASS" } },
+		{ 'u',{ "TILE_GRAVEL" } },
+		{ '.',{ "TILE_PLAIN_FLOOR" } },
+		{ '#',{ "TILE_PLAIN_WALL" } },
+		{ '+',{ "TILE_DOOR" } },
+		{ '[',{ "TILE_WINDOW" } },
+		{ 'o',{ "TILE_GLASS" } },
+		{ '<',{ "TILE_UPWARD_STAIRCASE" } },
+		{ '>',{ "TILE_DOWNWARD_STAIRCASE" } },
+		{ 'X',{ "TILE_UP_AND_DOWN_STAIRCASE" } },
+		{ '=',{ "TILE_GARAGE_DOOR" } },
+		{ '^',{ "TILE_FENCE" } },
+		{ '/',{ "TILE_GLASS_DOOR" } },
+		{ 'V',{ "TILE_SLANTED_ROOF" } },
+		{ '_',{ "TILE_SIDEWALK" } },
+		{ 's',{ "TILE_ROAD" } },
+		{ 'B',{ "TILE_PLAIN_FLOOR", "BED" } },
+		{ 'L',{ "TILE_GRASS", "LEMONADE_STAND" } },
+
+	};
+
 	// Add house
-	MapBuilder::ASCIIMap house_layout_floor1{
+	MapBuilder::LayeredASCIIMap house_layout
+	{
+		tile_mapping,
 		{
-			"#######ooo/o#####",
-			"#............#<<#",
-			"#............#<<#",
-			"#............#..#",
-			"#............#..#",
-			"##..##########..#",
-			"#...............#",
-			"#...............#",
-			"#.......###+##..#",
-			"#.......#....#..#",
-			"#.......#....#..#",
-			"#.......#....#..#",
-			"#.......#######+#",
-			"#.......#.......#",
-			"##+#[[[##.......#",
-			"^.......#.......#",
-			"^.......#.......#",
-			"^^..^^^^##=====##",
-			"  u u     _____  ",
-			"  uu uu uu_____  ",
-			"   uuu uuu_____  ",
-			"          _____  ",
-			"          __________________",
-			"          __________________",
-			"          __________________",
-			"          __________________",
+			{
+				"#######ooo/o#####",
+				"#............#<<#",
+				"#............#<<#",
+				"#............#..#",
+				"#............#..#",
+				"##..##########..#",
+				"#...............#",
+				"#...............#",
+				"#.......###+##..#",
+				"#.......#....#..#",
+				"#.......#....#..#",
+				"#.......#....#..#",
+				"#.......#######+#",
+				"#.......#.......#",
+				"##+#[[[##.......#",
+				"^.......#.......#",
+				"^.......#.......#",
+				"^^..^^^^##=====##",
+				"  u u     _____             ",
+				"  uu uu uu_____             ",
+				"   uuu uuu_____             ",
+				"          _____             ",
+				"          __________________",
+				"          __________________",
+				"          __________________",
+				"          __________________",
+			},
+			{
+				"VVVVVVVVVVVVV#[[#",
+				"VVVVVVVVVVVVV[>>[",
+				"##########[[[#>>#",
+				"#.......#.......[",
+				"#.......+.......[",
+				"#.......#.......#",
+				"#########.......[",
+				"#..B.#..........[",
+				"[....#..........#",
+				"[....#..#####+###",
+				"#....+..#.......#",
+				"##+######......B#",
+				"#..#....+......B#",
+				"#..#....#.......#",
+				"##########[[#[[##",
+				"VVVVVVVVVVVVVVVVV",
+				"VVVVVVVVVVVVVVVVV",
+				"        VVVVVVVVV",
+			},
+			{
+				"             VVVV",
+				"             VVVV",
+				"VVVVVVVVVVVVVVVVV",
+				"VVVVVVVVVVVVVVVVV",
+				"VVVVVVVVVVVVVVVVV",
+				"VVVVVVVVVVVVVVVVV",
+				"VVVVVVVVVVVVVVVVV",
+				"VVVVVVVVVVVVVVVVV",
+				"VVVVVVVVVVVVVVVVV",
+				"VVVVVVVVVVVVVVVVV",
+				"VVVVVVVVVVVVVVVVV",
+				"VVVVVVVVVVVVVVVVV",
+				"VVVVVVVVVVVVVVVVV",
+				"VVVVVVVVVVVVVVVVV",
+				"VVVVVVVVVVVVVVVVV",
+			}
 		}
 	};
 
-	MapBuilder::ASCIIMap house_layout_floor2{
-		{
-			"VVVVVVVVVVVVV#[[#",
-			"VVVVVVVVVVVVV[>>[",
-			"##########[[[#>>#",
-			"#.......#.......[",
-			"#.......+.......[",
-			"#.......#.......#",
-			"#########.......[",
-			"#....#..........[",
-			"[....#..........#",
-			"[....#..#####+###",
-			"#....+..#.......#",
-			"##+######.......#",
-			"#..#....+.......#",
-			"#..#....#.......#",
-			"##########[[#[[##",
-			"VVVVVVVVVVVVVVVVV",
-			"VVVVVVVVVVVVVVVVV",
-			"        VVVVVVVVV",
-		}
-	};
-
-	MapBuilder::ASCIIMap house_layout_roof{
-		{
-			"             VVVV",
-			"             VVVV",
-			"VVVVVVVVVVVVVVVVV",
-			"VVVVVVVVVVVVVVVVV",
-			"VVVVVVVVVVVVVVVVV",
-			"VVVVVVVVVVVVVVVVV",
-			"VVVVVVVVVVVVVVVVV",
-			"VVVVVVVVVVVVVVVVV",
-			"VVVVVVVVVVVVVVVVV",
-			"VVVVVVVVVVVVVVVVV",
-			"VVVVVVVVVVVVVVVVV",
-			"VVVVVVVVVVVVVVVVV",
-			"VVVVVVVVVVVVVVVVV",
-			"VVVVVVVVVVVVVVVVV",
-			"VVVVVVVVVVVVVVVVV",
-			"                 ",
-			"                 ",
-			"                 ",
-		}
-	};
-
-	MapBuilder::make_from_ascii_map(
-		tile_map.get(), house_layout_floor1, true, Position(10, 4, 0)
-	);
-	MapBuilder::make_from_ascii_map(
-		tile_map.get(), house_layout_floor2, true, Position(10, 4, 1)
-	);
-	MapBuilder::make_from_ascii_map(
-		tile_map.get(), house_layout_roof, true, Position(10, 4, 2)
+	MapBuilder::make_from_layered_ascii_map(
+		m_world.get(), house_layout, true, Position(10, 4, 0)
 	);
 
 	// Create AI Manger
@@ -270,27 +262,25 @@ void WorldGameState::new_game()
 
 	// Material
 
-	tile_map->add_material(lemonade_stand_pos - Position(4, 0, 0), RawMaster::get<MaterialType>("lemonade"), 4);
-	tile_map->add_material(lemonade_stand_pos - Position(4, -3, 0), RawMaster::get<MaterialType>("water"), 7, -50.0_degC);
+	//tile_map->add_material(lemonade_stand_pos - Position(4, 0, 0), RawMaster::get<MaterialType>("lemonade"), 4);
+	tile_map->add_material(lemonade_stand_pos - Position(4, -3, 0), RawMaster::get<MaterialType>("blood"), 7);
 
 	// Add AI Brains
 	for (auto& entity : m_world->get_entities(
 		EntityFilter
 		{
 			.ignore_ids = { m_player_id },
-			.required_flags = EntityFlag::ANIMATE
+			.required_flags = EntityFlag::IS_CREATURE
 		}
 	))
 	{
 		entity->set_brain(m_ai_manager->create_brain());
 	}
 
-	m_world->set_tile_map(std::move(tile_map));
-
 	m_previous_player_pos = Position(-1, -1, -1);
 
 	// Create Input Handler
-	handle_input_result(InputResult{ new InputHandler_Player() });
+	handle_input_result(InputResult(new InputHandler_Player()));
 
 	// Update camera size
 
@@ -334,10 +324,10 @@ void WorldGameState::update(double delta_time)
 	}
 	}
 
-	if (does_player_exist() && get_player()->has_current_action())
+	if ((m_tick_speed == TickSpeed::TURN_BASED || GameSettings::INSTANT_ACTIONS) && does_player_exist() && get_player()->has_current_action())
 	{
 		auto current_action = get_player()->get_current_action();
-		step(current_action->remaining_action_length() / get_player()->get_action_speed(current_action));
+		step(current_action->remaining_action_length());
 	}
 	else
 	{
@@ -524,14 +514,8 @@ void WorldGameState::update_camera()
 
 void WorldGameState::handle_action(QueuedAction action)
 {
-	if (!action)
+	if (!action || !action->check_action())
 	{
-		return;
-	}
-
-	if (!action->check_action())
-	{
-		delete action;
 		return;
 	}
 
@@ -547,26 +531,21 @@ void WorldGameState::handle_action(QueuedAction action)
 
 	if (!action_result.success)
 	{
-		delete action;
 		return;
 	}
 
-	while (action_result.has_next_action())
+	if (action_result.next)
 	{
-		auto next_action = action_result.get_next_action();
-
 		if (action->has_actor())
 		{
 			auto actor = action->get_actor();
-			actor->start_action(next_action);
+			actor->start_action(action_result.next);
 		}
 		else
 		{
-			handle_input_result(InputResult(next_action));
+			handle_input_result(InputResult(action_result.next));
 		}
 	}
-
-	delete action;
 }
 
 void WorldGameState::handle_input_result(InputResult result)
@@ -577,14 +556,14 @@ void WorldGameState::handle_input_result(InputResult result)
 		{
 			auto actor = result.next_action->get_actor();
 			auto action_length = result.next_action->get_action_length();
-			actor->start_action(result.next_action);
+			actor->start_action(std::move(result.next_action));
 		}
 		else
 		{
 			auto action_length = result.next_action->get_action_length();
 			step(action_length);
 
-			handle_action(QueuedAction(result.next_action));
+			handle_action(std::move(result.next_action));
 		}
 	}
 	else

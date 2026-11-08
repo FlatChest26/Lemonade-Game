@@ -108,6 +108,7 @@ void keybinds::initialize()
 	InputMap::add_input_action(Keybind::Examine, SDLK_r, KMOD_NONE, KMOD_SHIFT);
 	InputMap::add_input_action(Keybind::Inventory, SDLK_i, KMOD_NONE, KMOD_SHIFT);
 	InputMap::add_input_action(Keybind::Grab, SDLK_g, KMOD_NONE, KMOD_SHIFT);
+	InputMap::add_input_action(Keybind::Grapple, SDLK_g, KMOD_SHIFT, KMOD_NONE);
 	InputMap::add_input_action(Keybind::Drop, SDLK_d, KMOD_NONE, KMOD_SHIFT);
 	InputMap::add_input_action(Keybind::Interact, SDLK_e, KMOD_NONE, KMOD_SHIFT);
 	InputMap::add_input_action(Keybind::Consume, SDLK_e, KMOD_SHIFT, KMOD_NONE);

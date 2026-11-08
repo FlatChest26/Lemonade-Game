@@ -71,6 +71,11 @@ WorldGameState* Action::get_world_state() const
 	return {};
 }
 
+TimeUnit EntityAction::get_action_length() const
+{
+	return TimeUnit::from_seconds(1.0) / m_actor->interact_speed();
+}
+
 bool EntityAction::check_action() const
 {
 	if (!Action::check_action())

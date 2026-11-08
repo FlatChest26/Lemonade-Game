@@ -127,16 +127,27 @@ public:
 
 	virtual Position get_center() const
 	{
-		return Position(static_cast<Coord>(width() / 2), static_cast<Coord>(height() / 2), static_cast<Coord>(depth() / 2));
+		return transforms::rotate_by_direction(Position(size()) / 2, direction());
 	}
 
-	virtual Position get_p1() const { return get_pos(); }
+	virtual Position get_p1() const
+	{
+		Position p1 = Position(0, 0, 0);
+		Position p2 = transforms::rotate_by_direction(Position(size()), direction());
+		return get_pos() + Position(std::min(p1.x, p2.x), std::min(p1.y, p2.y), std::min(p1.z, p2.z));
+	}
 
 	virtual Coord get_x1() const { return get_p1().x; }
 	virtual Coord get_y1() const { return get_p1().y; }
 	virtual Coord get_z1() const { return get_p1().z; }
 
-	virtual Position get_p2() const { return get_pos() + Position(static_cast<Coord>(width()), static_cast<Coord>(height()), static_cast<Coord>(depth())); }
+	virtual Position get_p2() const
+	{
+		Position p1 = Position(0, 0, 0);
+		Position p2 = transforms::rotate_by_direction(Position(size()), direction());
+
+		return get_pos() + Position(std::max(p1.x, p2.x), std::max(p1.y, p2.y), std::max(p1.z, p2.z));
+	}
 
 	virtual Coord get_x2() const { return get_p2().x; }
 	virtual Coord get_y2() const { return get_p2().y; }
@@ -214,10 +225,7 @@ public:
 	template<typename T>
 	bool contains_point(const T& x, const T& y, const T& z) const
 	{
-		return
-			m_transform.position.x <= static_cast<CoordType>(x) && static_cast<CoordType>(x) < m_transform.position.x + static_cast<CoordType>(m_transform.size.x) &&
-			m_transform.position.y <= static_cast<CoordType>(y) && static_cast<CoordType>(y) < m_transform.position.y + static_cast<CoordType>(m_transform.size.y) &&
-			m_transform.position.z <= static_cast<CoordType>(z) && static_cast<CoordType>(z) < m_transform.position.z + static_cast<CoordType>(m_transform.size.z);
+		return contains_offset(x - posx(), y - posy(), z - posz());
 	}
 
 	/* Returns true if the point is inside this thing. */
@@ -228,10 +236,8 @@ public:
 	template<typename T>
 	bool contains_offset(const T& x, const T& y, const T& z) const
 	{
-		return
-			0 <= static_cast<CoordType>(x) && static_cast<CoordType>(x) < static_cast<CoordType>(m_transform.size.x) &&
-			0 <= static_cast<CoordType>(y) && static_cast<CoordType>(y) < static_cast<CoordType>(m_transform.size.y) &&
-			0 <= static_cast<CoordType>(z) && static_cast<CoordType>(z) < static_cast<CoordType>(m_transform.size.z);
+		auto offsets = get_offsets();
+		return std::any_of(offsets.begin(), offsets.end(), [&](const Position& pos) { return pos == Position(x, y, z); });
 	}
 
 	/* Returns true if the point is inside this thing. */
@@ -239,7 +245,7 @@ public:
 	bool contains_offset(Vec3D<T> pos) const { return contains_offset(pos.x, pos.y, pos.z); }
 
 	/* Returns the points inside this thing, with the top-left-lower corner at (0, 0, 0). */
-	virtual std::vector<Position> get_offsets() const
+	virtual std::vector<Position> get_offsets(bool rotated = true) const
 	{
 		if (m_transform.size == SizeType{ 1, 1, 1 })
 			return { { 0, 0, 0 } };
@@ -247,27 +253,35 @@ public:
 		std::vector<Position> offsets;
 		offsets.reserve(static_cast<size_t>(m_transform.size.x * m_transform.size.y * m_transform.size.z));
 
-		for (Coord offset_z = 0; offset_z < static_cast<Coord>(m_transform.size.z); offset_z++)
-			for (Coord offset_y = 0; offset_y < static_cast<Coord>(m_transform.size.y); offset_y++)
-				for (Coord offset_x = 0; offset_x < static_cast<Coord>(m_transform.size.x); offset_x++)
-					offsets.emplace_back(offset_x, offset_y, offset_z);
+		for (Coord offset_z = 0; offset_z < static_cast<Coord>(depth()); offset_z++)
+			for (Coord offset_y = 0; offset_y < static_cast<Coord>(height()); offset_y++)
+				for (Coord offset_x = 0; offset_x < static_cast<Coord>(width()); offset_x++)
+				{
+					if (rotated)
+					{
+						offsets.push_back(transforms::rotate_by_direction(Position(offset_x, offset_y, offset_z), direction()));
+					}
+					else
+					{
+						offsets.emplace_back(offset_x, offset_y, offset_z);
+					}
+				}
 
 		return offsets;
 	}
 
 	/* Returns the points inside this thing. */
-	virtual std::vector<Position> get_points() const
+	virtual std::vector<Position> get_points(bool rotated = true) const
 	{
 		if (m_transform.size == SizeType{ 1, 1, 1 })
 			return { static_cast<Position>(m_transform.position) };
 
 		std::vector<Position> points;
-		points.reserve(static_cast<size_t>(m_transform.size.x * m_transform.size.y * m_transform.size.z));
 
-		for (Coord offset_z = 0; offset_z < static_cast<Coord>(m_transform.size.z); offset_z++)
-			for (Coord offset_y = 0; offset_y < static_cast<Coord>(m_transform.size.y); offset_y++)
-				for (Coord offset_x = 0; offset_x < static_cast<Coord>(m_transform.size.x); offset_x++)
-					points.emplace_back(m_transform.position.x + offset_x, m_transform.position.y + offset_y, m_transform.position.z + offset_z);
+		for (const auto& pos : get_offsets(rotated))
+		{
+			points.push_back(get_pos() + pos);
+		}
 
 		return points;
 	}

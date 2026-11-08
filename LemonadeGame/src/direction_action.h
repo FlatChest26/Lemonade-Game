@@ -15,8 +15,8 @@ protected:
 	Coord m_dz{ 0 };
 
 public:
-	ActionWithDirection(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, Coord dx = 0, Coord dy = 0, Coord dz = 0) :
-		EntityAction(action_length, actor), m_dx(dx), m_dy(dy), m_dz(dz)
+	ActionWithDirection(Entity* actor = nullptr, Coord dx = 0, Coord dy = 0, Coord dz = 0) :
+		EntityAction(actor), m_dx(dx), m_dy(dy), m_dz(dz)
 	{
 	}
 
@@ -36,14 +36,16 @@ class BumpAction : public ActionWithDirection
 {
 public:
 	BumpAction(Entity* actor = nullptr, Coord dx = 0, Coord dy = 0, Coord dz = 0) :
-		ActionWithDirection(TimeUnit::none(), actor, dx, dy, dz)
+		ActionWithDirection(actor, dx, dy, dz)
 	{
 	}
 
-	BumpAction(Entity* actor = nullptr, Position delta = { 0, 0, 0 }) :
+	BumpAction(Entity* actor = nullptr, const Position& delta = { 0, 0, 0 }) :
 		BumpAction(actor, delta.x, delta.y, delta.z)
 	{
 	}
+
+	virtual TimeUnit get_action_length() const override { return TimeUnit::none(); }
 
 	virtual bool check_action() const override;
 	virtual ActionResult perform() override;
@@ -55,18 +57,20 @@ class MovementAction : public ActionWithDirection
 {
 public:
 	MovementAction(Entity* actor = nullptr, Coord dx = 0, Coord dy = 0, Coord dz = 0) :
-		ActionWithDirection(TimeUnit::from_seconds(1.0), actor, dx, dy, dz)
-	{
-	}
-	MovementAction(Entity* actor = nullptr, Position delta = { 0, 0, 0 }) :
-		ActionWithDirection(TimeUnit::from_seconds(1.0), actor, delta.x, delta.y, delta.z)
+		ActionWithDirection(actor, dx, dy, dz)
 	{
 	}
 
+	MovementAction(Entity* actor = nullptr, const Position& delta = { 0, 0, 0 }) :
+		ActionWithDirection(actor, delta.x, delta.y, delta.z)
+	{
+	}
+
+	virtual TimeUnit get_action_length() const override;
+
 	virtual bool check_action() const override;
 	virtual ActionResult perform() override;
-	static std::string action_name() { return "movement action"; }
-	virtual bool is_movement_action() const override { return true; }
+	static std::string action_name() { return "move"; }
 };
 
 #endif // !LEMONADE_GAME_SRC_DIRECTION_ACTION_H

@@ -6,6 +6,7 @@
 #include "transforms.h"
 #include "thing.h"
 #include "raw_master.h"
+#include "material_def.h"
 
 #include <string>
 #include <vector>
@@ -13,36 +14,33 @@
 
 class TileMap;
 struct TileType;
+class World;
 
-using TileMapping = std::map<char, ThingID>;
+struct MappingType
+{
+	RawMaster::RawID tile;
+	RawMaster::RawID furniture;
+	RawMaster::RawID item;
+
+	RawMaster::RawID material;
+	MaterialAmount material_amount{ 1 };
+	units::Temperature temperature{ 60.0_degF };
+};
+
+using TileMapping = std::map<char, MappingType>;
 
 namespace MapBuilder
 {
-	inline const TileMapping default_tile_mapping
-	{
-		{ ' ', "TILE_AIR" },
-		{ ',', "TILE_GRASS" },
-		{ 'u', "TILE_GRAVEL" },
-		{ '.', "TILE_PLAIN_FLOOR" },
-		{ '#', "TILE_PLAIN_WALL" },
-		{ '+', "TILE_DOOR" },
-		{ '[', "TILE_WINDOW" },
-		{ 'o', "TILE_GLASS" },
-		{ '<', "TILE_UPWARD_STAIRCASE" },
-		{ '>', "TILE_DOWNWARD_STAIRCASE" },
-		{ 'X', "TILE_UP_AND_DOWN_STAIRCASE" },
-		{ '=', "TILE_GARAGE_DOOR" },
-		{ '^', "TILE_FENCE" },
-		{ '/', "TILE_GLASS_DOOR" },
-		{ 'V', "TILE_SLANTED_ROOF" },
-		{ '_', "TILE_SIDEWALK" },
-		{ 's', "TILE_ROAD" },
-	};
-
 	struct ASCIIMap
 	{
+		TileMapping tile_mappings;
 		std::vector<std::string> map_string;
-		TileMapping tile_mappings{ MapBuilder::default_tile_mapping };
+	};
+
+	struct LayeredASCIIMap
+	{
+		TileMapping tile_mappings;
+		std::vector<std::vector<std::string>> map_string_layers;
 	};
 
 	extern void set_floor(TileMap* tile_map, RawMaster::Ref<TileType> floor_tile, Coord layer = 0);
@@ -58,8 +56,15 @@ namespace MapBuilder
 	);
 
 	extern void make_from_ascii_map(
-		TileMap* tile_map,
+		World* world,
 		ASCIIMap ascii_map,
+		bool leave_out_spaces = true,
+		Position position = Position(0, 0, 0)
+	);
+
+	extern void make_from_layered_ascii_map(
+		World* world,
+		LayeredASCIIMap layered_map,
 		bool leave_out_spaces = true,
 		Position position = Position(0, 0, 0)
 	);

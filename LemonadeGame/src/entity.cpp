@@ -157,39 +157,17 @@ Entity::Entity(EntityID ID, EntityFlag entity_flags) :
 
 Entity::~Entity()
 {
-	reset_actions();
+	
 }
 
 Entity::Entity(const Entity& other)
 {
-	m_ID = other.m_ID;
-	m_flags = other.m_flags;
-
-	m_location = other.m_location;
-	m_action_queue = other.m_action_queue;
-
-	m_raw_refs = other.m_raw_refs;
-	copy_components_from_entity(other);
-
-	render_overrides = other.render_overrides;
-
-	on_flags_updated();
+	*this = other;
 }
 
 Entity::Entity(Entity&& other)
 {
-	m_ID = other.m_ID;
-	m_flags = other.m_flags;
-
-	m_location = other.m_location;
-	m_action_queue = other.m_action_queue;
-
-	m_raw_refs = other.m_raw_refs;
-	move_components_from_entity(other);
-
-	render_overrides = std::move(other.render_overrides);
-
-	on_flags_updated();
+	*this = other;
 }
 
 Entity& Entity::operator=(const Entity& other)
@@ -198,7 +176,6 @@ Entity& Entity::operator=(const Entity& other)
 	m_flags = other.m_flags;
 
 	m_location = other.m_location;
-	m_action_queue = other.m_action_queue;
 
 	m_raw_refs = other.m_raw_refs;
 	copy_components_from_entity(other);
@@ -216,7 +193,7 @@ Entity& Entity::operator=(Entity& other)
 	m_flags = other.m_flags;
 
 	m_location = other.m_location;
-	m_action_queue = other.m_action_queue;
+	m_action_queue = std::move(other.m_action_queue);
 
 	m_raw_refs = other.m_raw_refs;
 	move_components_from_entity(other);
@@ -870,19 +847,7 @@ void Entity::remove_from_inventory(Entity* item, bool update_inventory)
 	item->set_location(get_world(), false);
 }
 
-double Entity::get_action_speed(Action* action) const
-{
-	double action_speed = interact_speed();
-
-	if (get_current_action()->is_movement_action())
-	{
-		action_speed = move_speed();
-	}
-
-	return action_speed;
-}
-
-bool Entity::can_queue_action(QueuedAction action, bool print_errors) const
+bool Entity::can_queue_action(Action* action, bool print_errors) const
 {
 	if (!action)
 	{
@@ -921,16 +886,21 @@ bool Entity::can_queue_action(QueuedAction action, bool print_errors) const
 	return true;
 }
 
+bool Entity::start_action(Action* action)
+{
+	return start_action(QueuedAction(action));
+}
+
 bool Entity::start_action(QueuedAction action)
 {
-	if (!can_queue_action(action, true))
+	if (!can_queue_action(action.get(), true))
 	{
 		return false;
 	}
 
-	m_action_queue.push_back(action);
+	m_action_queue.push_back(std::move(action));
 
-	if (action->progress(TimeUnit::none()))
+	if (get_current_action()->progress(TimeUnit::none()))
 		complete_action();
 
 	return true;
@@ -947,19 +917,21 @@ bool Entity::has_action_name(std::string action_name) const
 	return false;
 }
 
+void Entity::reset_actions(Action* action)
+{
+	reset_actions(QueuedAction(action));
+}
+
 void Entity::reset_actions(QueuedAction action)
 {
-	if (action && !can_queue_action(action, true))
+	if (action && !can_queue_action(action.get(), true))
 		return;
-
-	for (auto& action : m_action_queue)
-		delete action;
 
 	m_action_queue.clear();
 
 	if (action)
 	{
-		start_action(action);
+		start_action(std::move(action));
 	}
 }
 
@@ -968,7 +940,7 @@ void Entity::continue_action(const TimeUnit& delta)
 	if (!has_current_action())
 		return;
 
-	if (get_current_action()->progress(delta * get_action_speed(get_current_action())))
+	if (get_current_action()->progress(delta))
 	{
 		complete_action();
 	}
@@ -979,16 +951,12 @@ void Entity::complete_action()
 	if (!has_current_action())
 		return;
 
-	auto completed_action = get_current_action();
+	auto next_action = std::move(m_action_queue.back());
 	m_action_queue.pop_back();
 
 	if (auto world_state = get_world_state())
 	{
-		world_state->handle_action(completed_action);
-	}
-	else
-	{
-		delete completed_action;
+		world_state->handle_action(std::move(next_action));
 	}
 }
 
@@ -1001,13 +969,14 @@ bool Entity::can_see(Coord x, Coord y, Coord z) const
 			return tile_map->is_visible(x, y, z);
 		}
 	}
-	else
+	else if (has_movable())
 	{
 		auto result = los::raycast3D(
 			get_world(),
 			get_movable()->pos(),
 			Position(x, y, z),
-			los::RaycastParams{
+			los::RaycastParams
+			{
 				.max_range = static_cast<double>(view_range()),
 				.stop_when_blocked = false,
 				.stop_when_opaque = true,
@@ -1206,6 +1175,7 @@ void Entity::step(const TimeUnit& time_delta)
 		if (is_being_held() && get_entity_holder()->has_movable())
 		{
 			get_movable()->pos() = get_entity_holder()->get_movable()->pos() - get_movable()->get_center();
+			get_movable()->direction() = get_entity_holder()->get_movable()->direction();
 		}
 	}
 
@@ -1223,5 +1193,10 @@ void Entity::step(const TimeUnit& time_delta)
 	if (has_brain())
 	{
 		get_brain()->step(time_delta);
+	}
+
+	if (has_brain() && has_living() && get_living()->is_dead())
+	{
+		remove_brain();
 	}
 }

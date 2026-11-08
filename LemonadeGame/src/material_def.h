@@ -43,6 +43,7 @@ enum class MaterialFlag : uint64_t
 	IS_CONSUMABLE = 1 << 0,
 	IS_BLOCKED = 1 << 1,
 	IS_OPAQUE = 1 << 2,
+	STAINS = 1 << 3,
 };
 
 IS_FLAG_ENUM(MaterialFlag);
@@ -50,8 +51,9 @@ IS_FLAG_ENUM(MaterialFlag);
 inline std::map<std::string, MaterialFlag> AllMaterialFlags
 {
 	{ "consumable",		MaterialFlag::IS_CONSUMABLE },
-	{ "is_blocked",		MaterialFlag::IS_BLOCKED },
-	{ "is_opaque",		MaterialFlag::IS_OPAQUE },
+	{ "is_blocked",		MaterialFlag::IS_BLOCKED	},
+	{ "is_opaque",		MaterialFlag::IS_OPAQUE		},
+	{ "stains",			MaterialFlag::STAINS		},
 };
 
 
@@ -75,6 +77,7 @@ public:
 	bool is_consumable() const { return flags & MaterialFlag::IS_CONSUMABLE; }
 	bool is_blocked() const { return flags & MaterialFlag::IS_BLOCKED; }
 	bool is_opaque() const { return flags & MaterialFlag::IS_OPAQUE; }
+	bool stains() const { return flags & MaterialFlag::STAINS; }
 };
 
 struct MaterialType
@@ -154,6 +157,10 @@ public:
 	TimeUnit& current_step() { return m_current_step; }
 	const TimeUnit& current_step() const { return m_current_step; }
 
+	bool should_stain() const
+	{
+		return current_state() == MaterialStateType::LIQUID && amount() == 1 && current_state_definition()->stains();
+	}
 
 	// Current State //
 
@@ -181,7 +188,6 @@ public:
 		return &m_mat_type->states.at(current_state());
 	}
 
-
 	// Thing // 
 
 	virtual Noun noun() const override
@@ -191,116 +197,14 @@ public:
 			return state_def->noun;
 		}
 
-		return Noun{ "<undefined material state>", "<undefined material states>" };
+		return Noun{ "<undefined material state>", "<undefined material state>" };
 	}
 
-	virtual Renderable renderable() const override
-	{
-		Renderable renderable = { ' ', color::get("white"), color::get("black") };
-
-		switch (current_state())
-		{
-		case MaterialStateType::SOLID:
-			renderable.glyph = 219; // █
-			break;
-		case MaterialStateType::LIQUID:
-			renderable.glyph = 247; // ≈
-			break;
-		case MaterialStateType::GAS:
-			renderable.glyph = 177; // ▒
-			break;
-		case MaterialStateType::POWDER:
-			renderable.glyph = 219; // █
-			break;
-		}
-
-		if (auto state_def = current_state_definition())
-		{
-			renderable.fg = state_def->color;
-		}
-
-		return renderable;
-	}
-
-	virtual GrammarNoun display_noun() const override
-	{
-		std::string noun = singular_noun();
-
-		if (current_state() == MaterialStateType::LIQUID)
-		{
-			if (amount() == 1)
-			{
-				noun = "spattering of " + singular_noun();
-			}
-			else if (amount() > 3)
-			{
-				noun = "pool of " + singular_noun();
-			}
-			else
-			{
-				noun = "puddle of " + singular_noun();
-			}
-		}
-		else if (current_state() == MaterialStateType::SOLID)
-		{
-			if (amount() == 1)
-			{
-				noun = "sheet of " + singular_noun();
-			}
-			else if (amount() > 3)
-			{
-				noun = "block of " + singular_noun();
-			}
-			else
-			{
-				noun = "chunk of " + singular_noun();
-			}
-		}
-		else if (current_state() == MaterialStateType::GAS)
-		{
-			if (amount() > 2)
-			{
-				noun = "cloud of " + singular_noun();
-			}
-			else
-			{
-				noun = "puff of " + singular_noun();
-			}
-		}
-		else if (current_state() == MaterialStateType::POWDER)
-		{
-			if (amount() > 3)
-			{
-				noun = "pile of " + singular_noun();
-			}
-			else
-			{
-				noun = "sheet of " + singular_noun();
-			}
-		}
-
-		return grammar::a(noun);
-	}
+	virtual Renderable renderable() const override;
+	virtual GrammarNoun display_noun() const override;
 
 public:
-	void update_state()
-	{
-		if (!m_mat_type || m_mat_type->states.empty())
-			return;
-
-		if (m_mat_type->states.contains(MaterialStateType::GAS) && m_temperature >= m_mat_type->boiling_point)
-		{
-			m_state = MaterialStateType::GAS;
-		}
-		else if (m_mat_type->states.contains(MaterialStateType::LIQUID) && m_temperature >= m_mat_type->melting_point)
-		{
-			m_state = MaterialStateType::LIQUID;
-		}
-		else if (m_mat_type->states.contains(MaterialStateType::SOLID) && m_state != MaterialStateType::POWDER)
-		{
-			m_state = MaterialStateType::SOLID;
-		}
-	}
+	void update_state();
 };
 
 class Entity;

@@ -138,8 +138,11 @@ Entity EntityBuilder::create_furniture(EntityID ID, FurnitureInitializer init)
 	//new_furniture.add_flag(EntityFlag::CAN_HOLD_ITEMS);
 	new_furniture.add_flag(EntityFlag::CAN_BE_HELD);
 
-	if (init.furniture_definition->is_blocking)
+	if (init.furniture_definition->is_blocking())
 		new_furniture.add_flag(EntityFlag::IS_BLOCKING);
+
+	if (init.furniture_definition->is_opaque())
+		new_furniture.add_flag(EntityFlag::IS_OPAQUE);
 
 	new_furniture.set_furniture_def(init.furniture_definition);
 	new_furniture.set_item_def(init.furniture_definition->item_definition);

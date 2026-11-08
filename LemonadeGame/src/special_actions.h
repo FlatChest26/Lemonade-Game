@@ -9,7 +9,7 @@ class StartSleepAction : public EntityAction
 {
 public:
 	StartSleepAction(Entity* actor = nullptr) :
-		EntityAction(TimeUnit::from_seconds(1.0), actor)
+		EntityAction(actor)
 	{
 	}
 
@@ -23,7 +23,7 @@ class EndSleepAction : public EntityAction
 {
 public:
 	EndSleepAction(Entity* actor = nullptr) :
-		EntityAction(TimeUnit::from_seconds(1.0), actor)
+		EntityAction(actor)
 	{
 	}
 
@@ -37,7 +37,7 @@ class DeathAction : public EntityAction
 {
 public:
 	DeathAction(Entity* actor = nullptr) :
-		EntityAction(TimeUnit::from_seconds(1.0), actor)
+		EntityAction(actor)
 	{
 	}
 

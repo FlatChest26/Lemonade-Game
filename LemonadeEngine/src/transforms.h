@@ -900,7 +900,7 @@ inline constexpr Position DEFAULT_POSITION = Position{ 0, 0, 0 };
 inline constexpr PositionF DEFAULT_POSITIONF = PositionF{ 0.0, 0.0, 0.0 };
 inline constexpr Size DEFAULT_SIZE = Size{ 1, 1, 1 };
 inline constexpr SizeF DEFAULT_SIZEF = SizeF{ 1.0, 1.0, 1.0 };
-inline constexpr Direction DEFAULT_DIRECTION = NO_DIRECTION;
+inline constexpr Direction DEFAULT_DIRECTION = NORTH;
 
 template<typename T, typename K>
 struct Transform
@@ -942,6 +942,8 @@ public:
 using TileTransform = Transform<Position, Size>;
 using PreciseTransform = Transform<PositionF, SizeF>;
 
+#include <numbers> 
+
 namespace transforms
 {
 	inline Position dir_as_pos(const Direction& dir)
@@ -981,9 +983,18 @@ namespace transforms
 		return pos_as_dir(Position(x, y, z));
 	}
 
+	inline double degrees_to_radians(double degrees)
+	{
+		return degrees * (std::numbers::pi / 180.0);
+	}
+
+	extern Direction opposite_direction(Direction dir);
+	extern double dir_to_angle_in_degrees(Direction dir);
+	extern Position rotate_by_direction(const Position& point, Direction dir, const Position& origin = Position(0, 0, 0));
+
 	inline bool is_adjacent(const Position& p1, const Position& p2)
 	{
-		return (p2 - p1).length_squared() < (1.4f * 1.4f);
+		return (p2 - p1).length_squared() < (1.4 * 1.4);
 	}
 
 	inline std::vector<Position> get_adjacent_locations(const Position& origin = Position(0, 0, 0), bool above = false, bool below = false, bool include_orgin = false)

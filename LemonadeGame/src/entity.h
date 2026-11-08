@@ -91,8 +91,8 @@ enum class EntityFlag : int64_t
 	NAME_IS_KNOWN = 1 << 16,									// This entity's name is known by the player.
 	SHOULD_REMOVE = 1 << 17,									// This entity is queued for removal.
 
-	IS_ENTITY_SPAWN = 1 << 18,									// NPCs generate from this entity.
-	IS_ENTITY_CLEARER = 1 << 19,								// NPCs are removed once they reach this entity.
+	IS_OPAQUE = 1 << 18,										// The entity will act as a visual obstacle to other entities.
+	IS_TRANSPARENT = ~IS_OPAQUE,								// The entity will never act as a visual obstactle to other entities
 };
 
 IS_FLAG_ENUM(EntityFlag);
@@ -139,11 +139,11 @@ using EntityComponentTuple = std::tuple<
 using EntityRef = Entity&;
 using EntityPtr = Entity*;
 
-class Action;
-
 /* An entity represents anything in the world. */
 class Entity : public Thing
 {
+	friend class World;
+
 protected:
 
 	EntityID m_ID;
@@ -153,7 +153,7 @@ protected:
 	EntityComponentTuple m_components;
 	EntityRawRefTuple m_raw_refs;
 
-	ActionQueue m_action_queue;
+	ActionQueue m_action_queue{};
 
 public:
 	// -- Virtual Variables -- //
@@ -179,7 +179,7 @@ public:
 public:
 
 	// -- Getters & Setters --
-
+	void set_ID(EntityID ID) { m_ID = ID; }
 	virtual EntityID ID() const { return m_ID; }
 
 	WorldGameState* get_world_state() const;
@@ -252,9 +252,13 @@ public:
 public:
 	// Actions //
 
-	virtual bool can_queue_action(QueuedAction action, bool print_errors = false) const;
+	virtual bool can_queue_action(Action* action, bool print_errors = false) const;
+
 	virtual void reset_actions(QueuedAction action = nullptr);
+	virtual void reset_actions(Action* action);
+
 	virtual bool start_action(QueuedAction action);
+	virtual bool start_action(Action* action);
 
 	virtual void continue_action(const TimeUnit& delta);
 	virtual void complete_action();
@@ -281,10 +285,8 @@ public:
 
 	virtual bool has_action_name(std::string action_name) const;
 
-	virtual double get_action_speed(Action* action) const;
-
-	virtual const Action* get_current_action() const { return m_action_queue.back(); }
-	virtual Action* get_current_action() { return m_action_queue.back(); }
+	virtual const Action* get_current_action() const { return m_action_queue.back().get(); }
+	virtual Action* get_current_action() { return m_action_queue.back().get(); }
 
 	virtual bool can_interact_with(Entity* subject) const;
 	virtual std::vector<InteractionOption> get_interactions_with(Entity* subject);
@@ -448,7 +450,7 @@ public:
 	// For entities larger than 1x1x1, return the renderable at that coordinate, relative to the entity's position.
 	virtual Renderable get_renderable_at(Coord offset_x, Coord offset_y, Coord offset_z) const;
 	// For entities larger than 1x1x1, return the renderable at that coordinate, relative to the entity's position.
-	virtual Renderable get_renderable_at(Position offset) const { return get_renderable_at(offset.x, offset.y, offset.z); }
+	virtual Renderable get_renderable_at(const Position& offset) const { return get_renderable_at(offset.x, offset.y, offset.z); }
 
 	virtual Renderable renderable() const override;
 
@@ -571,11 +573,10 @@ public:
 	// The player forgets this entity's name.
 	virtual void forget_name() { remove_flag(EntityFlag::NAME_IS_KNOWN); }
 
-	// Checks if EntityFlag::IS_ENTITY_SPAWN is set.
-	virtual bool is_entity_spawn() const { return m_flags & EntityFlag::IS_ENTITY_SPAWN; }
-
-	// Checks if EntityFlag::IS_ENTITY_CLEARER is set.
-	virtual bool is_entity_clearer() const { return m_flags & EntityFlag::IS_ENTITY_CLEARER; }
+	// Checks if EntityFlag::IS_OPAQUE is set.
+	virtual bool is_opaque() const { return m_flags & EntityFlag::IS_OPAQUE; }
+	// Checks if EntityFlag::IS_OPAQUE is NOT set.
+	virtual bool is_transparent() const { return !is_opaque(); }
 
 public:
 	// - Field of View -- //

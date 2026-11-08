@@ -26,7 +26,7 @@ class World;
 class WorldGameState;
 class TileMap;
 
-using QueuedAction = Action*;
+using QueuedAction = std::unique_ptr<Action>;
 using ActionQueue = std::vector<QueuedAction>;
 using ActionResponse = GameMessage;
 
@@ -34,47 +34,19 @@ struct ActionResult
 {
 	bool success{ false };
 	std::vector<ActionResponse> responses{};
-	ActionQueue next;
-
-	constexpr bool has_next_action() const
-	{
-		return !next.empty();
-	}
-
-	void add_next_action(QueuedAction action)
-	{
-		next.push_back(action);
-	}
-
-	QueuedAction get_next_action()
-	{
-		if (next.front())
-		{
-			auto next_action = next.front();
-			next.erase(next.begin());
-
-			return next_action;
-		}
-
-		return nullptr;
-	}
+	Action* next;
 };
 
 class Action
 {
 protected:
-	TimeUnit m_action_length{ TimeUnit::none() };
 	TimeUnit m_time_spent_on_action{ TimeUnit::none() };
 
 public:
-	Action(const TimeUnit& action_length = TimeUnit::none()) :
-		m_action_length(action_length)
-	{
-	}
 
 	virtual ActionResult perform();
 
-	virtual bool reset_progress(const TimeUnit& delta)
+	virtual bool reset_progress(const TimeUnit& delta = TimeUnit::none())
 	{
 		m_time_spent_on_action = delta;
 		return is_action_complete();
@@ -86,10 +58,10 @@ public:
 		return is_action_complete();
 	}
 
-	virtual bool is_action_complete() const { return m_time_spent_on_action >= m_action_length; }
+	virtual bool is_action_complete() const { return m_time_spent_on_action >= get_action_length(); }
 
-	virtual TimeUnit get_action_length() const { return m_action_length; }
-	virtual TimeUnit remaining_action_length() const { return m_action_length - m_time_spent_on_action; }
+	virtual TimeUnit get_action_length() const { return TimeUnit::from_seconds(1.0); }
+	virtual TimeUnit remaining_action_length() const { return get_action_length() - m_time_spent_on_action; }
 
 	static std::string action_name() { return "<unnamed action>"; }
 	virtual bool check_action() const { return true; }
@@ -106,18 +78,20 @@ public:
 	virtual World* get_world() const;
 	virtual TileMap* get_tile_map() const;
 	virtual WorldGameState* get_world_state() const;
-
-	virtual bool is_movement_action() const { return false; }
 };
 
 class WaitAction : public Action
 {
+protected:
+	TimeUnit m_wait_time;
+
 public:
-	WaitAction(const TimeUnit& action_length = TimeUnit::from_seconds(1.0)) :
-		Action(action_length)
+	WaitAction(const TimeUnit& wait_time) :
+		m_wait_time(wait_time)
 	{
 	}
 
+	virtual TimeUnit get_action_length() const override { return m_wait_time; }
 	virtual ActionResult perform() override { return ActionResult(true); }
 
 	static std::string action_name() { return "wait"; }
@@ -129,10 +103,12 @@ protected:
 	Entity* m_actor;
 
 public:
-	EntityAction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr) :
-		Action(action_length), m_actor(actor)
+	EntityAction(Entity* actor = nullptr) :
+		m_actor(actor)
 	{
 	}
+
+	virtual TimeUnit get_action_length() const override;
 
 	virtual void set_actor(Entity* actor) override;
 	virtual bool check_action() const override;

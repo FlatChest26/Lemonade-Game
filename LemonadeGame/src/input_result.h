@@ -62,7 +62,12 @@ struct InputResult
 	}
 
 	InputResult(Action* action) :
-		type(Type::Action), next_action(action)
+		type(Type::Action), next_action(QueuedAction(action))
+	{
+	}
+
+	InputResult(QueuedAction action) :
+		type(Type::Action), next_action(std::move(action))
 	{
 	}
 
@@ -92,7 +97,12 @@ struct InputResult
 	}
 
 	InputResult(Action* action, InputResult* next) :
-		type(Type::Action), next_action(action), next_input_result(next)
+		type(Type::Action), next_action(QueuedAction(action)), next_input_result(next)
+	{
+	}
+
+	InputResult(QueuedAction action, InputResult* next) :
+		type(Type::Action), next_action(std::move(action)), next_input_result(next)
 	{
 	}
 };

@@ -76,5 +76,8 @@
     <ClCompile Include="src\output.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\transforms.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

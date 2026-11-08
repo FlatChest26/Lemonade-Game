@@ -60,6 +60,7 @@ enum class Keybind : uint64_t
 	Inventory,
 	Examine,
 	Grab,
+	Grapple,
 	Drop,
 	Interact,
 	Sleep,

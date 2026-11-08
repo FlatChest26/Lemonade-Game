@@ -52,7 +52,7 @@
         "color": "light_yellow",
         "description": "A sweet, refreshing drink, made of sugar, water, and squeezed lemons.",
         "value": 1.0,
-        "flags": [ "consumable" ],
+        "flags": [ "consumable", "stains" ],
         "consumable_effects": [ { "modified_stat": "thirst", "amount": -15.0 }, { "modified_stat": "mood", "amount": 9.0, "taste": "refreshing" } ]
       },
       "solid": {
@@ -70,6 +70,39 @@
         "color": "light_yellow",
         "value": 0.3,
         "description": "Lemonade in its gaseous state."
+      }
+    }
+  },
+  {
+    "type": "material_type",
+    "ID": "blood",
+    "boiling_point": { "celsius": 100.0 },
+    "melting_point": { "celsius": 0.0 },
+    "states": {
+      "liquid": {
+        "noun": { "singular": "blood", "plural": "blood" },
+        "prefix": "blood",
+        "color": "dark_red",
+        "description": "An iron-rich liquid.",
+        "value": 0.8,
+        "flags": [ "consumable", "stains" ],
+        "consumable_effects": [ { "modified_stat": "thirst", "amount": -4.0 }, { "modified_stat": "mood", "amount": -16.0, "taste": "metallic" } ]
+      },
+      "solid": {
+        "noun": { "singular": "frozen blood", "plural": "frozen blood" },
+        "prefix": "frozen blood",
+        "color": "light_red",
+        "value": 0.6,
+        "description": "Frozen blood.",
+        "flags": [ "consumable", "is_blocked" ],
+        "consumable_effects": [ { "modified_stat": "thirst", "amount": -8.0 }, { "modified_stat": "mood", "amount": -25.0, "taste": "crunchy" } ]
+      },
+      "gas": {
+        "noun": { "singular": "boiling blood", "plural": "boiling blood" },
+        "prefix": "boiling blood",
+        "color": "light_red",
+        "value": 0.3,
+        "description": "Blood in its gaseous state."
       }
     }
   }

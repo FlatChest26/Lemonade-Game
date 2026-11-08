@@ -10,11 +10,11 @@
 class Interaction : public EntityAction
 {
 protected:
-	EntityID m_subject;
+	Entity* m_subject;
 
 public:
-	Interaction(const TimeUnit& action_length = TimeUnit::none(), Entity* actor = nullptr, Entity* subject = nullptr) :
-		EntityAction(action_length, actor), m_subject(subject->ID())
+	Interaction(Entity* actor = nullptr, Entity* subject = nullptr) :
+		EntityAction(actor), m_subject(subject)
 	{
 	}
 
@@ -29,7 +29,7 @@ class SwapPlacesAction : public Interaction
 {
 public:
 	SwapPlacesAction(Entity* actor = nullptr, Entity* subject = nullptr) :
-		Interaction(TimeUnit::from_seconds(1.0), actor, subject)
+		Interaction(actor, subject)
 	{
 	}
 
@@ -43,7 +43,7 @@ class GrabAction : public Interaction
 {
 public:
 	GrabAction(Entity* actor = nullptr, Entity* subject = nullptr) :
-		Interaction(TimeUnit::from_seconds(1.0), actor, subject)
+		Interaction(actor, subject)
 	{
 	}
 
@@ -56,7 +56,7 @@ class DropAction : public Interaction
 {
 public:
 	DropAction(Entity* actor = nullptr, Entity* subject = nullptr) :
-		Interaction(TimeUnit::from_seconds(1.0), actor, subject)
+		Interaction(actor, subject)
 	{
 	}
 
@@ -70,7 +70,7 @@ class ConsumeAction : public Interaction
 {
 public:
 	ConsumeAction(Entity* actor = nullptr, Entity* subject = nullptr) :
-		Interaction(TimeUnit::from_seconds(1.0), actor, subject)
+		Interaction(actor, subject)
 	{
 	}
 

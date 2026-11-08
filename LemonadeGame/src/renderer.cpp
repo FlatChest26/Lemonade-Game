@@ -134,10 +134,7 @@ void WorldRenderer::render_entities(const RenderParams& params) const
 
 void WorldRenderer::render_entity(const RenderParams& params, const Entity* entity) const
 {
-	if (!entity)
-		return;
-
-	if (!entity->has_movable())
+	if (!entity || !entity->has_movable())
 		return;
 
 	if (params.use_fov && !entity->is_visible_to_player())
@@ -193,8 +190,13 @@ void WorldRenderer::render_entity(const RenderParams& params, const Entity* enti
 		);
 	}
 
-	for (const auto& offset : entity->get_movable()->get_offsets()) // In the case of drawing an entity larger than 1x1x1
+	auto unrotated_offsets = entity->get_movable()->get_offsets(false);
+	auto rotated_offsets = entity->get_movable()->get_offsets(true);
+	
+	for (size_t idx = 0; idx < rotated_offsets.size(); idx++) // In the case of drawing an entity larger than 1x1x1
 	{
+		auto& offset = rotated_offsets[idx];
+
 		Position world_position = entity->get_movable()->pos() + offset;
 
 		int draw_x = world_position.x + camera_offset.x;
@@ -207,7 +209,7 @@ void WorldRenderer::render_entity(const RenderParams& params, const Entity* enti
 		if (params.camera && !params.camera->in_view(world_position))
 			continue;
 
-		Renderable draw_renderable = entity->get_renderable_at(offset);
+		Renderable draw_renderable = entity->get_renderable_at(unrotated_offsets[idx]);
 
 		if (depth < 0)
 		{
@@ -307,7 +309,8 @@ void WorldRenderer::render_tile_map(const RenderParams& params) const
 		{
 			draw_renderable = draw_material.renderable();
 		}
-		else // draw the tile
+		
+		if (draw_material.amount() == 0 || draw_material.should_stain())
 		{
 			const Tile* draw_tile = tile_map->get_tile(x, y, layer);
 			
@@ -321,6 +324,11 @@ void WorldRenderer::render_tile_map(const RenderParams& params) const
 				{
 					draw_renderable = Renderable{ DISTANT_DOT, tile_below->fg(), tile_below->bg() };
 				}
+			}
+
+			if (draw_material.should_stain())
+			{
+				draw_renderable.fg = draw_material.fg();
 			}
 		}
 

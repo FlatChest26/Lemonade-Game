@@ -52,7 +52,7 @@ ActionResult BumpAction::perform()
 		return ActionResult
 		{
 			.success = true,
-			.next = { new OpenAction(actor, destination()) }
+			.next = new OpenAction(actor, destination())
 		};
 	}
 
@@ -79,7 +79,7 @@ ActionResult BumpAction::perform()
 			return ActionResult
 			{
 				.success = true,
-				.next = { new SwapPlacesAction(actor, blocking_entities.front()) }
+				.next = new SwapPlacesAction(actor, blocking_entities.front())
 			};
 		}
 	}
@@ -87,8 +87,13 @@ ActionResult BumpAction::perform()
 	return ActionResult
 	{
 		.success = true,
-		.next = { new MovementAction(actor, m_dx, m_dy, m_dz) }
+		.next = new MovementAction(actor, m_dx, m_dy, m_dz)
 	};
+}
+
+TimeUnit MovementAction::get_action_length() const
+{ 
+	return TimeUnit::from_seconds(1.0) / m_actor->move_speed(); 
 }
 
 bool MovementAction::check_action() const
@@ -193,6 +198,7 @@ ActionResult MovementAction::perform()
 	}
 
 	actor->get_movable()->set_position(final_x, final_y, final_z);
+	actor->get_movable()->face_direction(final_x - start_x, final_y - start_y, 0);
 
 	return ActionResult(true);
 }

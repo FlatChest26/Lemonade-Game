@@ -30,6 +30,11 @@ void AIBrain::step(TimeUnit time_delta)
 		return;
 	}
 
+	if (entity->has_living() && entity->get_living()->is_dead())
+	{
+		return;
+	}
+
 	if (auto behavior = current_behavior())
 	{
 		if (behavior->perform(this, time_delta))

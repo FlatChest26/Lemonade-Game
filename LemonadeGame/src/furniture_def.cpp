@@ -40,7 +40,8 @@ std::shared_ptr<RawObjectChecker> FurnitureDefinition::get_checker()
 	checker->add_property("size", RawValueType::RAW_Array, true);
 	checker->add_property("tiles", RawValueType::RAW_Array, true);
 
-	checker->add_property("is_blocking", RawValueType::RAW_Bool, false);
+	checker->add_property("flags", RawValueType::RAW_Array, false);
+	checker->add_property("sleep_quality", RawValueType::RAW_Number, false);
 
 	return checker;
 }
@@ -68,9 +69,28 @@ FurnitureDefinition FurnitureDefinition::from_json(const json& j)
 		f.tiles.push_back(FurnitureTile::from_json(tile_json));
 	}
 
-	if (checker->is_valid_property("is_blocking", j))
+	if (checker->is_valid_property("flags", j))
 	{
-		f.is_blocking = j.at("is_blocking").get<bool>();
+		f.flags = FurnitureFlag::NONE;
+
+		for (const auto& flag : j.at("flags"))
+		{
+			auto it = AllFurnitureFlags.find(flag.get<std::string>());
+
+			if (it != AllFurnitureFlags.end())
+			{
+				f.flags |= it->second;
+			}
+			else
+			{
+				CERR("Invalid furniture flag name : " << flag);
+			}
+		}
+	}
+
+	if (checker->is_valid_property("sleep_quality", j))
+	{
+		f.sleep_quality = j.at("sleep_quality").get<double>();
 	}
 
 	return f;

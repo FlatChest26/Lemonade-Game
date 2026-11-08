@@ -21,9 +21,9 @@ bool ActionWithLocation::check_action() const
 
 Tile* ActionWithLocation::get_tile_at_dest()
 {
-	if (auto tm = get_tile_map())
+	if (auto tile_map = get_tile_map())
 	{
-		return tm->get_tile(m_loc_x, m_loc_y, m_loc_z);
+		return tile_map->get_tile(m_loc_x, m_loc_y, m_loc_z);
 	}
 
 	return nullptr;
@@ -31,9 +31,9 @@ Tile* ActionWithLocation::get_tile_at_dest()
 
 const Tile* ActionWithLocation::get_tile_at_dest() const
 {
-	if (auto tm = get_tile_map())
+	if (auto tile_map = get_tile_map())
 	{
-		return tm->get_tile(m_loc_x, m_loc_y, m_loc_z);
+		return tile_map->get_tile(m_loc_x, m_loc_y, m_loc_z);
 	}
 
 	return nullptr;
@@ -45,6 +45,7 @@ bool TransformAction::check_action() const
 		return false;
 
 	auto tile_map = get_tile_map();
+
 	if (!tile_map)
 	{
 		ACTION_CERR("tile_map is null!");
@@ -82,6 +83,7 @@ ActionResult TransformAction::perform()
 		locations_already_checked.push_back(loc);
 
 		auto tile = tile_map->get_tile(loc);
+
 		if (!tile || (m_open && !tile->can_open()) || (!m_open && !tile->can_close()))
 			continue;
 

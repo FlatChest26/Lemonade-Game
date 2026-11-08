@@ -17,6 +17,23 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
+
+enum class FurnitureFlag : uint32_t
+{
+	NONE = 0,
+
+	IS_BLOCKING = 1 << 0,
+	IS_OPAQUE = 1 << 1,
+};
+
+IS_FLAG_ENUM(FurnitureFlag);
+
+inline std::map<std::string, FurnitureFlag> AllFurnitureFlags
+{
+	{ "is_blocking",	FurnitureFlag::IS_BLOCKING },
+	{ "is_opaque",		FurnitureFlag::IS_OPAQUE },
+};
+
 struct FurnitureTile
 {
 	Position position;
@@ -35,12 +52,18 @@ struct FurnitureDefinition
 
 	RawMaster::Ref<ItemDefinition> item_definition;
 
-	bool is_blocking = true;
+	double sleep_quality{ 1.0f };
+
+	FurnitureFlag flags;
 
 	Renderable get_renderable_at(Coord x, Coord y, Coord z) const;
 
 	static std::shared_ptr<RawObjectChecker> get_checker();
 	static FurnitureDefinition from_json(const json& j);
+
+public:
+	bool is_blocking() const { return flags & FurnitureFlag::IS_BLOCKING; }
+	bool is_opaque() const { return flags & FurnitureFlag::IS_OPAQUE; }
 };
 
 #endif // !LEMONADE_GAME_SRC_FURNITURE_DEF_H
