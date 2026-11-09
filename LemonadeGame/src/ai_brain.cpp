@@ -24,11 +24,60 @@ AIBrain::AIBrain(AIBrain&& other)
 	m_state_stack = std::move(other.m_state_stack);
 }
 
+void AIBrain::push_state(AIState* state)
+{
+	std::unique_ptr<AIState> new_state(state);
+
+	new_state->set_brain(this);
+	new_state->init();
+
+	if (!new_state->check())
+		return;
+
+	new_state->reinit();
+
+	m_state_stack.push_back(std::move(new_state));
+}
+
+void AIBrain::pop_state()
+{
+	if (m_state_stack.empty())
+		return;
+
+	current_state()->remove();
+	m_state_stack.pop_back();
+
+	if (current_state())
+	{
+		current_state()->reinit();
+	}
+}
+
+void AIBrain::reset_state(AIState* state)
+{
+	while (!m_state_stack.empty())
+	{
+		pop_state();
+	}
+
+	if (state)
+	{
+		push_state(state);
+	}
+}
+
+AIState* AIBrain::current_state() const
+{
+	if (m_state_stack.empty())
+		return nullptr;
+	return m_state_stack.back().get();
+}
+
 void AIBrain::step(const TimeUnit& time_delta)
 {
 	auto entity = get_entity();
 
-	if (entity->get_brain() != this)
+	if (!entity || entity->get_brain() != this)
 	{
 		CERR("entity's brain is not this brain!");
 		return;
@@ -63,37 +112,3 @@ void AIBrain::step(const TimeUnit& time_delta)
 	}
 }
 
-void AIBrain::push_state(AIState* state)
-{
-	std::unique_ptr<AIState> new_state(state);
-	
-	new_state->set_brain(this);
-	new_state->init();
-
-	if (!new_state->check())
-		return;
-
-	m_state_stack.push_back(std::move(new_state));
-}
-
-void AIBrain::pop_state()
-{
-	if (m_state_stack.empty())
-		return;
-
-	current_state()->remove();
-	m_state_stack.pop_back();
-}
-
-void AIBrain::reset_state(AIState* state)
-{
-	while (!m_state_stack.empty())
-	{
-		pop_state();
-	}
-
-	if (state)
-	{
-		push_state(state);
-	}
-}

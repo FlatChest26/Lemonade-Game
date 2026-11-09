@@ -199,8 +199,8 @@ void WorldRenderer::render_entity(const RenderParams& params, const Entity* enti
 
 		Position world_position = entity->get_movable()->pos() + offset;
 
-		int draw_x = world_position.x + camera_offset.x;
-		int draw_y = world_position.y + camera_offset.y;
+		int draw_x = world_position.x + camera_offset.x + params.world_inner_frame_p1().x;
+		int draw_y = world_position.y + camera_offset.y + params.world_inner_frame_p1().y;
 		int depth = world_position.z + camera_offset.z;
 
 		if (!params.in_world_frame(draw_x, draw_y))
@@ -242,11 +242,7 @@ void WorldRenderer::render_entity(const RenderParams& params, const Entity* enti
 			}
 		}
 
-		output::put_rgb(
-			draw_x + params.world_inner_frame_p1().x,
-			draw_y + params.world_inner_frame_p1().y,
-			draw_renderable, TCOD_BKGND_SET
-		);
+		output::put_rgb(draw_x,draw_y, draw_renderable, TCOD_BKGND_SET);
 	}
 }
 
@@ -291,8 +287,8 @@ void WorldRenderer::render_tile_map(const RenderParams& params) const
 
 	for (int x = view_left; x < view_right; x++) for (int y = view_top; y < view_bottom; y++)
 	{
-		int draw_x = x + camera_offset.x;
-		int draw_y = y + camera_offset.y;
+		int draw_x = x + camera_offset.x + params.world_inner_frame_p1().x;
+		int draw_y = y + camera_offset.y + params.world_inner_frame_p1().y;
 		int depth = layer + camera_offset.z;
 
 		if (!params.in_world_frame(draw_x, draw_y))
@@ -344,11 +340,7 @@ void WorldRenderer::render_tile_map(const RenderParams& params) const
 			}
 		}
 
-		output::put_rgb(
-			draw_x + params.world_inner_frame_p1().x,
-			draw_y + params.world_inner_frame_p1().y,
-			draw_renderable, TCOD_BKGND_SET
-		);
+		output::put_rgb(draw_x,draw_y, draw_renderable, TCOD_BKGND_SET);
 	}
 }
 
@@ -370,6 +362,9 @@ void WorldRenderer::render_debug(const RenderParams& params) const
 
 		draw_x += params.world_inner_frame_p1().x;
 		draw_y += params.world_inner_frame_p1().y;
+
+		if (!params.in_world_frame(draw_x, draw_y))
+			continue;
 
 		if (debug_tile.change_fg)
 		{

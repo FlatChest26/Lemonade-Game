@@ -112,6 +112,32 @@ namespace output
 			}
 		}
 	}
+
+	bool is_fullscreen()
+	{
+		if (auto o = get_output())
+		{
+			auto window = o->get_context().get_sdl_window();
+			if (window)
+			{
+				return SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN_DESKTOP;
+			}
+		}
+
+		return false;
+	}
+
+	void set_fullscreen(bool fullscreen)
+	{
+		if (auto o = get_output())
+		{
+			auto window = o->get_context().get_sdl_window();
+			if (window)
+			{
+				SDL_SetWindowFullscreen(window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+			}
+		}
+	}
 }
 
 ///////////////////

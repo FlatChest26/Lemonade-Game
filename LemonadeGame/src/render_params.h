@@ -69,15 +69,16 @@ struct RenderParams
 		return world_render_frame.size;
 	}
 
-
 	bool in_world_frame(const UIPosition& pos) const
 	{
-		return world_outer_frame_p1() <= pos && pos < (world_outer_frame_p2() - world_render_frame.padding * 2);
+		return in_world_frame(pos.x, pos.y);
 	}
 
 	bool in_world_frame(Coord x, Coord y) const
 	{
-		return in_world_frame(UIPosition(x, y));
+		return
+			world_inner_frame_p1().x <= x && x < world_inner_frame_p2().x &&
+			world_inner_frame_p1().y <= y && y < world_inner_frame_p2().y;
 	}
 };
 

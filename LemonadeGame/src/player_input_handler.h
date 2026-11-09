@@ -25,6 +25,8 @@ namespace sidebar_menus
 class InputHandler_Player : public InputHandler
 {
 protected:
+	UIPosition m_mouse_position;
+
 	SidebarMenu_GameInfo* m_game_info_menu;
 	SidebarMenu_PersonInfo* m_person_info_menu;
 	SidebarMenu_Look* m_look_menu;
@@ -44,6 +46,9 @@ protected:
 	// -- Input Handling -- //
 
 	OVERRIDE_HANDLER_EVENT(key_down);
+
+	OVERRIDE_HANDLER_EVENT(mouse_motion);
+	OVERRIDE_HANDLER_EVENT(mouse_button_down);
 };
 
 class InputHandler_Look : public InputHandler_Player
@@ -95,6 +100,8 @@ public:
 
 	virtual bool init() override;
 	virtual void remove() override;
+	virtual void step(const TimeUnit& delta_time) override;
+	virtual void render(const RenderParams& params) const override;
 
 protected:
 	// -- Input Handling -- //

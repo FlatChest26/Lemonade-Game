@@ -59,9 +59,10 @@ protected:
 	void run_behaviors(const TimeUnit& time_delta);
 
 public:
-	virtual void init() {};
+	virtual void init() {}
+	virtual void reinit() {}
+	virtual void remove() {}
 	virtual bool check() const { return true; }
-	virtual void remove() {};
 
 	virtual StateResult step(const TimeUnit& time_delta);
 };
@@ -89,6 +90,7 @@ public:
 	{}
 
 public:
+	virtual void reinit() override;
 	virtual StateResult step(const TimeUnit& time_delta) override;
 };
 
@@ -109,6 +111,7 @@ public:
 	}
 
 public:
+	virtual void reinit() override;
 	virtual StateResult step(const TimeUnit& time_delta) override;
 };
 

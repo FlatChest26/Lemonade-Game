@@ -94,6 +94,35 @@ bool InputHandler_Player::init()
 	return true;
 }
 
+InputResult InputHandler_Player::ev_mouse_button_down(SDL_Event event)
+{
+	if (!GameSettings::MOUSE_MODE)
+	{
+		GameSettings::MOUSE_MODE = true;
+		return InputResult();
+	}
+
+	m_mouse_position.x = event.motion.x;
+	m_mouse_position.y = event.motion.y;
+
+
+
+	return InputResult();
+}
+
+InputResult InputHandler_Player::ev_mouse_motion(SDL_Event event)
+{
+	if (!GameSettings::MOUSE_MODE)
+	{
+		return InputResult();
+	}
+
+	m_mouse_position.x = event.motion.x;
+	m_mouse_position.y = event.motion.y;
+
+	return InputResult();
+}
+
 InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 {
 	if (!does_player_exist())
@@ -508,26 +537,26 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 		return InputResult();
 	}
 
-	if (InputMap::is_action_pressed(Keybind::SetToTurnBasedSpeed, event))
+	if (InputMap::is_action_just_pressed(Keybind::SetToTurnBasedSpeed, event))
 	{
 		world_state->set_tick_speed(TickSpeed::TURN_BASED);
 		return InputResult();
 	}
 
-	if (InputMap::is_action_pressed(Keybind::SetToRealTimeSpeed, event))
+	if (InputMap::is_action_just_pressed(Keybind::SetToRealTimeSpeed, event))
 	{
 		world_state->set_tick_speed(TickSpeed::REAL_TIME);
 		return InputResult();
 	}
 
-	if (InputMap::is_action_pressed(Keybind::SetToRealTime2xSpeed, event))
+	if (InputMap::is_action_just_pressed(Keybind::SetToRealTime2xSpeed, event))
 	{
 		world_state->set_tick_speed(TickSpeed::REAL_TIME_2X);
 
 		return InputResult();
 	}
 
-	if (InputMap::is_action_pressed(Keybind::SetToRealTime4xSpeed, event))
+	if (InputMap::is_action_just_pressed(Keybind::SetToRealTime4xSpeed, event))
 	{
 		if (is_sleeping)
 		{
@@ -537,6 +566,18 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 		{
 			world_state->set_tick_speed(TickSpeed::REAL_TIME_4X);
 		}
+		return InputResult();
+	}
+
+	if (InputMap::is_action_just_pressed(Keybind::ToggleMouseMode, event))
+	{
+		GameSettings::MOUSE_MODE = !GameSettings::MOUSE_MODE;
+		return InputResult();
+	}
+
+	if (InputMap::is_action_just_pressed(Keybind::ToggleFullscreen, event))
+	{
+		output::set_fullscreen(!output::is_fullscreen());
 		return InputResult();
 	}
 
@@ -584,6 +625,20 @@ void InputHandler_Player::render(const RenderParams& params) const
 		params.world_render_frame.pos.y + params.world_render_frame.size.y,
 		color::get("white"), color::get("black"), DEFAULT_RECT_FRAME, false, TCOD_BKGND_SET
 	);
+
+	if (!GameSettings::MOUSE_MODE)
+		return;
+
+	if (!params.in_world_frame(m_mouse_position))
+		return;
+
+	int draw_x{ m_mouse_position.x }, draw_y{ m_mouse_position.y }, draw_z{ 0 };
+
+	auto draw_fg = output::get_bg(draw_x, draw_y);
+	auto draw_bg = output::get_fg(draw_x, draw_y);
+
+	output::set_fg(draw_x, draw_y, draw_fg);
+	output::set_bg(draw_x, draw_y, draw_bg);
 }
 
 bool InputHandler_Look::init()
@@ -702,10 +757,11 @@ void InputHandler_Look::render(const RenderParams& params) const
 	if (draw_z != 0)
 		return;
 
-	auto tile = get_world()->get_tile(m_look_menu->look_position);
-
 	int screen_x = draw_x + params.world_inner_frame_p1().x;
 	int screen_y = draw_y + params.world_inner_frame_p1().y;
+
+	if (!params.in_world_frame(screen_x, screen_y))
+		return;
 
 	auto draw_fg = output::get_bg(screen_x, screen_y);
 	auto draw_bg = output::get_fg(screen_x, screen_y);
@@ -919,9 +975,29 @@ void InputHandler_Interaction::remove()
 	get_world_state()->get_sidebar()->remove_menu(sidebar_menus::INTERACTION);
 }
 
+void InputHandler_Interaction::step(const TimeUnit& delta_time)
+{
+	m_selection_menu->menu_items.clear();
+	m_interactions = m_actor->get_interactions_with(m_subject);
+
+	for (const auto& interaction : m_interactions)
+	{
+		m_selection_menu->menu_items.push_back(SelectionMenuItem(
+			fmt::format("{} - {}", InputMap::actions_to_string(interaction.input_action), interaction.name),
+			color::get("white"),
+			color::get("black")
+		));
+	}
+
+	if (!m_interactions.empty())
+	{
+		m_selection_menu->selected_slot = 0;
+	}
+}
+
 InputResult InputHandler_Interaction::ev_key_down(SDL_Event event)
 {
-	if (InputMap::is_action_pressed(Keybind::Interact, event) || InputMap::is_action_pressed(Keybind::Quit, event))
+	if (m_interactions.empty() || InputMap::is_action_pressed(Keybind::Interact, event) || InputMap::is_action_pressed(Keybind::Quit, event))
 	{
 		return InputResult(InputResult::Type::Pop_InputHandler);
 	}
@@ -984,6 +1060,39 @@ InputResult InputHandler_Interaction::ev_key_down(SDL_Event event)
 	}
 
 	return InputHandler_Player::ev_key_down(event);
+}
+
+void InputHandler_Interaction::render(const RenderParams& params) const
+{
+	if (!m_subject->has_movable())
+		return;
+
+	auto subject_pos = m_subject->get_movable()->pos();
+
+	int draw_x{ subject_pos.x }, draw_y{ subject_pos.y }, draw_z{ subject_pos.z };
+
+	if (params.camera)
+	{
+		if (!params.camera->in_view(subject_pos))
+			return;
+
+		std::tie(draw_x, draw_y, draw_z) = params.camera->get_screen(subject_pos).as_tuple();
+	}
+
+	if (draw_z != 0)
+		return;
+
+	int screen_x = draw_x + params.world_inner_frame_p1().x;
+	int screen_y = draw_y + params.world_inner_frame_p1().y;
+
+	if (!params.in_world_frame(screen_x, screen_y))
+		return;
+
+	auto draw_fg = output::get_bg(screen_x, screen_y);
+	auto draw_bg = output::get_fg(screen_x, screen_y);
+
+	output::set_fg(screen_x, screen_y, draw_fg);
+	output::set_bg(screen_x, screen_y, draw_bg);
 }
 
 InputResult InputHandler_PositionSelector::ev_key_down(SDL_Event event)

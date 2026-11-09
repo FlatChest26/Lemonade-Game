@@ -25,7 +25,7 @@ bool Behavior_MoveTo::perform(AIState* state, const TimeUnit& delta)
 		return true;
 	}
 
-	if (entity->get_movable()->pos() == m_move_to)
+	if (entity->get_movable()->pos() == m_move_to_pos)
 	{
 		//CERR("entity is already at m_move_to!");
 		return true;
@@ -44,7 +44,7 @@ bool Behavior_MoveTo::perform(AIState* state, const TimeUnit& delta)
 		return true;
 	}
 
-	if (!tile_map->in_bounds(m_move_to))
+	if (!tile_map->in_bounds(m_move_to_pos))
 	{
 		CERR("Move to location is out of bounds!");
 		return true;
@@ -63,12 +63,12 @@ bool Behavior_MoveTo::perform(AIState* state, const TimeUnit& delta)
 		return false;
 	}
 
-	if (m_path.empty() || tile_map->should_update_path() || entity->get_movable()->pos() != m_current_pos)
+	if (m_path.empty() || tile_map->should_update_path() || entity->get_movable()->pos() != m_current_pos || !m_callback(this))
 	{
 		m_path.clear();
 		m_current_pos = entity->get_movable()->pos();
 
-		m_path = Pathfinding::compute_path(entity->get_tile_map(), m_current_pos, m_move_to, entity);
+		m_path = Pathfinding::compute_path(entity->get_tile_map(), m_current_pos, m_move_to_pos, entity);
 	}
 
 	if (!m_path.empty())
@@ -140,7 +140,7 @@ bool Behavior_Wander::perform(AIState* state, const TimeUnit& delta)
 			}
 		}
 
-		state->add_behavior(new Behavior_MoveTo(wander_location));
+		state->add_behavior(new Behavior_MoveTo({ .move_to_pos = wander_location }));
 
 		if ((m_min_wait > TimeUnit::none()) && (m_max_wait > m_min_wait))
 		{
@@ -148,6 +148,74 @@ bool Behavior_Wander::perform(AIState* state, const TimeUnit& delta)
 			m_wait_time = wait_distribution(snowy::rng::generator);
 		}
 	}
+
+	return false;
+}
+
+bool Behavior_GetAdjacentToEntity::perform(AIState* state, const TimeUnit& delta)
+{
+	auto entity = state->get_entity();
+
+	if (!entity || !entity->has_movable())
+	{
+		return true;
+	}
+
+	if (!m_target || !m_target->has_movable())
+	{
+		return true;
+	}
+
+	auto entity_pos = entity->get_movable()->pos();
+	auto target_pos = m_target->get_movable()->pos();
+
+	if (transforms::is_adjacent(entity_pos, target_pos))
+	{
+		return true;
+	}
+
+	auto move_to = transforms::get_closest_adjacent(entity_pos, target_pos);
+	auto world = state->get_world();
+
+	if (world->is_blocked(move_to, entity))
+	{
+		std::list<Position> valid_positions;
+
+		for (const auto& p : transforms::get_surrounding_locations(target_pos))
+		{
+			if (!world->is_blocked(p, entity))
+			{
+				valid_positions.push_back(p);
+			}
+		}
+
+		if (!valid_positions.empty())
+		{
+			valid_positions.sort(
+				[&](const Position& p1, const Position& p2)
+				{
+					return (p1 - entity_pos).length_squared() > (p2 - entity_pos).length_squared();
+				}
+			);
+
+			move_to = valid_positions.front();
+		}
+	}
+
+	state->add_behavior(new Behavior_MoveTo({
+		.move_to_pos = move_to,
+		.callback = [=](Behavior_MoveTo* behavior)
+			{
+				if (m_target->get_movable()->pos() != target_pos)
+				{
+					behavior->set_move_to(m_target->get_movable()->pos());
+					return true;
+				}
+
+				return false;
+			}
+		})
+	);
 
 	return false;
 }

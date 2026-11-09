@@ -43,12 +43,7 @@ public:
 	void pop_state();
 	void reset_state(AIState* state = nullptr);
 	
-	AIState* current_state() const
-	{
-		if (m_state_stack.empty())
-			return nullptr;
-		return m_state_stack.front().get();
-	}
+	AIState* current_state() const;
 
 public:
 	void step(const TimeUnit& time_delta);

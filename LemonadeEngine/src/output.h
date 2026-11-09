@@ -33,6 +33,11 @@ namespace output
 	extern void set_window_title(const char* window_title);
 	inline void set_window_title(std::string window_title) { return set_window_title(window_title.c_str()); }
 
+	/*Checks if the SDL_WINDOW_FULLSCREEN flag is sent for the current context.*/
+	extern bool is_fullscreen();
+	/*Sets the SDL_WINDOW_FULLSCREEN flag for the current context.*/
+	extern void set_fullscreen(bool fullscreen);
+
 	// -- Console Functions -- //
 
 	/* Converts the given char into its code page 437 mapping.*/

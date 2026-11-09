@@ -255,6 +255,11 @@ size_t Entity::carry_slots() const
 		return get_item_def()->carry_slots;
 	}
 
+	if (is_creature())
+	{
+		return 2;
+	}
+
 	return 1;
 }
 
@@ -727,7 +732,21 @@ bool Entity::can_interact_with(Entity* subject) const
 			return true;
 		}
 
-		if (!get_inventory()->has_item(subject) && get_inventory()->can_carry(subject))
+		bool is_adjacent = true;
+
+		if (has_movable())
+		{
+			if (!subject->has_movable())
+			{
+				is_adjacent = false;
+			}
+			else
+			{
+				is_adjacent = transforms::is_adjacent(get_movable()->pos(), subject->get_movable()->pos());
+			}
+		}
+
+		if (!get_inventory()->has_item(subject) && get_inventory()->can_carry(subject) && is_adjacent)
 		{
 			return true;
 		}
@@ -756,7 +775,21 @@ std::vector<InteractionOption> Entity::get_interactions_with(Entity* subject)
 			});
 		}
 
-		if (!get_inventory()->has_item(subject) && get_inventory()->can_carry(subject))
+		bool is_adjacent = true;
+
+		if (has_movable())
+		{
+			if (!subject->has_movable())
+			{
+				is_adjacent = false;
+			}
+			else
+			{
+				is_adjacent = transforms::is_adjacent(get_movable()->pos(), subject->get_movable()->pos());
+			}
+		}
+
+		if (!get_inventory()->has_item(subject) && get_inventory()->can_carry(subject) && is_adjacent)
 		{
 			potential_actions.push_back({
 				.name = "grab",

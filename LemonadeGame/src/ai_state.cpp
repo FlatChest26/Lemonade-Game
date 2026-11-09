@@ -3,6 +3,7 @@
 #include "entity.h"
 #include "world.h"
 #include "ai_handler.h"
+#include "interactions.h"
 
 AIState::AIState(const AIState& other)
 {
@@ -83,7 +84,6 @@ void AIState::run_behaviors(const TimeUnit& time_delta)
 		}
 	}
 }
-
 StateResult AIState::step(const TimeUnit& time_delta)
 {
 	run_behaviors(time_delta);
@@ -110,6 +110,15 @@ StateResult AIState_Wander::step(const TimeUnit& time_delta)
 	return StateResult(StateResultType::NONE);
 }
 
+
+void AIState_WalkAlongSidewalk::reinit()
+{
+	if (get_entity())
+	{
+		get_entity()->get_gait()->set_current_gait("STROLL");
+	}
+}
+
 StateResult AIState_WalkAlongSidewalk::step(const TimeUnit& time_delta)
 {
 	run_behaviors(time_delta);
@@ -126,7 +135,7 @@ StateResult AIState_WalkAlongSidewalk::step(const TimeUnit& time_delta)
 		}
 		else
 		{
-			add_behavior(new Behavior_MoveTo(m_preferred_sidewalk_end));
+			add_behavior(new Behavior_MoveTo({ .move_to_pos = m_preferred_sidewalk_end } ));
 			get_entity()->get_gait()->set_current_gait("STROLL");
 		}
 	}
@@ -134,48 +143,27 @@ StateResult AIState_WalkAlongSidewalk::step(const TimeUnit& time_delta)
 	return StateResult(StateResultType::NONE);
 }
 
-#include "interactions.h"
+void AIState_Horny::reinit()
+{
+	if (get_entity())
+	{
+		get_entity()->get_gait()->set_current_gait("WALK");
+	}
+}
 
 StateResult AIState_Horny::step(const TimeUnit& time_delta)
 {
+	auto entity_pos = get_entity()->get_movable()->pos();
+	auto target_pos = m_horny_target->get_movable()->pos();
+
 	run_behaviors(time_delta);
 
 	if (!has_behavior())
 	{
-		auto entity_pos = get_entity()->get_movable()->pos();
-		auto target_pos = m_horny_target->get_movable()->pos();
-
 		if (!transforms::is_adjacent(entity_pos, target_pos))
 		{
-			auto move_to = transforms::get_closest_adjacent(entity_pos, target_pos);
-			auto world = get_world();
-
-			if (world->is_blocked(move_to, get_entity()))
-			{
-				std::list<Position> valid_positions;
-
-				for (const auto& p : transforms::get_surrounding_locations(target_pos))
-				{
-					if (!world->is_blocked(p, get_entity()))
-					{
-						valid_positions.push_back(p);
-					}
-				}
-
-				if (!valid_positions.empty())
-				{
-					valid_positions.sort(
-						[&](const Position& p1, const Position& p2)
-						{
-							return (p1 - entity_pos).length_squared() > (p2 - entity_pos).length_squared();
-						}
-					);
-
-					move_to = valid_positions.front();
-				}
-			}
-
-			add_behavior(new Behavior_MoveTo(move_to));
+			add_behavior(new Behavior_GetAdjacentToEntity({ .target = m_horny_target }));
+			get_entity()->get_gait()->set_current_gait("WALK");
 		}
 		else
 		{

@@ -72,6 +72,9 @@ enum class Keybind : uint64_t
 	SetToRealTime4xSpeed,
 
 	PinSidebarMenu,
+
+	ToggleFullscreen,
+	ToggleMouseMode,
 };
 
 using InputMap = GenericInputMap<Keybind>;

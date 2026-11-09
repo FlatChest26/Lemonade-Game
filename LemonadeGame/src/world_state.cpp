@@ -263,7 +263,7 @@ void WorldGameState::new_game()
 	// Material
 
 	//tile_map->add_material(lemonade_stand_pos - Position(4, 0, 0), RawMaster::get<MaterialType>("lemonade"), 4);
-	tile_map->add_material(lemonade_stand_pos - Position(4, -3, 0), RawMaster::get<MaterialType>("blood"), 7);
+	//tile_map->add_material(lemonade_stand_pos - Position(4, -3, 0), RawMaster::get<MaterialType>("blood"), 7);
 
 	// Add AI Brains
 	for (auto& entity : m_world->get_entities(
