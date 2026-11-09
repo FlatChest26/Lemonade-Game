@@ -99,7 +99,10 @@ void GameState::push_input_handler(InputHandler* input_handler)
 
 void GameState::reset_input_handlers(InputHandler* input_handler)
 {
-	m_input_handlers.clear();
+	while (!m_input_handlers.empty())
+	{
+		pop_input_handler();
+	}
 
 	if (input_handler)
 	{

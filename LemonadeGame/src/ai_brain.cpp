@@ -11,11 +11,20 @@
 #include <random>
 #include "snowy_rng.h"
 
-AIBrain::~AIBrain()
+AIBrain::AIBrain(const AIBrain& other)
 {
+	m_manager = other.m_manager;
+	m_entity = other.m_entity;
 }
 
-void AIBrain::step(TimeUnit time_delta)
+AIBrain::AIBrain(AIBrain&& other)
+{
+	m_manager = other.m_manager;
+	m_entity = other.m_entity;
+	m_state_stack = std::move(other.m_state_stack);
+}
+
+void AIBrain::step(const TimeUnit& time_delta)
 {
 	auto entity = get_entity();
 
@@ -35,71 +44,56 @@ void AIBrain::step(TimeUnit time_delta)
 		return;
 	}
 
-	if (auto behavior = current_behavior())
+	if (auto state = current_state())
 	{
-		if (behavior->perform(this, time_delta))
-		{
-			m_behavior_stack.pop_back();
-		}
-	}
-	else
-	{
-		auto entity_pos = entity->get_movable()->pos();
-		auto sidewalk_1 = m_manager->get_sidewalk_end();
-		auto sidewalk_2 = m_manager->get_sidewalk_end() + Position(1, 0, 0);
+		auto result = state->step(time_delta);
 
-		if (transforms::is_adjacent(entity_pos, sidewalk_1) || transforms::is_adjacent(entity_pos, sidewalk_2))
+		switch (result.type)
 		{
-			entity->queue_remove();
-		}
-		else
-		{
-			add_behavior(new Behavior_Wander(2, Position(-1, -1, -1), TimeUnit::from_seconds(0.5), TimeUnit::from_seconds(4.0)));
+		case StateResultType::POP:
+			pop_state();
+			break;
+		case StateResultType::PUSH:
+			push_state(result.next);
+			break;
+		case StateResultType::RESET:
+			reset_state(result.next);
+			break;
 		}
 	}
 }
 
-void AIBrain::set_entity(Entity* entity)
+void AIBrain::push_state(AIState* state)
 {
-	m_entity = entity;
-}
+	std::unique_ptr<AIState> new_state(state);
+	
+	new_state->set_brain(this);
+	new_state->init();
 
-Entity* AIBrain::get_entity()
-{
-	return m_entity;
-}
-
-void AIBrain::add_behavior(Behavior* behavior)
-{
-	if (!behavior)
-	{
+	if (!new_state->check())
 		return;
-	}
 
-	m_behavior_stack.push_back(behavior);
+	m_state_stack.push_back(std::move(new_state));
 }
 
-Behavior* AIBrain::current_behavior()
+void AIBrain::pop_state()
 {
-	if (m_behavior_stack.empty())
+	if (m_state_stack.empty())
+		return;
+
+	current_state()->remove();
+	m_state_stack.pop_back();
+}
+
+void AIBrain::reset_state(AIState* state)
+{
+	while (!m_state_stack.empty())
 	{
-		return nullptr;
+		pop_state();
 	}
 
-	return m_behavior_stack.back();
-}
-
-const Behavior* AIBrain::current_behavior() const
-{
-	if (m_behavior_stack.empty())
+	if (state)
 	{
-		return nullptr;
+		push_state(state);
 	}
-
-	return m_behavior_stack.back();
-}
-
-void AIBrain::cancel_behavior()
-{
-	m_behavior_stack.pop_back();
 }

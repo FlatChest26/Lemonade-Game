@@ -13,7 +13,7 @@ protected:
 	Entity* m_subject;
 
 public:
-	Interaction(Entity* actor = nullptr, Entity* subject = nullptr) :
+	Interaction(Entity* actor, Entity* subject) :
 		EntityAction(actor), m_subject(subject)
 	{
 	}
@@ -28,7 +28,7 @@ public:
 class SwapPlacesAction : public Interaction
 {
 public:
-	SwapPlacesAction(Entity* actor = nullptr, Entity* subject = nullptr) :
+	SwapPlacesAction(Entity* actor, Entity* subject) :
 		Interaction(actor, subject)
 	{
 	}
@@ -42,7 +42,7 @@ public:
 class GrabAction : public Interaction
 {
 public:
-	GrabAction(Entity* actor = nullptr, Entity* subject = nullptr) :
+	GrabAction(Entity* actor, Entity* subject) :
 		Interaction(actor, subject)
 	{
 	}
@@ -55,7 +55,7 @@ public:
 class DropAction : public Interaction
 {
 public:
-	DropAction(Entity* actor = nullptr, Entity* subject = nullptr) :
+	DropAction(Entity* actor, Entity* subject) :
 		Interaction(actor, subject)
 	{
 	}
@@ -69,7 +69,7 @@ public:
 class ConsumeAction : public Interaction
 {
 public:
-	ConsumeAction(Entity* actor = nullptr, Entity* subject = nullptr) :
+	ConsumeAction(Entity* actor, Entity* subject) :
 		Interaction(actor, subject)
 	{
 	}
@@ -79,5 +79,75 @@ public:
 
 	static std::string action_name() { return "consume"; }
 };
+
+class CheckGrappleAction : public Interaction
+{
+public:
+	CheckGrappleAction(Entity* actor, Entity* subject = nullptr) :
+		Interaction(actor, subject)
+	{
+	}
+
+	virtual TimeUnit get_action_length() const override { return TimeUnit::none(); }
+
+	virtual bool check_action() const override;
+	virtual ActionResult perform();
+	static std::string action_name() { return "check grapple"; }
+};
+
+class GrappleAction : public Interaction
+{
+public:
+	GrappleAction(Entity* actor = nullptr, Entity* subject = nullptr) :
+		Interaction(actor, subject)
+	{
+	}
+
+	virtual TimeUnit get_action_length() const override;
+
+	virtual bool check_action() const override;
+	virtual ActionResult perform();
+	static std::string action_name() { return "grapple"; }
+};
+
+class ReleaseGrappleAction : public EntityAction
+{
+public:
+	ReleaseGrappleAction(Entity* actor = nullptr) :
+		EntityAction(actor)
+	{
+	}
+
+	virtual bool check_action() const override;
+	virtual ActionResult perform();
+	static std::string action_name() { return "release grapple"; }
+};
+
+class EscapeGrappleAction : public EntityAction
+{
+public:
+	EscapeGrappleAction(Entity* actor = nullptr) :
+		EntityAction(actor)
+	{
+	}
+
+	virtual bool check_action() const override;
+	virtual ActionResult perform();
+	static std::string action_name() { return "escape grapple"; }
+};
+
+class KissAction : public Interaction
+{
+public:
+	KissAction(Entity* actor, Entity* subject) :
+		Interaction(actor, subject)
+	{
+	}
+
+	virtual bool check_action() const override;
+	virtual ActionResult perform();
+	static std::string action_name() { return "kiss other"; }
+};
+
 
 #endif // !LEMONADE_GAME_SRC_MISC_ACTIONS_H

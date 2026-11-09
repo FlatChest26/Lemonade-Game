@@ -248,7 +248,7 @@ int SidebarMenu_Needs::render(const RenderParams& params, const SidebarParams& s
 
 	for (const auto& need_id : entity->get_living()->get_needs())
 	{
-		const auto& need = entity->get_living()->stat(need_id);
+		const auto& need = entity->get_living()->get_stat(need_id);
 		print_text(fmt::format("{}", capitalize(need.name()), need.get_value()), fg);
 		print_text(fmt::format(" You are {}.", need.description()), need.description_color());
 	}

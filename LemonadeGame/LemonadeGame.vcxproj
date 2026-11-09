@@ -154,6 +154,7 @@
     <ClInclude Include="src\ai_behavior.h" />
     <ClInclude Include="src\ai_brain.h" />
     <ClInclude Include="src\ai_handler.h" />
+    <ClInclude Include="src\ai_state.h" />
     <ClInclude Include="src\anatomy.h" />
     <ClInclude Include="src\body_part.h" />
     <ClInclude Include="src\body_part_components.h" />
@@ -218,6 +219,7 @@
     <ClCompile Include="src\ai_behavior.cpp" />
     <ClCompile Include="src\ai_brain.cpp" />
     <ClCompile Include="src\ai_handler.cpp" />
+    <ClCompile Include="src\ai_state.cpp" />
     <ClCompile Include="src\anatomy.cpp" />
     <ClCompile Include="src\body_part.cpp" />
     <ClCompile Include="src\body_part_type.cpp" />

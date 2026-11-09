@@ -437,7 +437,7 @@ GrammarNoun Entity::display_noun() const
 
 	if (is_name_known())
 	{
-		return full_name();
+		return nickname();
 	}
 
 	Noun display_noun = noun();
@@ -867,7 +867,7 @@ bool Entity::can_queue_action(Action* action, bool print_errors) const
 		return false;
 	}
 
-	if (has_action_name(action->action_name()))
+	if (has_action(action))
 	{
 		return false;
 	}
@@ -906,11 +906,15 @@ bool Entity::start_action(QueuedAction action)
 	return true;
 }
 
-bool Entity::has_action_name(std::string action_name) const
+bool Entity::has_action(Action* action) const
 {
 	for (auto& other_action : m_action_queue)
 	{
-		if (other_action->action_name() == action_name)
+		if (
+			other_action->action_name() == action->action_name() && 
+			other_action->get_actor() == action->get_actor() &&
+			other_action->get_subject() == action->get_subject()
+			)
 			return true;
 	}
 
@@ -957,6 +961,39 @@ void Entity::complete_action()
 	if (auto world_state = get_world_state())
 	{
 		world_state->handle_action(std::move(next_action));
+	}
+}
+
+void Entity::grapple_other(Entity* other)
+{
+	if (!other->can_be_grappled())
+		return;
+
+	set_component<Grapple>(new Grapple(this, other));
+	other->set_component<Grapple>(new Grapple(this, other));
+}
+
+void Entity::release_grapple()
+{
+	if (!is_grappling_other())
+		return;
+
+	if (has_grapple())
+	{
+		get_grapple()->target->remove_component<Grapple>();
+		remove_component<Grapple>();
+	}
+}
+
+void Entity::escape_grapple()
+{
+	if (!is_being_grappled())
+		return;
+
+	if (has_grapple())
+	{
+		get_grapple()->owner->remove_component<Grapple>();
+		remove_component<Grapple>();
 	}
 }
 
@@ -1031,6 +1068,20 @@ bool Entity::is_player() const
 	}
 
 	return false;
+}
+
+bool Entity::can_move_on_own() const
+{
+	if (!has_movable())
+		return false;
+
+	if (is_being_grappled())
+		return false;
+
+	if (is_being_held())
+		return false;
+
+	return true;
 }
 
 void Entity::on_flags_updated()
@@ -1122,12 +1173,12 @@ Position Entity::escape_wall(const Position& pos) const
 	if (!check_block(pos))
 		return pos;
 
-	Position valid_pos = pos;
-
 	for (const auto& check_pos : transforms::get_surrounding_locations(pos))
 	{
 		if (!check_block(check_pos))
+		{
 			return check_pos;
+		}
 	}
 
 	return pos;
@@ -1137,21 +1188,6 @@ void Entity::step(const TimeUnit& time_delta)
 {
 	if (has_movable())
 	{
-		// Try to escape wall
-		if (!is_being_held() && can_collide() && free_to_move() && get_tile_map()->get_tile(get_movable()->pos())->is_blocked())
-		{
-			auto new_pos = escape_wall(get_movable()->pos());
-
-			if (new_pos == get_movable()->pos())
-			{
-				CERR("Entity cannot escape wall!");
-			}
-			else
-			{
-				get_movable()->pos() = new_pos;
-			}
-		}
-
 		// Fall if not on ground
 		if (can_fall() && !is_on_floor())
 		{
@@ -1176,6 +1212,18 @@ void Entity::step(const TimeUnit& time_delta)
 		{
 			get_movable()->pos() = get_entity_holder()->get_movable()->pos() - get_movable()->get_center();
 			get_movable()->direction() = get_entity_holder()->get_movable()->direction();
+		}
+
+		if (is_being_grappled() && get_grapple_owner()->has_movable())
+		{
+			auto grapple_owner = get_grapple_owner();
+			get_movable()->pos() = escape_wall(transforms::get_closest_adjacent(get_movable()->pos(), grapple_owner->get_movable()->pos()));
+		}
+
+		// Try to escape wall
+		if (!is_being_held() && can_collide() && free_to_move())
+		{
+			get_movable()->pos() = escape_wall(get_movable()->pos());
 		}
 	}
 

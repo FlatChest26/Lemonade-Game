@@ -91,7 +91,7 @@ namespace grammar
 		}
 		else if (std::holds_alternative<std::string>(g_noun)) // Proper noun
 		{
-			return the(std::get<std::string>(g_noun));
+			return std::get<std::string>(g_noun);
 		}
 
 		return "the ";

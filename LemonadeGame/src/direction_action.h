@@ -15,7 +15,7 @@ protected:
 	Coord m_dz{ 0 };
 
 public:
-	ActionWithDirection(Entity* actor = nullptr, Coord dx = 0, Coord dy = 0, Coord dz = 0) :
+	ActionWithDirection(Entity* actor, Coord dx, Coord dy, Coord dz) :
 		EntityAction(actor), m_dx(dx), m_dy(dy), m_dz(dz)
 	{
 	}
@@ -35,12 +35,12 @@ public:
 class BumpAction : public ActionWithDirection
 {
 public:
-	BumpAction(Entity* actor = nullptr, Coord dx = 0, Coord dy = 0, Coord dz = 0) :
+	BumpAction(Entity* actor, Coord dx, Coord dy, Coord dz) :
 		ActionWithDirection(actor, dx, dy, dz)
 	{
 	}
 
-	BumpAction(Entity* actor = nullptr, const Position& delta = { 0, 0, 0 }) :
+	BumpAction(Entity* actor, const Position& delta) :
 		BumpAction(actor, delta.x, delta.y, delta.z)
 	{
 	}
@@ -56,12 +56,12 @@ public:
 class MovementAction : public ActionWithDirection
 {
 public:
-	MovementAction(Entity* actor = nullptr, Coord dx = 0, Coord dy = 0, Coord dz = 0) :
+	MovementAction(Entity* actor, Coord dx, Coord dy, Coord dz) :
 		ActionWithDirection(actor, dx, dy, dz)
 	{
 	}
 
-	MovementAction(Entity* actor = nullptr, const Position& delta = { 0, 0, 0 }) :
+	MovementAction(Entity* actor, const Position& delta) :
 		ActionWithDirection(actor, delta.x, delta.y, delta.z)
 	{
 	}

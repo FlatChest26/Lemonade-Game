@@ -104,4 +104,27 @@ namespace transforms
 
 		return Position(tpoint2 + origin);
 	}
+
+	bool is_adjacent(const Position& p1, const Position& p2, Coord min_dist)
+	{
+		//return ((p2 - p1).unit() * min_dist).length_squared() >= ((p2 - p1).length_squared()) + DBL_EPSILON;
+
+		for (const auto& adjacent_pos : get_surrounding_locations(p1))
+		{
+			if (adjacent_pos == p2)
+				return true;
+		}
+
+		return false;
+	}
+
+	bool is_directly_adjacent(const Position& p1, const Position& p2)
+	{
+		return (p2 - p1).length_squared() <= (1.4 * 1.4) + DBL_EPSILON;
+	}
+
+	Position get_closest_adjacent(const Position& start, const Position& destination, Coord near_radius)
+	{
+		return ((start - destination).unit() * near_radius) + destination;
+	}
 }

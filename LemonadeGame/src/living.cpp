@@ -107,6 +107,8 @@ bool Living::is_adult() const
 
 void Living::add_defaults()
 {
+	// Needs //
+
 	add_stat(
 		needs::AROUSAL,
 		StatInfo
@@ -122,7 +124,7 @@ void Living::add_defaults()
 				{ "sex-crazed",		80, 101, color::get("red") },
 			},
 		},
-		StatRate{ .amount = -1, .tick = TimeUnit::from_minutes(20.0f) }
+		StatRate{ .amount = -1, .tick = TimeUnit::from_minutes(20.0) }
 	);
 
 	add_stat(
@@ -140,7 +142,7 @@ void Living::add_defaults()
 				{ "starving",		80, 101, color::get("red") },
 			},
 		},
-		StatRate{ .amount = 1, .tick = TimeUnit::from_minutes(26.0f) }
+		StatRate{ .amount = 1, .tick = TimeUnit::from_minutes(26.0) }
 	);
 
 	add_stat(
@@ -157,7 +159,7 @@ void Living::add_defaults()
 				{ "dehydrated",		70, 101, color::get("dark_blue") },
 			},
 		},
-		StatRate{ .amount = 1, .tick = TimeUnit::from_minutes(22.0f) }
+		StatRate{ .amount = 1, .tick = TimeUnit::from_minutes(22.0) }
 	);
 
 	add_stat(
@@ -175,7 +177,7 @@ void Living::add_defaults()
 				{ "filthy",			80, 101, color::get("dark_brown") },
 			}
 		},
-		StatRate{ .amount = 1, .tick = TimeUnit::from_minutes(28.0f) }
+		StatRate{ .amount = 1, .tick = TimeUnit::from_minutes(28.0) }
 	);
 
 	add_stat(
@@ -193,7 +195,7 @@ void Living::add_defaults()
 				{ "exhausted",		80, 101, color::get("dark_indigo") },
 			}
 		},
-		StatRate{ .amount = 1, .tick = TimeUnit::from_minutes(23.0f) }
+		StatRate{ .amount = 1, .tick = TimeUnit::from_minutes(23.0) }
 	);
 
 	add_stat(
@@ -216,7 +218,63 @@ void Living::add_defaults()
 				{ "loving life!",	 80,  101, color::get("spring_green") },
 			}
 		},
-		StatRate{ .amount = -1, .tick = TimeUnit::from_minutes(42.0f) }
+		StatRate{ .amount = -1, .tick = TimeUnit::from_minutes(42.0) }
+	);
+
+	// Attributes //
+
+	add_stat(
+		attributes::STRENGTH,
+		StatInfo
+		{
+			.type = StatType::Attribute,
+			.positive_name = "strength",
+			.can_be_negative = false,
+			.description = {
+				{ "weak",			0,  10, color::get("purple") },
+				{ "average",		10, 40, color::get("gray") },
+				{ "competent",		40, 60, color::get("white") },
+				{ "excellent",		60, 80, color::get("light_yellow") },
+				{ "incredible",		80, 101, color::get("yellow") },
+			}
+		},
+		StatRate{ .amount = -1, .tick = TimeUnit::from_hours(48.0) }
+	);
+
+	add_stat(
+		attributes::AGILITY,
+		StatInfo
+		{
+			.type = StatType::Attribute,
+			.positive_name = "agility",
+			.can_be_negative = false,
+			.description = {
+				{ "weak",			0,  10, color::get("purple") },
+				{ "average",		10, 40, color::get("gray") },
+				{ "competent",		40, 60, color::get("white") },
+				{ "excellent",		60, 80, color::get("light_yellow") },
+				{ "incredible",		80, 101, color::get("yellow") },
+			}
+		},
+		StatRate{ .amount = -1, .tick = TimeUnit::from_hours(48.0) }
+	);
+
+	add_stat(
+		attributes::ENDURANCE,
+		StatInfo
+		{
+			.type = StatType::Attribute,
+			.positive_name = "endurance",
+			.can_be_negative = false,
+			.description = {
+				{ "weak",			0,  10, color::get("purple") },
+				{ "average",		10, 40, color::get("gray") },
+				{ "competent",		40, 60, color::get("white") },
+				{ "excellent",		60, 80, color::get("light_yellow") },
+				{ "incredible",		80, 101, color::get("yellow") },
+			}
+		},
+		StatRate{ .amount = -1, .tick = TimeUnit::from_hours(48.0) }
 	);
 }
 
@@ -243,7 +301,7 @@ void Living::add_stat(const StatID& ID, const StatInfo& stat, const StatRate& ch
 		break;
 	}
 
-	add_timer(ID, change_rate);
+	add_timer(ID + "_TIMER", ID, change_rate);
 }
 
 void Living::remove_stat(const StatID& ID)
@@ -300,7 +358,7 @@ double Living::get_sleep_quality() const
 
 bool Living::can_sleep() const
 {
-	auto fatigue = stat(needs::FATIGUE);
+	auto fatigue = get_stat(needs::FATIGUE);
 
 	if (fatigue.get_value() > 20)
 	{
@@ -312,7 +370,7 @@ bool Living::can_sleep() const
 
 bool Living::can_wake_up() const
 {
-	auto fatigue = stat(needs::FATIGUE);
+	auto fatigue = get_stat(needs::FATIGUE);
 
 	if (fatigue.get_value() < 40)
 	{
@@ -324,7 +382,7 @@ bool Living::can_wake_up() const
 
 bool Living::should_sleep() const
 {
-	auto fatigue = stat(needs::FATIGUE);
+	auto fatigue = get_stat(needs::FATIGUE);
 
 	if (fatigue.get_value() > 92)
 	{
@@ -336,7 +394,7 @@ bool Living::should_sleep() const
 
 bool Living::should_wake_up() const
 {
-	auto fatigue = stat(needs::FATIGUE);
+	auto fatigue = get_stat(needs::FATIGUE);
 
 	if (fatigue.get_value() < 20)
 	{
@@ -348,7 +406,7 @@ bool Living::should_wake_up() const
 
 void Living::fall_asleep()
 {
-	add_timer("REST_TIMER", StatRate{ .amount = -1, .tick = TimeUnit::from_minutes(12.0) });
+	add_timer("REST_TIMER", needs::FATIGUE, StatRate{ .amount = -1, .tick = TimeUnit::from_minutes(12.0) });
 	m_asleep = true;
 }
 
@@ -379,7 +437,21 @@ void Living::step(const TimeUnit& time_delta)
 		return;
 	}
 
-	auto hunger = stat(needs::HUNGER);
+	// Manage stats
+	for (auto& [ID, stat] : m_stats)
+	{
+		if (!stat.info().can_be_negative)
+		{
+			stat.value() = std::clamp(stat.value().current(), 0, 100);
+		}
+		else
+		{
+			stat.value() = std::clamp(stat.value().current(), -100, 100);
+		}
+	}
+
+	// Manage needs
+	auto hunger = get_stat(needs::HUNGER);
 
 	if (hunger.value() > 95)
 	{
@@ -387,7 +459,7 @@ void Living::step(const TimeUnit& time_delta)
 		return;
 	}
 
-	auto thirst = stat(needs::THIRST);
+	auto thirst = get_stat(needs::THIRST);
 
 	if (thirst.value() > 95)
 	{
@@ -395,7 +467,6 @@ void Living::step(const TimeUnit& time_delta)
 		return;
 	}
 
-	// Manage sleep
 	if (is_asleep() && should_wake_up())
 	{
 		m_owner->reset_actions(QueuedAction(new EndSleepAction(m_owner)));
@@ -408,40 +479,18 @@ void Living::step(const TimeUnit& time_delta)
 		return;
 	}
 
-	// Manage stats
-	for (auto& [ID, stat] : m_stats)
+	// Manage timers
+	for (auto& [timer_id, timer_data] : m_timers)
 	{
-		if (has_timer(ID))
-		{
-			auto& [rate, timer] = get_timer(ID);
-			timer += time_delta * GameSettings::WORLD_RELATIVE_SPEED;
+		auto& [modified_stat, rate, timer] = timer_data;
 
-			while (timer >= rate.tick)
-			{
-				stat.value() += rate.amount;
-				timer -= std::min(rate.tick, timer);
-			}
-		}
+		auto& stat = get_stat(modified_stat);
+		timer += time_delta * GameSettings::WORLD_RELATIVE_SPEED;
 
-		if (!stat.info().can_be_negative)
+		while (timer >= rate.tick)
 		{
-			stat.value() = std::clamp(stat.value().current(), 0, 100);
-		}
-		else
-		{
-			stat.value() = std::clamp(stat.value().current(), -100, 100);
-		}
-
-		if (ID == needs::FATIGUE && has_timer("REST_TIMER"))
-		{
-			auto& [rate, timer] = get_timer("REST_TIMER");
-			timer += time_delta * GameSettings::WORLD_RELATIVE_SPEED;
-
-			while (timer >= rate.tick)
-			{
-				stat.value() += rate.amount * get_sleep_quality();
-				timer -= rate.tick;
-			}
+			stat.value() += rate.amount;
+			timer -= std::min(rate.tick, timer);
 		}
 	}
 }

@@ -274,7 +274,7 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 				if (other_tile == tile)
 					continue;
 
-				if (transforms::is_adjacent(p, other_pos) && (other_tile->can_connect_with(tile) || tile->can_connect_with(other_tile)))
+				if (transforms::is_directly_adjacent(p, other_pos) && (other_tile->can_connect_with(tile) || tile->can_connect_with(other_tile)))
 				{
 					is_connection = true;
 					break;
@@ -326,7 +326,7 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 				if (other_tile == tile)
 					continue;
 
-				if (transforms::is_adjacent(p, other_pos) && (other_tile->can_connect_with(tile) || tile->can_connect_with(other_tile)))
+				if (transforms::is_directly_adjacent(p, other_pos) && (other_tile->can_connect_with(tile) || tile->can_connect_with(other_tile)))
 				{
 					is_connection = true;
 					break;
@@ -439,6 +439,69 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 		return InputResult();
 	}
 
+	if (can_act && InputMap::is_action_pressed(Keybind::Grapple, event))
+	{
+		std::vector<Entity*> potential_grapple_target;
+
+		if (player->is_being_grappled() || player->is_grappling_other())
+		{
+			return InputResult(new CheckGrappleAction(player));
+		}
+		else
+		{
+			for (const auto& p : transforms::get_surrounding_locations(player_pos, false, false, true))
+			{
+				auto entities_at = world->get_entities_at(p,
+					EntityFilter
+					{
+						.ignore_held = true,
+						.ignore_ids = { player->ID() },
+						.required_flags = { EntityFlag::CAN_BE_GRAPPLED }
+					}
+				);
+
+				if (!entities_at.empty())
+				{
+					potential_grapple_target.insert(potential_grapple_target.end(), entities_at.begin(), entities_at.end());
+				}
+			}
+		}
+		
+		if (!potential_grapple_target.empty())
+		{
+			if (potential_grapple_target.size() == 1)
+			{
+				return InputResult(new CheckGrappleAction(player, potential_grapple_target.front()));
+			}
+			else
+			{
+				return InputResult(new InputHandler_ListSelector(
+					{
+						.title = "Grapple what?",
+						.input_keybind = Keybind::Interact,
+						.display_input_keybind = false,
+						.items = [&]()
+						{
+							std::vector<ListSelectorItem> items;
+							for (auto& entity : potential_grapple_target)
+							{
+								items.push_back(ListSelectorItem(
+									entity->display_name(), entity->fg(), entity->bg(),
+									[=]()
+									{
+										return InputResult(new CheckGrappleAction(player, entity));
+									}
+								));
+							}
+							return items;
+						}(),
+					}
+				));
+
+			}
+		}
+	}
+
 	if (InputMap::is_action_pressed(Keybind::Quit, event))
 	{
 		game->stop_running();
@@ -494,7 +557,7 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 		{
 			for (auto& entity : world->get_entities(EntityFilter{ .must_be_ai = true }))
 			{
-				entity->get_brain()->add_behavior(new Behavior_MoveTo(player->get_movable()->pos()));
+				entity->get_brain()->push_state(new AIState_Horny({ .horny_target = player }));
 			}
 		}
 		break;

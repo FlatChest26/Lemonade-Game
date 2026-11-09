@@ -84,6 +84,16 @@ ActionResult BumpAction::perform()
 		}
 	}
 
+	if (actor->is_being_grappled())
+	{
+		return ActionResult(false);
+	}
+
+	if (actor->is_grappling_other())
+	{
+		actor->get_grapple_target()->start_action(QueuedAction(new MovementAction(actor->get_grapple_target(), m_dx, m_dy, m_dz)));
+	}
+
 	return ActionResult
 	{
 		.success = true,

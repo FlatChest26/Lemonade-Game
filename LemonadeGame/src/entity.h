@@ -93,6 +93,8 @@ enum class EntityFlag : int64_t
 
 	IS_OPAQUE = 1 << 18,										// The entity will act as a visual obstacle to other entities.
 	IS_TRANSPARENT = ~IS_OPAQUE,								// The entity will never act as a visual obstactle to other entities
+
+	CAN_BE_GRAPPLED = 1 << 19,									// The entity can be put in a grapple.
 };
 
 IS_FLAG_ENUM(EntityFlag);
@@ -113,10 +115,16 @@ struct RenderOverride
 	std::function<bool(const Entity*)> active;
 };
 
-template<typename T>
-using ComponentRef = std::unique_ptr<T>;
+struct Grapple
+{
+	Entity* owner;
+	Entity* target;
+};
 
 using FallTimer = TimeUnit;
+
+template<typename T>
+using ComponentRef = std::unique_ptr<T>;
 
 using EntityRawRefTuple = std::tuple<
 	RawMaster::Ref<Species>,
@@ -133,7 +141,8 @@ using EntityComponentTuple = std::tuple<
 	ComponentRef<Living>,
 	ComponentRef<AIBrain>,
 	ComponentRef<Person>,
-	ComponentRef<FallTimer>
+	ComponentRef<FallTimer>,
+	ComponentRef<Grapple>
 >;
 
 using EntityRef = Entity&;
@@ -283,7 +292,7 @@ public:
 		return !m_action_queue.empty();
 	}
 
-	virtual bool has_action_name(std::string action_name) const;
+	virtual bool has_action(Action* action) const;
 
 	virtual const Action* get_current_action() const { return m_action_queue.back().get(); }
 	virtual Action* get_current_action() { return m_action_queue.back().get(); }
@@ -444,6 +453,32 @@ public:
 	virtual bool is_person() const { return has_component<Person>(); }
 	virtual void set_person(Person* person) { set_component<Person>(person)->set_owner(this); }
 
+	// Grapple //
+
+	virtual void grapple_other(Entity* other);
+	virtual void release_grapple();
+	virtual void escape_grapple();
+
+	virtual bool is_grappling_other() const { return has_grapple() && get_grapple()->owner == this; }
+	virtual bool is_being_grappled() const { return has_grapple() && get_grapple()->target == this; }
+
+	virtual bool has_grapple() const { return has_component<Grapple>(); }
+	virtual Grapple* get_grapple() const { return get_component<Grapple>(); }
+
+	virtual Entity* get_grapple_owner() const
+	{
+		if (!has_grapple())
+			return nullptr;
+		return get_grapple()->owner;
+	}
+
+	virtual Entity* get_grapple_target() const
+	{
+		if (!has_grapple())
+			return nullptr;
+		return get_grapple()->target;
+	}
+
 public:
 	// Thing //
 
@@ -578,6 +613,9 @@ public:
 	// Checks if EntityFlag::IS_OPAQUE is NOT set.
 	virtual bool is_transparent() const { return !is_opaque(); }
 
+	// Checks if EntityFlag::CAN_BE_GRAPPLED is set.
+	virtual bool can_be_grappled() const { return m_flags & EntityFlag::CAN_BE_GRAPPLED; }
+
 public:
 	// - Field of View -- //
 
@@ -603,6 +641,8 @@ public:
 	virtual void on_flags_updated();
 	virtual bool is_on_floor() const;
 	virtual bool is_being_held() const;
+
+	virtual bool can_move_on_own() const;
 
 	virtual bool should_flash();
 	virtual void game_message(GameMessage msg);

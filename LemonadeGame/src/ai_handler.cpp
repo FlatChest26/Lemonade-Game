@@ -97,8 +97,7 @@ void AIManager::step(TimeUnit time_delta)
 			if (npc)
 			{
 				auto brain = npc->set_brain(create_brain());
-				npc->change_gait_type("STROLL");
-				brain->add_behavior(new Behavior_MoveTo(m_sidewalk_end + Position(x, 0, 0)));
+				brain->push_state(new AIState_WalkAlongSidewalk({ m_sidewalk_end + Position(x, 0, 0) }));
 			}
 		}
 	}

@@ -14,11 +14,11 @@ protected:
 	Coord m_loc_x{ 0 }, m_loc_y{ 0 }, m_loc_z{ 0 };
 
 public:
-	ActionWithLocation(Entity* actor = nullptr, Coord loc_x = 0, Coord loc_y = 0, Coord loc_z = 0) :
+	ActionWithLocation(Entity* actor, Coord loc_x, Coord loc_y, Coord loc_z) :
 		EntityAction(actor), m_loc_x(loc_x), m_loc_y(loc_y), m_loc_z(loc_z)
 	{
 	}
-	ActionWithLocation(Entity* actor = nullptr, const Position& location = Position(0, 0, 0)) :
+	ActionWithLocation(Entity* actor, const Position& location) :
 		ActionWithLocation(actor, location.x, location.y, location.z)
 	{
 	}
@@ -44,11 +44,11 @@ protected:
 	bool m_open{ true };
 
 public:
-	TransformAction(Entity* actor = nullptr, Coord loc_x = 0, Coord loc_y = 0, Coord loc_z = 0, bool open = true) :
+	TransformAction(Entity* actor, Coord loc_x, Coord loc_y, Coord loc_z, bool open) :
 		ActionWithLocation(actor, loc_x, loc_y, loc_z), m_open(open)
 	{
 	}
-	TransformAction(Entity* actor = nullptr, const Position& location = Position(0, 0, 0), bool open = true) :
+	TransformAction(Entity* actor, const Position& location, bool open) :
 		ActionWithLocation(actor, location), m_open(open)
 	{
 	}
@@ -61,11 +61,11 @@ public:
 class OpenAction : public TransformAction
 {
 public:
-	OpenAction(Entity* actor = nullptr, Coord loc_x = 0, Coord loc_y = 0, Coord loc_z = 0) :
+	OpenAction(Entity* actor, Coord loc_x, Coord loc_y, Coord loc_z) :
 		TransformAction(actor, loc_x, loc_y, loc_z, true)
 	{
 	}
-	OpenAction(Entity* actor = nullptr, const Position& location = Position(0, 0, 0)) :
+	OpenAction(Entity* actor, const Position& location) :
 		TransformAction(actor, location, true)
 	{
 	}
@@ -77,11 +77,11 @@ public:
 class CloseAction : public TransformAction
 {
 public:
-	CloseAction(Entity* actor = nullptr, Coord loc_x = 0, Coord loc_y = 0, Coord loc_z = 0) :
+	CloseAction(Entity* actor, Coord loc_x, Coord loc_y, Coord loc_z) :
 		TransformAction(actor, loc_x, loc_y, loc_z, false)
 	{
 	}
-	CloseAction(Entity* actor = nullptr, const Position& location = Position(0, 0, 0)) :
+	CloseAction(Entity* actor, const Position& location) :
 		TransformAction(actor, location, false)
 	{
 	}

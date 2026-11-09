@@ -33,6 +33,19 @@ void EntityBuilder::default_entity_render_overrides(std::vector<RenderOverride>&
 				return false;
 			}
 	});
+
+	// Grapple bg
+
+	render_overrides.push_back({
+		.priority = 4,
+		.renderable = Renderable{ .bg = color::get("violet") },
+		.override_bg = true,
+		.flash_frames_on = 20,
+		.active = [](const Entity* entity)
+			{
+				return entity->has_grapple();
+			}
+		});
 }
 
 Entity EntityBuilder::create_creature(EntityID ID, CreatureInitializer init)
@@ -54,6 +67,7 @@ Entity EntityBuilder::create_creature(EntityID ID, CreatureInitializer init)
 	new_creature.add_flag(EntityFlag::ANIMATE);
 	new_creature.add_flag(EntityFlag::CAN_DO_ACTIONS);
 	new_creature.add_flag(EntityFlag::CAN_INTERACT_WITH_OTHERS);
+	new_creature.add_flag(EntityFlag::CAN_BE_GRAPPLED);
 
 	// Species
 	if (init.species)
@@ -84,7 +98,7 @@ Entity EntityBuilder::create_creature(EntityID ID, CreatureInitializer init)
 				continue;
 			}
 
-			new_creature.get_living()->stat(ID).value() = init_amount;
+			new_creature.get_living()->get_stat(ID).value() = init_amount;
 		}
 
 		// Person

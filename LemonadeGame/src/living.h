@@ -83,10 +83,18 @@ namespace needs
 	inline StatID MOOD = "mood";
 }
 
+namespace attributes
+{
+	inline StatID STRENGTH = "strength";
+	inline StatID AGILITY = "agility";
+	inline StatID ENDURANCE = "endurance";
+}
+
 using TimerID = std::string;
 
 struct StatTimer
 {
+	StatID modified_stat;
 	StatRate rate;
 	TimeUnit timer;
 };
@@ -149,7 +157,7 @@ public:
 		return m_stats.find(ID) != m_stats.end();
 	}
 
-	Stat& stat(const StatID& ID)
+	Stat& get_stat(const StatID& ID)
 	{
 		if (!has_stat(ID))
 		{
@@ -159,7 +167,7 @@ public:
 		return m_stats.at(ID);
 	}
 
-	const Stat& stat(const StatID& ID) const
+	const Stat& get_stat(const StatID& ID) const
 	{
 		if (!has_stat(ID))
 		{
@@ -182,9 +190,9 @@ public:
 		return m_timers.find(ID) != m_timers.end();
 	}
 
-	void add_timer(const TimerID& ID, const StatRate& rate)
+	void add_timer(const TimerID& ID, const StatID& modified_stat, const StatRate& rate)
 	{
-		m_timers[ID] = StatTimer(rate, rate.tick);
+		m_timers[ID] = StatTimer(modified_stat, rate, rate.tick);
 	}
 
 	void remove_timer(const TimerID& ID)

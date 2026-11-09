@@ -269,6 +269,9 @@
     <ClInclude Include="src\material_def.h">
       <Filter>Code\Header Files\Entity\Components</Filter>
     </ClInclude>
+    <ClInclude Include="src\ai_state.h">
+      <Filter>Code\Header Files\AI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -405,6 +408,9 @@
     </ClCompile>
     <ClCompile Include="src\material_def.cpp">
       <Filter>Code\Source Files\Entity\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ai_state.cpp">
+      <Filter>Code\Source Files\AI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

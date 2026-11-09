@@ -946,6 +946,19 @@ using PreciseTransform = Transform<PositionF, SizeF>;
 
 namespace transforms
 {
+
+	template<typename T>
+	inline Vec2D<T> abs(Vec2D<T> vec)
+	{
+		return Vec2D<T>(std::abs(vec.x), std::abs(vec.y));
+	}
+
+	template<typename T>
+	inline Vec3D<T> abs(Vec3D<T> vec)
+	{
+		return Vec3D<T>(std::abs(vec.x), std::abs(vec.y), std::abs(vec.z));
+	}
+
 	inline Position dir_as_pos(const Direction& dir)
 	{
 		Position pos = Position(0, 0, 0);
@@ -992,10 +1005,8 @@ namespace transforms
 	extern double dir_to_angle_in_degrees(Direction dir);
 	extern Position rotate_by_direction(const Position& point, Direction dir, const Position& origin = Position(0, 0, 0));
 
-	inline bool is_adjacent(const Position& p1, const Position& p2)
-	{
-		return (p2 - p1).length_squared() < (1.4 * 1.4);
-	}
+	extern bool is_adjacent(const Position& p1, const Position& p2, Coord min_dist = 1);
+	extern bool is_directly_adjacent(const Position& p1, const Position& p2);
 
 	inline std::vector<Position> get_adjacent_locations(const Position& origin = Position(0, 0, 0), bool above = false, bool below = false, bool include_orgin = false)
 	{
@@ -1079,6 +1090,8 @@ namespace transforms
 
 		return positions;
 	}
+
+	extern Position get_closest_adjacent(const Position& start, const Position& destination, Coord near_radius = 1);
 }
 
 

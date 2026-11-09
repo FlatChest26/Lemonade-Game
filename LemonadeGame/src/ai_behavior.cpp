@@ -6,9 +6,11 @@
 #include "pathfinding.h"
 #include "snowy_rng.h"
 #include "world.h"
+#include "ai_state.h"
 
-bool Behavior_MoveTo::perform(AIBrain* brain, const TimeUnit& delta)
+bool Behavior_MoveTo::perform(AIState* state, const TimeUnit& delta)
 {
+	auto brain = state->get_brain();
 	auto entity = brain->get_entity();
 
 	if (!entity)
@@ -26,6 +28,11 @@ bool Behavior_MoveTo::perform(AIBrain* brain, const TimeUnit& delta)
 	if (entity->get_movable()->pos() == m_move_to)
 	{
 		//CERR("entity is already at m_move_to!");
+		return true;
+	}
+
+	if (!entity->can_move_on_own())
+	{
 		return true;
 	}
 
@@ -77,8 +84,9 @@ bool Behavior_MoveTo::perform(AIBrain* brain, const TimeUnit& delta)
 	return m_path.empty();
 }
 
-bool Behavior_Wander::perform(AIBrain* brain, const TimeUnit& delta)
+bool Behavior_Wander::perform(AIState* state, const TimeUnit& delta)
 {
+	auto brain = state->get_brain();
 	auto entity = brain->get_entity();
 
 	if (!entity)
@@ -86,7 +94,11 @@ bool Behavior_Wander::perform(AIBrain* brain, const TimeUnit& delta)
 		CERR("entity is null!");
 		return true;
 	}
-
+	
+	if (!entity->can_move_on_own())
+	{
+		return true;
+	}
 	auto tile_map = entity->get_tile_map();
 	if (!tile_map)
 	{
@@ -128,7 +140,7 @@ bool Behavior_Wander::perform(AIBrain* brain, const TimeUnit& delta)
 			}
 		}
 
-		brain->add_behavior(new Behavior_MoveTo(wander_location));
+		state->add_behavior(new Behavior_MoveTo(wander_location));
 
 		if ((m_min_wait > TimeUnit::none()) && (m_max_wait > m_min_wait))
 		{

@@ -8,7 +8,7 @@
 class StartSleepAction : public EntityAction
 {
 public:
-	StartSleepAction(Entity* actor = nullptr) :
+	StartSleepAction(Entity* actor) :
 		EntityAction(actor)
 	{
 	}
@@ -22,7 +22,7 @@ public:
 class EndSleepAction : public EntityAction
 {
 public:
-	EndSleepAction(Entity* actor = nullptr) :
+	EndSleepAction(Entity* actor) :
 		EntityAction(actor)
 	{
 	}
@@ -36,7 +36,7 @@ public:
 class DeathAction : public EntityAction
 {
 public:
-	DeathAction(Entity* actor = nullptr) :
+	DeathAction(Entity* actor) :
 		EntityAction(actor)
 	{
 	}
@@ -50,7 +50,7 @@ public:
 class StarveToDeathAction : public DeathAction
 {
 public:
-	StarveToDeathAction(Entity* actor = nullptr) :
+	StarveToDeathAction(Entity* actor) :
 		DeathAction(actor)
 	{
 	}
@@ -63,7 +63,7 @@ public:
 class DieOfDehydrationAction : public DeathAction
 {
 public:
-	DieOfDehydrationAction(Entity* actor = nullptr) :
+	DieOfDehydrationAction(Entity* actor) :
 		DeathAction(actor)
 	{
 	}
