@@ -31,6 +31,7 @@ namespace RawMaster
 	using BodyPlanDB = snowy::SingletonDatabase<Ref<BodyPlan>>;
 	using BodyPartTypeDB = snowy::SingletonDatabase<Ref<BodyPartType>>;
 	using BodyModDB = snowy::SingletonDatabase<Ref<BodyMod>>;
+	using BodyGlossDB = snowy::SingletonDatabase<Ref<BodyGloss>>;
 	using SpeciesDB = snowy::SingletonDatabase<Ref<Species>>;
 	using ItemDefsDB = snowy::SingletonDatabase<Ref<ItemDefinition>>;
 	using FurnitureDefsDB = snowy::SingletonDatabase<Ref<FurnitureDefinition>>;
@@ -41,18 +42,19 @@ namespace RawMaster
 
 	inline std::vector<std::string> VALID_TYPES
 	{
-		"body_part_type",
-		"body_mod",
-		"body_plan",
-		"tile_type",
-		"species",
-		"color",
-		"name_set",
-		"item_definition",
-		"furniture_definition",
 		"pronouns",
 		"gender",
+		"name_set",
+		"color",
 		"material_type",
+		"tile_type",
+		"body_part_type",
+		"body_plan",
+		"body_mod",
+		"body_gloss",
+		"item_definition",
+		"furniture_definition",
+		"species",
 	};
 
 	static void initialize_databases()
@@ -104,19 +106,19 @@ namespace RawMaster
 		});
 
 		BodyPlanDB::init();
-		BodyPlanDB::add({
-			{ "GenericBody", std::make_shared<BodyPlan>(body_plan::GenericBody) }
-		});
+		//BodyPlanDB::add({
+		//	{ "GenericBody", std::make_shared<BodyPlan>(body_plan::GenericBody) }
+		//});
 
 		BodyModDB::init();
-		BodyModDB::add({
-			{ "DemonParts",		std::make_shared<BodyMod>(body_mod::DemonParts) },
-			{ "FemaleParts",	std::make_shared<BodyMod>(body_mod::FemaleParts) },
-			{ "MaleParts",		std::make_shared<BodyMod>(body_mod::MaleParts) },
-			{ "GirlCock",		std::make_shared<BodyMod>(body_mod::GirlCock) },
-			{ "BoyPussy",		std::make_shared<BodyMod>(body_mod::BoyPussy) },
-			{ "HeadDetails",	std::make_shared<BodyMod>(body_mod::HeadDetails) },
-		});
+		//BodyModDB::add({
+		//	{ "DemonParts",		std::make_shared<BodyMod>(body_mod::DemonParts) },
+		//	{ "FemaleParts",	std::make_shared<BodyMod>(body_mod::FemaleParts) },
+		//	{ "MaleParts",		std::make_shared<BodyMod>(body_mod::MaleParts) },
+		//	{ "GirlCock",		std::make_shared<BodyMod>(body_mod::GirlCock) },
+		//	{ "BoyPussy",		std::make_shared<BodyMod>(body_mod::BoyPussy) },
+		//	{ "HeadDetails",	std::make_shared<BodyMod>(body_mod::HeadDetails) },
+		//});
 
 		ItemDefsDB::init();
 		FurnitureDefsDB::init();
@@ -125,6 +127,8 @@ namespace RawMaster
 		MaterialTypesDB::add({
 			{ "null",  std::make_shared<MaterialType>(material_types::NullMaterial) }
 		});
+
+		BodyGlossDB::init();
 	}
 
 	static void load_colors(std::vector<json> json)
@@ -249,6 +253,9 @@ namespace RawMaster
 
 		COUT("Loading body plans\n");
 		load_raw_type<BodyPlan>(raw_data["body_plan"]);
+
+		COUT("Loading body gloss\n");
+		load_raw_type<BodyGloss>(raw_data["body_gloss"]);
 
 		COUT("Loading body mods\n");
 		load_raw_type<BodyMod>(raw_data["body_mod"]);

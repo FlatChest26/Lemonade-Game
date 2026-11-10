@@ -1,37 +1,14 @@
 [
   {
+    "copy_from": "HUMAN",
     "type": "species",
     "ID": "ANGEL",
     "noun": { "singular": "angel", "plural": "angels", "always_plural": false },
     "adjective": "angelic",
     "renderable": { "glyph": 142, "fg": "yellow", "bg": "0x000000" },
     "//": "Ä",
-    "default_body_plan": "GenericBody",
-    "body_mods": [ "DemonParts", "HeadDetails" ],
     "description": "An angel person.",
     "frequency": 2.0,
-    "lifespan": { "min": 80, "max": 120 },
-    "life_stages": { "child": 12, "adult": 18, "mature": 26 },
-    "flags": [ "does_not_exist" ],
-    "gaits": [
-      { "name": "creep", "speed": 0.4 },
-      { "name": "stroll", "speed": 0.7 },
-      { "name": "walk", "speed": 1.0, "is_default": true },
-      { "name": "jog", "speed": 1.3 },
-      { "name": "run", "speed": 1.7 },
-      { "name": "sprint", "speed": 2.2 }
-    ],
-    "common_genders": [
-      { "type": "NEUTER", "frequency": 2.0 },
-      { "type": "EPICENE", "frequency": 25.0 },
-      { "type": "FEMININE", "frequency": 100.0 },
-      { "type": "MASCULINE", "frequency": 100.0 }
-    ],
-    "common_body_mods": [
-      { "body_mod": "FemaleParts", "frequency": 100.0 },
-      { "body_mod": "MaleParts", "frequency": 100.0 },
-      { "body_mod": "GirlCock", "frequency": 50.0 },
-      { "body_mod": "BoyPussy", "frequency": 50.0 }
-    ]
+    "add_flags": [ "does_not_exist" ]
   }
 ]

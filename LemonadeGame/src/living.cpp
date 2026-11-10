@@ -20,7 +20,8 @@ void Stat::set_value(StatInt_t value)
 
 void Stat::add_value(StatInt_t value)
 {
-	m_value = std::clamp<StatInt_t>(m_value + value, m_info.min_value, m_info.max_value);
+	m_value += value;
+	m_value = std::clamp<StatInt_t>(m_value, m_info.min_value, m_info.max_value);
 }
 
 std::string Stat::name() const
@@ -124,207 +125,234 @@ void Living::add_defaults()
 	// Needs //
 
 	add_stat(
-		needs::AROUSAL,
-		StatInfo
 		{
-			.type = StatType::Need,
-			.positive_name = "arousal",
-			.min_value = 0,
-			.max_value = 100,
-			.description = {
-				{ "cold",			0,  10, color::get("gray") },
-				{ "simulated",		10, 25, color::get("pale_pink") },
-				{ "aroused",		25, 50, color::get("pink") },
-				{ "horny",			50, 80, color::get("fuchsia") },
-				{ "sex-crazed",		80, 101, color::get("red") },
+			.ID = needs::AROUSAL,
+			.stat_info = StatInfo
+			{
+				.type = StatType::Need,
+				.positive_name = "arousal",
+				.min_value = 0,
+				.max_value = 100,
+				.description = {
+					{ "cold",			0,  10, color::get("gray") },
+					{ "simulated",		10, 25, color::get("pale_pink") },
+					{ "aroused",		25, 50, color::get("pink") },
+					{ "horny",			50, 80, color::get("fuchsia") },
+					{ "sex-crazed",		80, 101, color::get("red") },
+				},
 			},
-		},
-		StatRate{ .amount = -1, .tick = TimeUnit::from_minutes(20.0) }
+			.change_rate = StatRate{ .amount = -1, .tick = TimeUnit::from_minutes(20.0) },
+			.starting_value = 0
+		}
 	);
 
 	add_stat(
-		needs::HUNGER,
-		StatInfo
 		{
-			.type = StatType::Need,
-			.positive_name = "hunger",
-			.min_value = 0,
-			.max_value = 100,
-			.description = {
-				{ "full",			0,  10, color::get("gray") },
-				{ "peckish",		10, 30, color::get("tan") },
-				{ "hungry",			30, 50, color::get("copper") },
-				{ "famished",		50, 80, color::get("burnt_umber") },
-				{ "starving",		80, 101, color::get("red") },
+			.ID = needs::HUNGER,
+			.stat_info = StatInfo
+			{
+				.type = StatType::Need,
+				.positive_name = "hunger",
+				.min_value = 0,
+				.max_value = 100,
+				.description = {
+					{ "full",			0,  10, color::get("gray") },
+					{ "peckish",		10, 30, color::get("tan") },
+					{ "hungry",			30, 50, color::get("copper") },
+					{ "famished",		50, 80, color::get("burnt_umber") },
+					{ "starving",		80, 101, color::get("red") },
+				},
 			},
-		},
-		StatRate{ .amount = 1, .tick = TimeUnit::from_minutes(26.0) }
+			.change_rate = StatRate{ .amount = 1, .tick = TimeUnit::from_minutes(26.0) },
+			.starting_value = 0
+		}
 	);
 
 	add_stat(
-		needs::THIRST,
-		StatInfo
 		{
-			.type = StatType::Need,
-			.positive_name = "thirst",
-			.min_value = 0,
-			.max_value = 100,
-			.description = {
-				{ "hydrated",		0,  10, color::get("gray") },
-				{ "parched",		10, 30, color::get("light_blue") },
-				{ "thirsty",		30, 70, color::get("blue") },
-				{ "dehydrated",		70, 101, color::get("dark_blue") },
+			.ID = needs::THIRST,
+			.stat_info = StatInfo
+			{
+				.type = StatType::Need,
+				.positive_name = "thirst",
+				.min_value = 0,
+				.max_value = 100,
+				.description = {
+					{ "hydrated",		0,  10, color::get("gray") },
+					{ "parched",		10, 30, color::get("light_blue") },
+					{ "thirsty",		30, 70, color::get("blue") },
+					{ "dehydrated",		70, 101, color::get("dark_blue") },
+				},
 			},
-		},
-		StatRate{ .amount = 1, .tick = TimeUnit::from_minutes(22.0) }
+			.change_rate = StatRate{ .amount = 1, .tick = TimeUnit::from_minutes(22.0) },
+			.starting_value = 0
+		}
 	);
 
 	add_stat(
-		needs::HYGIENE,
-		StatInfo
 		{
-			.type = StatType::Need,
-			.positive_name = "hygiene",
-			.min_value = 0,
-			.max_value = 100,
-			.description = {
-				{ "immaculate",		0,  10, color::get("gray") },
-				{ "presentable",	10, 40, color::get("peach") },
-				{ "grody",			40, 60, color::get("yellow") },
-				{ "disheveled",		60, 80, color::get("orange") },
-				{ "filthy",			80, 101, color::get("dark_brown") },
-			}
-		},
-		StatRate{ .amount = 1, .tick = TimeUnit::from_minutes(28.0) }
+			.ID = needs::HYGIENE,
+			.stat_info = StatInfo
+			{
+				.type = StatType::Need,
+				.positive_name = "hygiene",
+				.min_value = 0,
+				.max_value = 100,
+				.description = {
+					{ "immaculate",		0,  10, color::get("gray") },
+					{ "presentable",	10, 40, color::get("peach") },
+					{ "grody",			40, 60, color::get("yellow") },
+					{ "disheveled",		60, 80, color::get("orange") },
+					{ "filthy",			80, 101, color::get("dark_brown") },
+				}
+			},
+			.change_rate = StatRate{ .amount = 1, .tick = TimeUnit::from_minutes(28.0) },
+			.starting_value = 0
+		}
 	);
 
 	add_stat(
-		needs::FATIGUE,
-		StatInfo
 		{
-			.type = StatType::Need,
-			.positive_name = "fatigue",
-			.min_value = 0,
-			.max_value = 100,
-			.description = {
-				{ "wide awake",		0,  10, color::get("gray") },
-				{ "alert",			10, 40, color::get("lavender") },
-				{ "wearied",		40, 60, color::get("lilac") },
-				{ "tired",			60, 80, color::get("purple") },
-				{ "exhausted",		80, 101, color::get("dark_indigo") },
-			}
-		},
-		StatRate{ .amount = 1, .tick = TimeUnit::from_minutes(23.0) }
+			.ID = needs::FATIGUE,
+			.stat_info = StatInfo
+			{
+				.type = StatType::Need,
+				.positive_name = "fatigue",
+				.min_value = 0,
+				.max_value = 100,
+				.description = {
+					{ "wide awake",		0,  10, color::get("gray") },
+					{ "alert",			10, 40, color::get("lavender") },
+					{ "wearied",		40, 60, color::get("lilac") },
+					{ "tired",			60, 80, color::get("purple") },
+					{ "exhausted",		80, 101, color::get("dark_indigo") },
+				}
+			},
+			.change_rate = StatRate{ .amount = 1, .tick = TimeUnit::from_minutes(23.0) },
+			.starting_value = 0
+		}
 	);
 
 	add_stat(
-		needs::MOOD,
-		StatInfo
 		{
-			.type = StatType::Need,
-			.positive_name = "mood",
-			.negative_name = "mood",
-			.min_value = -100,
-			.max_value = 100,
-			.description = {
-				{ "hopeless",		-100, -80, color::get("dark_scarlet") },
-				{ "miserable",		-80,  -60, color::get("carmine") },
-				{ "upset",			-60,  -30, color::get("chestnut") },
-				{ "meh",			-30,  -10, color::get("rose") },
-				{ "fine",			-10,   10, color::get("gray") },
-				{ "chill",			 10,   30, color::get("moss_green") },
-				{ "great",			 30,   60, color::get("mint_green") },
-				{ "ecstatic",		 60,   80, color::get("green") },
-				{ "loving life!",	 80,  101, color::get("spring_green") },
-			}
-		},
-		StatRate{ .amount = -1, .tick = TimeUnit::from_minutes(42.0) }
+			.ID = needs::MOOD,
+			.stat_info = StatInfo
+			{
+				.type = StatType::Need,
+				.positive_name = "mood",
+				.negative_name = "mood",
+				.min_value = -100,
+				.max_value = 100,
+				.description = {
+					{ "hopeless",		-100, -80, color::get("dark_scarlet") },
+					{ "miserable",		-80,  -60, color::get("carmine") },
+					{ "upset",			-60,  -30, color::get("chestnut") },
+					{ "meh",			-30,  -10, color::get("rose") },
+					{ "fine",			-10,   10, color::get("gray") },
+					{ "chill",			 10,   30, color::get("moss_green") },
+					{ "great",			 30,   60, color::get("mint_green") },
+					{ "ecstatic",		 60,   80, color::get("green") },
+					{ "loving life!",	 80,  101, color::get("spring_green") },
+				}
+			},
+			.change_rate = StatRate{ .amount = -1, .tick = TimeUnit::from_minutes(42.0) },
+			.starting_value = 0
+		}
 	);
 
 	// Attributes //
 
 	add_stat(
-		attributes::STRENGTH,
-		StatInfo
 		{
-			.type = StatType::Attribute,
-			.positive_name = "strength",
-			.min_value = 0,
-			.max_value = 20,
-			.description = {
-				{ "weak",			0,  10, color::get("purple") },
-				{ "average",		10, 40, color::get("gray") },
-				{ "competent",		40, 60, color::get("white") },
-				{ "excellent",		60, 80, color::get("light_yellow") },
-				{ "incredible",		80, 101, color::get("yellow") },
-			}
-		},
-		StatRate{ .amount = -1, .tick = TimeUnit::from_hours(48.0) }
+			.ID = attributes::STRENGTH,
+			.stat_info = StatInfo
+			{
+				.type = StatType::Attribute,
+				.positive_name = "strength",
+				.min_value = 0,
+				.max_value = 20,
+				.description = {
+					{ "weak",			0,  2, color::get("purple") },
+					{ "average",		2,  8, color::get("gray") },
+					{ "competent",		8,  12, color::get("white") },
+					{ "excellent",		12, 16, color::get("light_yellow") },
+					{ "incredible",		16, 20, color::get("yellow") },
+				}
+			},
+			.change_rate = StatRate{ .amount = -1, .tick = TimeUnit::from_hours(48.0) },
+			.starting_value = 6
+		}
 	);
 
 	add_stat(
-		attributes::AGILITY,
-		StatInfo
 		{
-			.type = StatType::Attribute,
-			.positive_name = "agility",
-			.min_value = 0,
-			.max_value = 20,
-			.description = {
-				{ "weak",			0,  10, color::get("purple") },
-				{ "average",		10, 40, color::get("gray") },
-				{ "competent",		40, 60, color::get("white") },
-				{ "excellent",		60, 80, color::get("light_yellow") },
-				{ "incredible",		80, 101, color::get("yellow") },
-			}
-		},
-		StatRate{ .amount = -1, .tick = TimeUnit::from_hours(48.0) }
+			.ID = attributes::AGILITY,
+			.stat_info = StatInfo
+			{
+				.type = StatType::Attribute,
+				.positive_name = "agility",
+				.min_value = 0,
+				.max_value = 20,
+				.description = {
+					{ "weak",			0,  2, color::get("purple") },
+					{ "average",		2,  8, color::get("gray") },
+					{ "competent",		8,  12, color::get("white") },
+					{ "excellent",		12, 16, color::get("light_yellow") },
+					{ "incredible",		16, 20, color::get("yellow") },
+				}
+			},
+			.change_rate = StatRate{ .amount = -1, .tick = TimeUnit::from_hours(48.0) },
+			.starting_value = 6
+		}
 	);
 
 	add_stat(
-		attributes::ENDURANCE,
-		StatInfo
 		{
-			.type = StatType::Attribute,
-			.positive_name = "endurance",
-			.min_value = 0,
-			.max_value = 20,
-			.description = {
-				{ "weak",			0,  10, color::get("purple") },
-				{ "average",		10, 40, color::get("gray") },
-				{ "competent",		40, 60, color::get("white") },
-				{ "excellent",		60, 80, color::get("light_yellow") },
-				{ "incredible",		80, 101, color::get("yellow") },
-			}
-		},
-		StatRate{ .amount = -1, .tick = TimeUnit::from_hours(48.0) }
+			.ID = attributes::ENDURANCE,
+			.stat_info = StatInfo
+			{
+				.type = StatType::Attribute,
+				.positive_name = "endurance",
+				.min_value = 0,
+				.max_value = 20,
+				.description = {
+					{ "weak",			0,  2, color::get("purple") },
+					{ "average",		2,  8, color::get("gray") },
+					{ "competent",		8,  12, color::get("white") },
+					{ "excellent",		12, 16, color::get("light_yellow") },
+					{ "incredible",		16, 20, color::get("yellow") },
+				}
+			},
+			.change_rate = StatRate{ .amount = -1, .tick = TimeUnit::from_hours(48.0) },
+			.starting_value = 6
+		}
 	);
 }
 
-void Living::add_stat(const StatID& ID, const StatInfo& stat, const StatRate& change_rate)
+void Living::add_stat(const StatInitializer& init)
 {
-	if (has_stat(ID))
+	if (has_stat(init.ID))
 		return;
 
-	m_stats[ID] = Stat(stat);
+	m_stats[init.ID] = Stat(init.stat_info, init.starting_value);
 
-	switch (stat.type)
+	switch (init.stat_info.type)
 	{
 	case StatType::Need:
-		m_needs.push_back(ID);
+		m_needs.push_back(init.ID);
 		break;
 	case StatType::Trait:
-		m_traits.push_back(ID);
+		m_traits.push_back(init.ID);
 		break;
 	case StatType::Attribute:
-		m_attributes.push_back(ID);
+		m_attributes.push_back(init.ID);
 		break;
 	case StatType::Skill:
-		m_skills.push_back(ID);
+		m_skills.push_back(init.ID);
 		break;
 	}
 
-	add_timer(ID + "_TIMER", ID, change_rate);
+	add_timer(init.ID + "_TIMER", init.ID, init.change_rate);
 }
 
 void Living::remove_stat(const StatID& ID)
@@ -351,6 +379,32 @@ void Living::remove_stat(const StatID& ID)
 	}
 
 	m_stats.erase(ID);
+}
+
+void Living::add_timer(const TimerID& ID, const StatID& modified_stat, const StatRate& rate)
+{
+	m_timers_by_id[ID] = m_timers.size();
+	m_timers.emplace_back(ID, modified_stat, rate, rate.tick);
+}
+
+void Living::remove_timer(const TimerID& ID)
+{
+	if (!has_timer(ID))
+		return;
+
+	size_t idx = m_timers_by_id.at(ID);
+	m_timers_by_id.erase(ID);
+
+	if (m_timers[idx] != m_timers.back())
+	{
+		TimerID swap_id = m_timers.back().ID;
+
+		std::swap(m_timers[idx], m_timers.back());
+
+		m_timers_by_id[swap_id] = idx;
+	}
+
+	m_timers.pop_back();
 }
 
 double Living::get_sleep_quality() const
@@ -560,9 +614,9 @@ void Living::step(const TimeUnit& time_delta)
 	}
 
 	// Manage timers
-	for (auto& [timer_id, timer_data] : m_timers)
+	for (auto& timer_data : m_timers)
 	{
-		auto& [modified_stat, rate, timer] = timer_data;
+		auto& [timer_id, modified_stat, rate, timer] = timer_data;
 
 		auto& stat = get_stat(modified_stat);
 		timer += time_delta * GameSettings::WORLD_RELATIVE_SPEED;

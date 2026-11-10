@@ -38,6 +38,8 @@ enum class BodyPartFlag : uint64_t
 	PHALLUS = 1 << 11,
 	ORIFICE = 1 << 12,
 
+	SIGHT = 1 << 15,
+
 	//LIMB = 1 << 2,
 	//INTERNAL = 1 << 4,
 
@@ -70,12 +72,15 @@ enum class BodyPartCategory
 
 	HEAD,
 	NECK,
+
 	UPPER_BODY,
 	LOWER_BODY,
+	GROIN,
+	
 	UPPER_ARM,
 	LOWER_ARM,
 	HAND,
-	GROIN,
+	
 	UPPER_LEG,
 	LOWER_LEG,
 	FOOT,
@@ -153,6 +158,7 @@ inline std::map<std::string, BodyPartFlag> AllBodyPartFlags
 	{ "phallus",	BodyPartFlag::PHALLUS },
 	{ "orifice",	BodyPartFlag::ORIFICE },
 	{ "small",		BodyPartFlag::SMALL },
+	{ "sight",		BodyPartFlag::SIGHT },
 };
 
 namespace body_part

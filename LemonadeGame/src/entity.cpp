@@ -221,6 +221,11 @@ int Entity::view_range() const
 {
 	if (has_field_of_view())
 	{
+		if (has_anatomy() && !get_anatomy()->has_body_parts({ .required_flags = BodyPartFlag::SIGHT }))
+		{
+			return 2;
+		}
+
 		return 32;
 	}
 

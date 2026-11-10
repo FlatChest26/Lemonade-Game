@@ -1,8 +1,96 @@
 [
   {
     "type": "body_mod",
+    "ID": "FemaleParts",
+    "add_parts": [
+      { "bp_type": "breasts", "ID": "breasts", "position": "FRONT" },
+      { "bp_type": "vagina", "ID": "vagina", "position": "BOTTOM" }
+    ],
+    "add_connections": [
+      { "parent": "upper_body", "child": "breasts", "relation": "IN_FRONT" },
+      { "parent": "groin", "child": "vagina", "relation": "BELOW" }
+    ]
+  },
+  {
+    "type": "body_mod",
+    "ID": "MaleParts",
+    "add_parts": [
+      { "bp_type": "penis", "ID": "penis", "position": "FRONT" },
+      { "bp_type": "testicles", "ID": "testicles", "position": "BOTTOM" }
+    ],
+    "add_connections": [
+      { "parent": "groin", "child": "penis", "relation": "IN_FRONT" },
+      { "parent": "groin", "child": "testicles", "relation": "BELOW" }
+    ]
+  },
+  {
+    "type": "body_mod",
+    "ID": "GirlCock",
+    "add_parts": [
+      { "bp_type": "breasts", "ID": "breasts", "position": "FRONT" },
+      { "bp_type": "penis", "ID": "penis", "position": "FRONT" },
+      { "bp_type": "testicles", "ID": "testicles", "position": "BOTTOM" }
+    ],
+    "add_connections": [
+      { "parent": "upper_body", "child": "breasts", "relation": "IN_FRONT" },
+      { "parent": "groin", "child": "penis", "relation": "IN_FRONT" },
+      { "parent": "groin", "child": "testicles", "relation": "BELOW" }
+    ]
+  },
+  {
+    "type": "body_mod",
+    "ID": "BoyPussy",
+    "add_parts": [ { "bp_type": "vagina", "ID": "vagina", "position": "BOTTOM" } ],
+    "add_connections": [ { "parent": "groin", "child": "vagina", "relation": "BELOW" } ]
+  },
+  {
+    "type": "body_mod",
+    "ID": "HeadDetails",
+    "add_parts": [
+      { "bp_type": "eyes", "ID": "eyes", "position": "FRONT" },
+      { "bp_type": "mouth", "ID": "mouth", "position": "FRONT" },
+      { "bp_type": "ears", "ID": "ears", "position": "SIDES" },
+      { "bp_type": "nose", "ID": "nose", "position": "FRONT" },
+      { "bp_type": "tongue", "ID": "tongue", "position": "INSIDE" }
+    ],
+    "add_connections": [
+      { "parent": "head", "child": "eyes", "relation": "IN_FRONT" },
+      { "parent": "head", "child": "mouth", "relation": "IN_FRONT" },
+      { "parent": "head", "child": "ears", "relation": "SIDES" },
+      { "parent": "head", "child": "nose", "relation": "IN_FRONT" },
+      { "parent": "mouth", "child": "tongue", "relation": "INSIDE" }
+    ],
+    "add_relations": [
+      { "parent": "eyes", "child": "mouth", "relation": "BELOW" },
+      { "parent": "eyes", "child": "nose", "relation": "BETWEEN" }
+    ]
+  },
+  {
+    "type": "body_mod",
+    "ID": "DemonParts",
+    "add_parts": [ { "bp_type": "horns", "ID": "horns", "position": "TOP" }, { "bp_type": "tail", "ID": "tail", "position": "BACK" } ],
+    "add_connections": [
+      { "parent": "head", "child": "horns", "relation": "ABOVE" },
+      { "parent": "groin", "child": "tail", "relation": "BEHIND" }
+    ]
+  },
+  {
+    "type": "body_mod",
     "ID": "CatFeatures",
-    "add_parts": [ { "bp_type": "tail", "ID": "BP_TAIL", "position": "BACK" } ],
-    "add_connections": [ { "parent": "BP_LOWERBODY", "child": "BP_TAIL", "relative_position": "BEHIND" } ]
+    "add_parts": [ { "bp_type": "tail", "ID": "tail", "position": "BACK" } ],
+    "add_connections": [ { "parent": "groin", "child": "tail", "relation": "BEHIND" } ]
+  },
+  {
+    "type": "body_gloss",
+    "ID": "interesting_names",
+    "replacements": [
+      { "singular": { "old": "lower arm", "new": "forearm" }, "plural": { "old": "lower arms", "new": "forearms" } },
+      { "singular": { "old": "upper leg", "new": "thigh" }, "plural": { "old": "upper legs", "new": "thighs" } }
+    ]
+  },
+  {
+    "type": "body_mod",
+    "ID": "InterestingNames",
+    "add_body_gloss": [ "interesting_names" ]
   }
 ]

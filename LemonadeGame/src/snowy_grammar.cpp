@@ -2,7 +2,6 @@
 
 namespace grammar
 {
-
 	constexpr std::string capitalize(std::string_view str)
 	{
 		std::string new_str{ str };
@@ -155,6 +154,70 @@ namespace grammar
 
 		return the(g_noun.as_noun(), plural);
 	}
+
+	std::string say_regarding(const Verb& verb, const Noun& noun, bool plural)
+	{
+		if (noun.always_plural || plural)
+		{
+			return verb.plural;
+		}
+
+		return verb.singular;
+	}
+
+	std::string say_regarding(const Verb& verb, const GrammarNoun& g_noun, bool plural)
+	{
+		if (g_noun.noun.always_plural || plural)
+		{
+			return verb.plural;
+		}
+
+		return verb.singular;
+	}
+
+	std::string say_regarding(const Verb& verb, int num)
+	{
+		if (num == 1)
+		{
+			return verb.singular;
+		}
+
+		return verb.plural;
+	}
+
+	std::string word_replace(std::string_view str, const WordReplacement& replacement)
+	{
+		std::string new_word{ str };
+
+		if (!replacement.empty())
+		{
+			size_t pos = new_word.find(replacement.old_str);
+			
+			if (pos != std::string::npos)
+			{
+				new_word.replace(pos, replacement.old_str.length(), replacement.new_str);
+			}
+		}
+
+		return new_word;
+	}
+
+	Noun noun_replace(const Noun& noun, const NounReplacement& replacement)
+	{
+		Noun new_noun = noun;
+
+		if (!replacement.singular.empty())
+		{
+			new_noun.singular = word_replace(noun.singular, replacement.singular);
+		}
+
+		if (!replacement.plural.empty())
+		{
+			new_noun.plural = word_replace(noun.plural, replacement.plural);
+		}
+
+		return new_noun;
+	}
 }
 
 std::shared_ptr<RawObjectChecker> Noun::get_checker()
@@ -262,19 +325,19 @@ Age Age::from_json(const json& j)
 
 	if (j.is_number())
 	{
-		a.physical_age = j.get<age_t>();
-		a.chronological_age = j.get<age_t>();
+		a.physical_age = j.get<Age_t>();
+		a.chronological_age = j.get<Age_t>();
 	}
 	else if (j.is_array() && j.size() > 0)
 	{
 		if (j.at(0).is_number())
 		{
-			a.physical_age = j.get<age_t>();
+			a.physical_age = j.get<Age_t>();
 		}
 
 		if (j.size() > 1 && j.at(1).is_number())
 		{
-			a.chronological_age = j.at(1).get<age_t>();
+			a.chronological_age = j.at(1).get<Age_t>();
 		}
 		else
 		{
@@ -292,7 +355,7 @@ Age Age::from_json(const json& j)
 			}
 			else
 			{
-				a.physical_age = j.at("physical_age").get<age_t>();
+				a.physical_age = j.at("physical_age").get<Age_t>();
 			}
 		}
 
@@ -305,7 +368,7 @@ Age Age::from_json(const json& j)
 			}
 			else
 			{
-				a.chronological_age = j.at("chronological_age").get<age_t>();
+				a.chronological_age = j.at("chronological_age").get<Age_t>();
 			}
 		}
 	}
@@ -495,4 +558,62 @@ Verb Verb::from_json(const json& j)
 	v.plural = j.at("plural").get<std::string>();
 
 	return v;
+}
+
+std::shared_ptr<RawObjectChecker> WordReplacement::get_checker()
+{
+	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
+
+	checker->set_type_name("word_replacement");
+
+	checker->add_property("old", RawValueType::RAW_String, true);
+	checker->add_property("new", RawValueType::RAW_String, true);
+
+	return checker;
+}
+
+WordReplacement WordReplacement::from_json(const json& j)
+{
+	auto checker = WordReplacement::get_checker();
+
+	if (!checker->check_json(j, true))
+	{
+		return {};
+	}
+
+	WordReplacement wr;
+
+	wr.old_str = j.at("old").get<std::string>();
+	wr.new_str = j.at("new").get<std::string>();
+
+	return wr;
+}
+
+std::shared_ptr<RawObjectChecker> NounReplacement::get_checker()
+{
+	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
+
+	checker->set_type_name("word_replacement");
+
+	checker->add_property("singular", RawValueType::RAW_Custom, true, WordReplacement::get_checker());
+	checker->add_property("plural", RawValueType::RAW_Custom, true, WordReplacement::get_checker());
+
+	return checker;
+}
+
+NounReplacement NounReplacement::from_json(const json& j)
+{
+	auto checker = NounReplacement::get_checker();
+
+	if (!checker->check_json(j, true))
+	{
+		return {};
+	}
+
+	NounReplacement nr;
+
+	nr.singular = WordReplacement::from_json(j.at("singular"));
+	nr.plural = WordReplacement::from_json(j.at("plural"));
+
+	return nr;
 }

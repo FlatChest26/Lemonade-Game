@@ -80,6 +80,8 @@ class BodyPart : public Thing
 protected:
 
 	Entity* m_owner;
+
+	Noun m_noun;
 	RawMaster::Ref<BodyPartType> m_type;
 
 	BodyPartID m_ID;
@@ -120,7 +122,9 @@ public:
 
 	BodyPartID ID() const { return m_ID; }
 
-	virtual Noun noun() const override { return m_type->noun; }
+	void set_noun(const Noun& noun) { m_noun = noun; }
+
+	virtual Noun noun() const override { return m_noun; }
 	virtual GrammarNoun display_noun() const override;
 
 	bool is_plural() const override { return m_type->multiple > 1; }
@@ -171,6 +175,8 @@ public:
 
 	bool is_small() const { return m_type->flags & BodyPartFlag::SMALL; }
 
+	bool is_used_to_sight() const { return m_type->flags & BodyPartFlag::SIGHT; }
+
 	//bool is_sensory() const { return m_type->flags & BodyPartFlag::SENSORY; }
 
 	//bool can_choke() const { return m_type->flags & BodyPartFlag::CHOKABLE; }
@@ -199,6 +205,16 @@ public:
 public:
 
 	// -- Utilities -- //
+
+	bool operator==(const BodyPart& other)
+	{
+		return ID() == other.ID();
+	}
+
+	bool operator!=(const BodyPart& other)
+	{
+		return ID() != other.ID();
+	}
 
 	static BodyPartRelativePosition opposite_of(BodyPartRelativePosition rel_pos)
 	{

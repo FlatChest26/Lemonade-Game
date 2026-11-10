@@ -2,13 +2,19 @@
 #include "units.h"
 #include "entity.h"
 
-Anatomy::Anatomy(RawMaster::Ref<BodyPlan> bd_plan, std::vector<RawMaster::Ref<BodyMod>> bd_mods) :
-	m_height(bd_plan->height), m_weight(bd_plan->weight)
+#include <ranges>
+
+Anatomy::Anatomy(RawMaster::Ref<BodyPlan> bd_plan, std::vector<RawMaster::Ref<BodyMod>> bd_mods)
 {
+	m_height = bd_plan->height;
+	m_weight = bd_plan->weight;
+
 	for (auto& bp : bd_plan->body_parts)
 	{
 		add_body_part(bp);
 	}
+
+	std::vector<BodyGloss> body_gloss;
 
 	for (auto& bdm : bd_mods)
 	{
@@ -45,6 +51,41 @@ Anatomy::Anatomy(RawMaster::Ref<BodyPlan> bd_plan, std::vector<RawMaster::Ref<Bo
 			remove_body_part(bp_id);
 			add_body_part(bp);
 		}
+
+		for (auto& bdg : bdm->add_body_gloss)
+		{
+			body_gloss.push_back(*bdg);
+		}
+
+		for (auto& bdg_id : bdm->remove_body_gloss)
+		{
+			std::vector<size_t> remove_indexes;
+
+			size_t idx = 0;
+			for (auto& bdg : body_gloss)
+			{
+				if (bdg.ID == bdg_id)
+				{
+					remove_indexes.push_back(idx);
+				}
+				idx++;
+			}
+
+			for (size_t remove_idx : std::views::reverse(remove_indexes))
+			{
+				if (remove_idx > body_gloss.size())
+				{
+					continue;
+				}
+
+				if (body_gloss[remove_idx] != body_gloss.back())
+				{
+					std::swap(body_gloss[remove_idx], body_gloss.back());
+				}
+
+				body_gloss.pop_back();
+			}
+		}
 	}
 
 	for (auto& bc : bd_plan->body_connections)
@@ -69,6 +110,11 @@ Anatomy::Anatomy(RawMaster::Ref<BodyPlan> bd_plan, std::vector<RawMaster::Ref<Bo
 			add_body_relation(bc);
 		}
 	}
+
+	for (auto& bdg : body_gloss)
+	{
+		apply_body_gloss(bdg);
+	}
 }
 
 Anatomy::Anatomy(const Anatomy& other)
@@ -79,11 +125,14 @@ Anatomy::Anatomy(const Anatomy& other)
 	m_weight = other.m_weight;
 
 	m_body_parts = other.m_body_parts;
+	m_body_parts_by_id = other.m_body_parts_by_id;
 
 	m_connections = other.m_connections;
 	m_relations = other.m_relations;
 
 	m_root_id = other.m_root_id;
+
+	set_owner(other.m_owner);
 }
 
 Anatomy::Anatomy(Anatomy&& other)
@@ -92,6 +141,7 @@ Anatomy::Anatomy(Anatomy&& other)
 	m_weight = other.m_weight;
 
 	m_body_parts = std::move(other.m_body_parts);
+	m_body_parts_by_id = std::move(other.m_body_parts_by_id);
 
 	m_connections = std::move(other.m_connections);
 	m_relations = std::move(other.m_relations);
@@ -105,7 +155,7 @@ void Anatomy::set_owner(Entity* entity)
 {
 	m_owner = entity;
 
-	for (auto& [bp_id, bp] : m_body_parts)
+	for (auto& bp : m_body_parts)
 	{
 		bp.set_owner(entity);
 	}
@@ -143,7 +193,10 @@ BodyPart* Anatomy::add_body_part(const BodyPartPlan& bp_plan)
 		rel_size = bp_type->default_rel_size;
 	}
 
-	m_body_parts.insert(std::pair(ID, BodyPart(m_owner, ID, bp_type, rel_size, bp_plan.position, bp_plan.prefix)));
+	size_t idx = m_body_parts.size();
+
+	m_body_parts.emplace_back(m_owner, ID, bp_type, rel_size, bp_plan.position, bp_plan.prefix);
+	m_body_parts_by_id[ID] = idx;
 
 	if (bp_plan.is_root)
 	{
@@ -152,11 +205,14 @@ BodyPart* Anatomy::add_body_part(const BodyPartPlan& bp_plan)
 
 	add_dirty_part(ID);
 
-	return &m_body_parts[ID];
+	return &m_body_parts.back();
 }
 
 bool Anatomy::add_body_connection(const BodyConnectionPlan& bc_plan)
 {
+	if (has_connection(bc_plan.parent, bc_plan.child))
+		return false;
+
 	if (!has_body_part(bc_plan.parent) || !has_body_part(bc_plan.child))
 	{
 		CERR(" One or both body parts not found: " << bc_plan.parent << ", " << bc_plan.child);
@@ -181,6 +237,17 @@ bool Anatomy::add_body_relation(const BodyConnectionPlan& bc_plan)
 	return true;
 }
 
+void Anatomy::apply_body_gloss(const BodyGloss& bdg)
+{
+	for (const auto& replacement : bdg.replacements)
+	{
+		for (auto& bp : m_body_parts)
+		{
+			bp.set_noun(grammar::noun_replace(bp.noun(), replacement));
+		}
+	}
+}
+
 bool Anatomy::remove_body_part(const BodyPartID& bp_ID)
 {
 	if (!has_body_part(bp_ID))
@@ -193,20 +260,31 @@ bool Anatomy::remove_body_part(const BodyPartID& bp_ID)
 		m_connections.clear();
 		m_relations.clear();
 		m_body_parts.clear();
+		m_body_parts_by_id.clear();
 	}
 	else
 	{
 		auto body_part = get_body_part(bp_ID);
 
-		for (auto& connection : m_connections)
+		for (auto& child_id : get_child_part_ids(bp_ID, false))
 		{
-			if (connection.parent == bp_ID)
-			{
-				remove_body_part(connection.child);
-			}
+			remove_body_part(child_id);
 		}
 
-		m_body_parts.erase(bp_ID);
+		size_t idx = m_body_parts_by_id.at(bp_ID);
+		m_body_parts_by_id.erase(bp_ID);
+
+		if (m_body_parts[idx] != m_body_parts.back()) // Swap with back
+		{
+			BodyPartID swap_id = m_body_parts.back().ID();
+
+			std::swap(m_body_parts[idx], m_body_parts.back());
+
+			m_body_parts_by_id[swap_id] = idx;
+		}
+
+		m_body_parts.pop_back();
+		
 		fix_relations_and_connections();
 	}
 
@@ -278,12 +356,19 @@ void Anatomy::step(const TimeUnit& time_delta)
 						"{} {} {} destroyed!",
 						grammar::Poss(std::string_view(grammar::the(n1))),
 						grammar::to_string(n2),
-						grammar::is_plural(n2) ? "are" : "is"
-					)
+						grammar::say_regarding(Verb{"is", "are"}, n2)
+					),
+					color::get("red")
 				)
 			);
 
 			remove_body_part(bp->ID());
+
+			COUT("Remaining parts: ");
+			for (auto& bp : m_body_parts)
+			{
+				COUT("\t" << bp.ID());
+			}
 		}
 
 		if (still_dirty)

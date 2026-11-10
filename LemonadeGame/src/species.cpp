@@ -7,6 +7,8 @@ std::shared_ptr<RawObjectChecker> Species::get_checker()
 
 	checker->set_type_name("species");
 
+	checker->add_property("copy_from", RawValueType::RAW_String, false);
+
 	checker->add_property("ID", RawValueType::RAW_String, true);
 	checker->add_property("noun", RawValueType::RAW_Custom, true, Noun::get_checker());
 	checker->add_property("renderable", RawValueType::RAW_Custom, true, Renderable::get_checker());
@@ -14,7 +16,11 @@ std::shared_ptr<RawObjectChecker> Species::get_checker()
 	checker->add_property("adjective", RawValueType::RAW_String, false);
 	checker->add_property("gendered_nouns", RawValueType::RAW_Object, false);
 	checker->add_property("default_body_plan", RawValueType::RAW_String, false);
+
 	checker->add_property("body_mods", RawValueType::RAW_Array, false);
+	checker->add_property("add_body_mods", RawValueType::RAW_Array, false);
+	checker->add_property("remove_body_mods", RawValueType::RAW_Array, false);
+
 	checker->add_property("description", RawValueType::RAW_String, false);
 
 	checker->add_property("lifespan_min", RawValueType::RAW_Custom, false);
@@ -29,10 +35,8 @@ std::shared_ptr<RawObjectChecker> Species::get_checker()
 	checker->add_property("life_stages", RawValueType::RAW_Object, false);
 
 	checker->add_property("frequency", RawValueType::RAW_Number, false);
+
 	checker->add_property("flags", RawValueType::RAW_Array, false);
-
-	checker->add_property("copy_from", RawValueType::RAW_String, false);
-
 	checker->add_property("remove_flags", RawValueType::RAW_Array, false);
 	checker->add_property("add_flags", RawValueType::RAW_Array, false);
 
@@ -140,6 +144,8 @@ Species Species::from_json(const json& j)
 
 	if (checker->is_valid_property("body_mods", j))
 	{
+		s.body_mods.clear();
+
 		for (auto& json_body_mod : j.at("body_mods"))
 		{
 			if (json_body_mod.is_string())
@@ -159,6 +165,76 @@ Species Species::from_json(const json& j)
 			else
 			{
 				CERR("Unrecognized body mod: " << json_body_mod);
+			}
+		}
+	}
+
+	if (checker->is_valid_property("add_body_mods", j))
+	{
+		for (auto& json_body_mod : j.at("add_body_mods"))
+		{
+			if (json_body_mod.is_string())
+			{
+				s.body_mods.push_back(RawMaster::get<BodyMod>(json_body_mod.get<std::string>()));
+			}
+			else if (json_body_mod.is_object())
+			{
+				if (!BodyMod::get_checker()->check_json(json_body_mod))
+				{
+					CERR("Invalid body mod json: " << json_body_mod);
+					continue;
+				}
+
+				s.body_mods.push_back(std::make_shared<BodyMod>(BodyMod::from_json(json_body_mod)));
+			}
+			else
+			{
+				CERR("Unrecognized body mod: " << json_body_mod);
+			}
+		}
+	}
+
+	if (checker->is_valid_property("remove_body_mods", j))
+	{
+		for (auto& json_body_mod : j.at("remove_body_mods"))
+		{
+			if (json_body_mod.is_string())
+			{
+				auto remove_id = json_body_mod.get<std::string>();
+
+				std::vector<size_t> remove_indexes;
+
+				size_t idx = 0;
+				for (auto& bdm : s.body_mods)
+				{
+					if (bdm->ID == remove_id)
+					{
+						remove_indexes.push_back(idx);
+					}
+
+					idx++;
+				}
+
+				for (size_t remove_idx : std::views::reverse(remove_indexes))
+				{
+					if (remove_idx > s.body_mods.size())
+					{
+						continue;
+					}
+
+					if (s.body_mods[remove_idx] != s.body_mods.back())
+					{
+						std::swap(s.body_mods[remove_idx], s.body_mods.back());
+					}
+
+					s.body_mods.pop_back();
+				}
+
+				
+			}
+			else
+			{
+				CERR("Unrecognized body mod ID: " << json_body_mod);
 			}
 		}
 	}

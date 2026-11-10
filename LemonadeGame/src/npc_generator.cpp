@@ -103,24 +103,35 @@ Entity NPCGenerator::generate_npc()
 	RawMaster::Ref<Species> random_species = snowy::rng::get_weighted_random(npc_generator::ValidSpecies, snowy::rng::generator);
 
 	// Generate random age
-	std::uniform_int_distribution<Age::age_t> lifespan_dist(random_species->lifespan_min, random_species->lifespan_max);
+	std::uniform_int_distribution<Age_t> lifespan_dist(random_species->lifespan_min, random_species->lifespan_max);
 	Age random_lifespan{ lifespan_dist(snowy::rng::generator) };
 
-	std::uniform_int_distribution<Age::age_t> age_distrib(random_species->adult_age, random_lifespan);
+	std::uniform_int_distribution<Age_t> age_distrib(random_species->adult_age, random_lifespan);
 	Age random_age{ age_distrib(snowy::rng::generator) };
 
 	// Generate gender
-	RawMaster::Ref<Gender> random_gender = snowy::rng::get_weighted_random(npc_generator::ValidSpeciesGenders[random_species->ID], snowy::rng::generator);
+	auto valid_genders = npc_generator::ValidSpeciesGenders[random_species->ID];
+
+	RawMaster::Ref<Gender> random_gender;
+
+	if (!valid_genders.empty())
+	{
+		random_gender = snowy::rng::get_weighted_random(valid_genders, snowy::rng::generator);
+	}
+	else
+	{
+		random_gender = std::make_shared<Gender>();
+	}
 
 	// Generate name
 	RawMaster::Ref<NameSet> first_name_set;
 	RawMaster::Ref<NameSet> family_name_set = RawMaster::get<NameSet>("family_name");
 
-	if (random_gender->gender_type & GenderType::FEMININE)
+	if (random_gender->is_feminine())
 	{
 		first_name_set = RawMaster::get<NameSet>("female_given");
 	}
-	else if (random_gender->gender_type & GenderType::MASCULINE)
+	else if (random_gender->is_masculine())
 	{
 		first_name_set = RawMaster::get<NameSet>("male_given");
 	}
@@ -154,8 +165,14 @@ Entity NPCGenerator::generate_npc()
 	}
 
 	// Generate body mods
+	auto valid_body_mods = npc_generator::ValidSpeciesBodyMods[random_species->ID];
+
 	std::vector<RawMaster::Ref<BodyMod>> random_body_mods;
-	random_body_mods.push_back(snowy::rng::get_weighted_random(npc_generator::ValidSpeciesBodyMods[random_species->ID], snowy::rng::generator));
+
+	if (!valid_body_mods.empty())
+	{
+		random_body_mods.push_back(snowy::rng::get_weighted_random(valid_body_mods, snowy::rng::generator));
+	}
 
 	// Make NPC
 	auto npc = EntityBuilder::create_creature(

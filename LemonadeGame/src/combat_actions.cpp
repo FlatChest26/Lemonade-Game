@@ -30,6 +30,8 @@ bool AutoAttackAction::check_action() const
 
 ActionResult AutoAttackAction::perform()
 {
+	// Choose weapon
+
 	snowy::rng::WeightedVector<Entity*> weapons;
 
 	for (auto& item : get_actor()->get_inventory()->get_items())
@@ -48,7 +50,9 @@ ActionResult AutoAttackAction::perform()
 		};
 	}
 
-	Entity* chosen_weapon = snowy::rng::get_weighted_random(weapons, snowy::rng::generator);
+	auto chosen_weapon = snowy::rng::get_weighted_random(weapons, snowy::rng::generator);
+
+	// Choose attack
 
 	snowy::rng::WeightedVector<const Attack*> attacks;
 
@@ -68,14 +72,22 @@ ActionResult AutoAttackAction::perform()
 		};
 	}
 
+	auto chosen_attack = snowy::rng::get_weighted_random(attacks, snowy::rng::generator);
+
+	// Choose target part
+
 	snowy::rng::WeightedVector<BodyPartID> body_parts;
 
-	for (const auto& bp : get_subject()->get_anatomy()->get_body_parts())
+	auto anatomy = get_subject()->get_anatomy();
+
+	for (const auto& bp_ID : anatomy->get_body_part_ids())
 	{
+		auto bp = anatomy->get_body_part(bp_ID);
+
 		if (bp->is_internal())
 			continue;
 
-		body_parts.push_back(std::tuple(bp->get_relative_size(), bp->ID()));
+		body_parts.push_back(std::tuple(bp->get_relative_size() * bp->get_relative_size(), bp_ID));
 	}
 
 	if (body_parts.empty())
@@ -86,6 +98,8 @@ ActionResult AutoAttackAction::perform()
 		};
 	}
 
+	auto chosen_bp = snowy::rng::get_weighted_random(body_parts, snowy::rng::generator);
+
 	return ActionResult
 	{
 		.success = true,
@@ -95,8 +109,8 @@ ActionResult AutoAttackAction::perform()
 			AttackParams
 			{
 				.weapon = chosen_weapon,
-				.attack_info = snowy::rng::get_weighted_random(attacks, snowy::rng::generator),
-				.target_part = snowy::rng::get_weighted_random(body_parts, snowy::rng::generator)
+				.attack_info = chosen_attack,
+				.target_part = chosen_bp
 			}
 		)
 	};
@@ -110,6 +124,18 @@ bool AttackAction::check_action() const
 	if (!get_subject()->has_anatomy())
 	{
 		ACTION_CERR("Subject does not have anatomy!");
+		return false;
+	}
+
+	if (!get_subject()->get_anatomy()->has_body_part(m_attack_params.target_part))
+	{
+		ACTION_CERR("Subject does not have the target part!");
+		return false;
+	}
+
+	if (m_attack_params.weapon && !get_actor()->get_inventory()->has_item(m_attack_params.weapon))
+	{
+		ACTION_CERR("Actor does not have the weapon!");
 		return false;
 	}
 
@@ -168,9 +194,9 @@ ActionResult AttackAction::perform()
 					fmt::format(
 						"{} {} at {} and {}!",
 						subject->is_player() ? grammar::The(n1) : grammar::A(n1),
-						grammar::is_plural(n1) ? attack_info->attack_verb.plural : attack_info->attack_verb.singular,
+						grammar::say_regarding(attack_info->attack_verb, n1),
 						actor->is_player() ? grammar::the(n2) : grammar::a(n2),
-						grammar::is_plural(n1) ? "miss" : "mises"
+						grammar::say_regarding(Verb{ "miss", "misses" }, n1)
 					)
 				)
 			}
@@ -195,14 +221,14 @@ ActionResult AttackAction::perform()
 				fmt::format(
 					"{} {} {} {} for {} damage!",
 					subject->is_player() ? grammar::The(n1) : grammar::A(n1),
-					(grammar::is_plural(n1) ? attack_info->attack_verb.plural : attack_info->attack_verb.singular),
+					grammar::say_regarding(attack_info->attack_verb, n1),
 					grammar::poss(std::string_view(actor->is_player() ? grammar::the(n2) : grammar::a(n2))), grammar::to_string(n3),
 					damage.amount
 				) :
 				fmt::format(
 					"{} {} {} in {} for {} damage!",
 					subject->is_player() ? grammar::The(n1) : grammar::A(n1),
-					(grammar::is_plural(n1) ? attack_info->attack_verb.plural : attack_info->attack_verb.singular),
+					grammar::say_regarding(attack_info->attack_verb, n1),
 					actor->is_player() ? grammar::the(n2) : grammar::a(n2), grammar::the(n3),
 					damage.amount
 				),

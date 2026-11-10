@@ -11,7 +11,7 @@ std::shared_ptr<RawObjectChecker> BodyPlan::get_checker()
 	checker->add_property("default_height", RawValueType::RAW_Number, false);
 	checker->add_property("default_weight", RawValueType::RAW_Number, false);
 
-	checker->add_property("body_connections", RawValueType::RAW_Array, false);
+	checker->add_property("connections", RawValueType::RAW_Array, false);
 
 	return checker;
 }
@@ -29,16 +29,6 @@ BodyPlan BodyPlan::from_json(const json& j)
 
 	bp.ID = j.at("ID").get<std::string>();
 
-	for (auto& json_body_plan : j.at("body_parts"))
-	{
-		if (!BodyPartPlan::get_checker()->check_json(json_body_plan, true))
-		{
-			continue;
-		}
-
-		bp.body_parts.push_back(BodyPartPlan::from_json(json_body_plan));
-	}
-
 	if (checker->is_valid_property("default_height", j))
 	{
 		bp.height = units::length::from_json(j.at("default_height"));
@@ -49,10 +39,26 @@ BodyPlan BodyPlan::from_json(const json& j)
 		bp.weight = units::mass::from_json(j.at("default_weight"));
 	}
 
-	if (checker->is_valid_property("body_connections", j))
+	for (auto& json_body_plan : j.at("body_parts"))
 	{
-		for (auto& json_connection : j.at("body_connections"))
+		if (!json_body_plan.is_object())
+			continue;
+
+		if (!BodyPartPlan::get_checker()->check_json(json_body_plan, true))
 		{
+			continue;
+		}
+
+		bp.body_parts.push_back(BodyPartPlan::from_json(json_body_plan));
+	}
+
+	if (checker->is_valid_property("connections", j))
+	{
+		for (auto& json_connection : j.at("connections"))
+		{
+			if (!json_connection.is_object())
+				continue;
+
 			if (!BodyConnectionPlan::get_checker()->check_json(json_connection, true))
 			{
 				continue;
@@ -102,6 +108,9 @@ std::shared_ptr<RawObjectChecker> BodyMod::get_checker()
 
 	checker->add_property("add_connections", RawValueType::RAW_Array, false);
 	checker->add_property("add_relations", RawValueType::RAW_Array, false);
+
+	checker->add_property("add_body_gloss", RawValueType::RAW_Array, false);
+	checker->add_property("remove_body_gloss", RawValueType::RAW_Array, false);
 
 	return checker;
 }
@@ -163,6 +172,7 @@ BodyMod BodyMod::from_json(const json& j)
 		{
 			if (!BodyPartPlan::get_checker()->check_json(json_body_plan, true))
 			{
+				CERR("Invalid body part plan json! " << json_body_plan);
 				continue;
 			}
 
@@ -190,6 +200,7 @@ BodyMod BodyMod::from_json(const json& j)
 		{
 			if (!BodyPartPlan::get_checker()->check_json(json_new_body_plan, true))
 			{
+				CERR("Invalid body part plan json! " << json_new_body_plan);
 				continue;
 			}
 
@@ -203,6 +214,7 @@ BodyMod BodyMod::from_json(const json& j)
 		{
 			if (!BodyConnectionPlan::get_checker()->check_json(json_connection, true))
 			{
+				CERR("Invalid body connection plan json! " << json_connection);
 				continue;
 			}
 
@@ -216,10 +228,50 @@ BodyMod BodyMod::from_json(const json& j)
 		{
 			if (!BodyConnectionPlan::get_checker()->check_json(json_connection, true))
 			{
+				CERR("Invalid body connection plan json! " << json_connection);
 				continue;
 			}
 
 			b.add_relations.push_back(BodyConnectionPlan::from_json(json_connection));
+		}
+	}
+
+	if (checker->is_valid_property("add_body_gloss", j))
+	{
+		for (auto& json_body_gloss : j.at("add_body_gloss"))
+		{
+			if (json_body_gloss.is_string())
+			{
+				b.add_body_gloss.push_back(RawMaster::get<BodyGloss>(json_body_gloss.get<std::string>()));
+			}
+			else if (json_body_gloss.is_object())
+			{
+				if (!BodyGloss::get_checker()->check_json(json_body_gloss, true))
+				{
+					CERR("Invalid body gloss json! " << json_body_gloss);
+					continue;
+				}
+
+				b.add_body_gloss.push_back(std::make_shared<BodyGloss>(BodyGloss::from_json(json_body_gloss)));
+			}
+			else
+			{
+				CERR("Unrecognized body gloss: " << json_body_gloss);
+			}
+		}
+	}
+
+	if (checker->is_valid_property("remove_body_gloss", j))
+	{
+		for (auto& json_body_gloss : j.at("remove_body_gloss"))
+		{
+			if (!json_body_gloss.is_string())
+			{
+				CERR("Invalid body gloss ID: " << json_body_gloss);
+				continue;
+			}
+
+			b.remove_body_gloss.push_back(json_body_gloss.get<std::string>());
 		}
 	}
 
@@ -314,8 +366,8 @@ std::shared_ptr<RawObjectChecker> BodyConnectionPlan::get_checker()
 	checker->set_type_name("body_connection_plan");
 
 	checker->add_property("parent", RawValueType::RAW_String, true);
-	checker->add_property("parent", RawValueType::RAW_String, true);
-	checker->add_property("relative_position", RawValueType::RAW_String, false);
+	checker->add_property("child", RawValueType::RAW_String, true);
+	checker->add_property("relation", RawValueType::RAW_String, false);
 
 	return checker;
 }
@@ -334,9 +386,9 @@ BodyConnectionPlan BodyConnectionPlan::from_json(const json& j)
 	bcp.parent = j.at("parent").get<std::string>();
 	bcp.child = j.at("child").get<std::string>();
 
-	if (checker->is_valid_property("relative_position", j))
+	if (checker->is_valid_property("relation", j))
 	{
-		auto pos_name = j.at("relative_position").get<std::string>();
+		auto pos_name = j.at("relation").get<std::string>();
 
 		if (!AllBodyPartRelativePosition.contains(pos_name))
 		{
@@ -349,4 +401,43 @@ BodyConnectionPlan BodyConnectionPlan::from_json(const json& j)
 	}
 
 	return bcp;
+}
+
+std::shared_ptr<RawObjectChecker> BodyGloss::get_checker()
+{
+	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
+
+	checker->set_type_name("body_gloss");
+
+	checker->add_property("ID", RawValueType::RAW_String, true);
+	checker->add_property("replacements", RawValueType::RAW_Array, true);
+
+	return checker;
+}
+
+BodyGloss BodyGloss::from_json(const json& j)
+{
+	auto checker = BodyGloss::get_checker();
+
+	if (!checker->check_json(j, true))
+	{
+		return {};
+	}
+
+	BodyGloss bdg;
+
+	bdg.ID = j.at("ID").get<std::string>();
+
+	for (auto& replacement_json : j.at("replacements"))
+	{
+		if (!NounReplacement::get_checker()->check_json(replacement_json))
+		{
+			CERR("Invalid noun replacement json! " << replacement_json);
+			continue;
+		}
+
+		bdg.replacements.push_back(NounReplacement::from_json(replacement_json));
+	}
+
+	return bdg;
 }

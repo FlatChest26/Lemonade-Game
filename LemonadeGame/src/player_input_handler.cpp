@@ -99,14 +99,11 @@ InputResult InputHandler_Player::ev_mouse_button_down(SDL_Event event)
 {
 	if (!GameSettings::MOUSE_MODE)
 	{
-		GameSettings::MOUSE_MODE = true;
 		return InputResult();
 	}
 
 	m_mouse_position.x = event.motion.x;
 	m_mouse_position.y = event.motion.y;
-
-
 
 	return InputResult();
 }

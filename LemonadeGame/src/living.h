@@ -55,13 +55,14 @@ class Stat
 {
 protected:
 	StatInfo m_info;
-	StatInt_t m_value;
+	StatInt_t m_value{ 0 };
 
 public:
 
-	Stat(const StatInfo& info = {}) :
-		m_info(info)
+	Stat(const StatInfo& info = {}, StatInt_t starting_value = 0) :
+		m_info(info), m_value(0)
 	{
+		set_value(starting_value);
 	}
 
 	const StatInfo& info() const { return m_info; }
@@ -98,9 +99,21 @@ using TimerID = std::string;
 
 struct StatTimer
 {
+	TimerID ID;
+
 	StatID modified_stat;
 	StatRate rate;
 	TimeUnit timer;
+
+	bool operator==(const StatTimer& other) const
+	{
+		return ID == other.ID;
+	}
+
+	bool operator!=(const StatTimer& other) const
+	{
+		return ID != other.ID;
+	}
 };
 
 class Living
@@ -118,7 +131,8 @@ protected:
 	std::vector<StatID> m_attributes;
 	std::vector<StatID> m_skills;
 
-	std::unordered_map<TimerID, StatTimer> m_timers;
+	std::vector<StatTimer> m_timers;
+	std::unordered_map<TimerID, size_t> m_timers_by_id;
 
 	bool m_asleep = false;
 	bool m_alive = true;
@@ -146,14 +160,22 @@ public:
 
 	bool is_immortal()
 	{
-		return m_total_lifespan < static_cast<Age::age_t>(INFINITY);
+		return m_total_lifespan < static_cast<Age_t>(INFINITY);
 	}
 
 
 public:
 	void add_defaults();
 
-	void add_stat(const StatID& ID, const StatInfo& stat, const StatRate& change_rate = StatRate{ 0, TimeUnit::none() });
+	struct StatInitializer
+	{
+		StatID ID;
+		StatInfo stat_info;
+		StatRate change_rate{ StatRate{ 0, TimeUnit::none() } };
+		StatInt_t starting_value{ 0 };
+	};
+
+	void add_stat(const StatInitializer& init);
 	void remove_stat(const StatID& ID);
 
 	bool has_stat(const StatID& ID) const
@@ -191,21 +213,14 @@ public:
 
 	bool has_timer(const TimerID& ID) const
 	{
-		return m_timers.find(ID) != m_timers.end();
+		return m_timers_by_id.contains(ID);
 	}
 
-	void add_timer(const TimerID& ID, const StatID& modified_stat, const StatRate& rate)
-	{
-		m_timers[ID] = StatTimer(modified_stat, rate, rate.tick);
-	}
+	void add_timer(const TimerID& ID, const StatID& modified_stat, const StatRate& rate);
+	void remove_timer(const TimerID& ID);
 
-	void remove_timer(const TimerID& ID)
-	{
-		m_timers.erase(ID);
-	}
-
-	StatTimer& get_timer(TimerID ID) { return m_timers.at(ID); }
-	const StatTimer& get_timer(TimerID ID) const { return m_timers.at(ID); }
+	StatTimer& get_timer(TimerID ID) { return m_timers.at(m_timers_by_id.at(ID)); }
+	const StatTimer& get_timer(TimerID ID) const { return m_timers.at(m_timers_by_id.at(ID)); }
 
 public:
 

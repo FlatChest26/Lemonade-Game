@@ -132,6 +132,35 @@ inline GrammarNoun operator+(const GrammarNoun& g_noun, const std::string& str)
 	return GrammarNoun::from_noun(Noun{ g_noun.noun.singular + str, g_noun.noun.plural + str, g_noun.noun.always_plural }, g_noun.is_proper);
 }
 
+struct Verb
+{
+	std::string singular;
+	std::string plural;
+
+	static std::shared_ptr<RawObjectChecker> get_checker();
+	static Verb from_json(const json& j);
+};
+
+struct WordReplacement
+{
+	std::string old_str;
+	std::string new_str;
+
+	bool empty() const { return old_str.empty() && new_str.empty(); }
+
+	static std::shared_ptr<RawObjectChecker> get_checker();
+	static WordReplacement from_json(const json& j);
+};
+
+struct NounReplacement
+{
+	WordReplacement singular;
+	WordReplacement plural;
+
+	static std::shared_ptr<RawObjectChecker> get_checker();
+	static NounReplacement from_json(const json& j);
+};
+
 namespace grammar
 {
 	inline std::string english_list(const std::ranges::input_range auto& list)
@@ -213,6 +242,13 @@ namespace grammar
 
 	extern std::string poss(const GrammarNoun& noun, bool plural = false);
 	inline std::string Poss(const GrammarNoun& noun, bool plural = false) { return capitalize(poss(noun, plural)); }
+
+	extern std::string say_regarding(const Verb& verb, const Noun& noun, bool plural = false);
+	extern std::string say_regarding(const Verb& verb, const GrammarNoun& g_noun, bool plural = false);
+	extern std::string say_regarding(const Verb& verb, int num);
+
+	extern std::string word_replace(std::string_view str, const WordReplacement& replacement);
+	extern Noun noun_replace(const Noun& noun, const NounReplacement& replacement);
 }
 
 namespace std
@@ -221,15 +257,15 @@ namespace std
 	inline constexpr string to_string(Name name) { return name.full_name; }
 }
 
+using Age_t = uint16_t;
+
 struct Age
 {
-	using age_t = short;
-
-	age_t physical_age{ 18 };
-	age_t chronological_age{ physical_age };
+	Age_t physical_age{ 18 };
+	Age_t chronological_age{ physical_age };
 
 	constexpr bool operator==(Age other) const { return physical_age == other.physical_age && chronological_age == other.chronological_age; }
-	constexpr operator age_t() const { return physical_age; }
+	constexpr operator Age_t() const { return physical_age; }
 
 	static Age from_json(const json& j);
 };
@@ -359,14 +395,5 @@ namespace grammar
 	inline constexpr std::string themselves(GrammarObject* T) { return T->pronouns()->reflexive; }
 	inline constexpr std::string Themselves(GrammarObject* T) { return capitalize(themselves(T)); }
 }
-
-struct Verb
-{
-	std::string singular;
-	std::string plural;
-
-	static std::shared_ptr<RawObjectChecker> get_checker();
-	static Verb from_json(const json& j);
-};
 
 #endif // !LEMONADE_GAME_SRC_SNOWY_GRAMMAR_H

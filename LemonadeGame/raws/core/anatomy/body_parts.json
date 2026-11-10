@@ -41,7 +41,7 @@
     "noun": { "singular": "groin", "plural": "groins" },
     "relative_size": 10.0,
     "category": "GROIN",
-    "flags": [ "important" ],
+    "flags": [  ],
     "max_health": 12
   },
   {
@@ -160,7 +160,7 @@
     "noun": { "singular": "eyes", "plural": "pairs of eyes", "always_plural": true },
     "relative_size": 0.8,
     "category": "EYES",
-    "flags": [ "embedded", "small" ],
+    "flags": [ "embedded", "small", "sight" ],
     "max_health": 2,
     "multiple": 2
   },
@@ -206,7 +206,7 @@
     "ID": "tail",
     "noun": { "singular": "tail", "plural": "tails" },
     "relative_size": 22.0,
-    "category": "TAIL",
+    "category": "OTHER",
     "flags": [  ],
     "max_health": 18
   },
@@ -215,7 +215,7 @@
     "ID": "horns",
     "noun": { "singular": "horns", "plural": "pairs of horns", "always_plural": true },
     "relative_size": 6.0,
-    "category": "HORNS",
+    "category": "OTHER",
     "flags": [  ],
     "max_health": 30,
     "multiple": 2

@@ -10,8 +10,9 @@ BodyPart::BodyPart(Entity* owner, ThingID ID, RawMaster::Ref<BodyPartType> type,
 {
 	if (m_type)
 	{
-		m_health.max = type->max_health;
-		m_health.current = type->max_health;
+		m_health.max = m_type->max_health;
+		m_health.current = m_type->max_health;
+		m_noun = m_type->noun;
 	}
 }
 
@@ -41,7 +42,7 @@ std::string BodyPart::prefix() const
 
 GrammarNoun BodyPart::display_noun() const
 { 
-	return GrammarNoun::from_noun(m_prefix + m_type->noun, false);
+	return GrammarNoun::from_noun(m_prefix + m_noun, false);
 }
 
 void BodyPart::take_damage(const Damage& damage)
@@ -60,7 +61,7 @@ void BodyPart::take_damage(const Damage& damage)
 	case DamageType::EDGE:
 	case DamageType::PIERCE:
 	{
-		if (get_owner()->has_movable())
+		if (get_owner()->has_movable() && snowy::rng::flip_coin())
 		{
 			Position pos = get_owner()->get_movable()->pos();
 

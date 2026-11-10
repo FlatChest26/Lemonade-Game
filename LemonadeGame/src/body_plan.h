@@ -113,9 +113,30 @@ namespace body_plan
 			{ "BP_RIGHT_LOWER_LEG", "BP_RIGHT_FOOT",		BodyPartRelativePosition::BELOW },
 			{ "BP_GROIN",			"BP_BUTT",				BodyPartRelativePosition::BEHIND },
 			{ "BP_BUTT",			"BP_ANUS",				BodyPartRelativePosition::INSIDE },
-}
+		}
 	};
 };
+
+
+struct BodyGloss
+{
+	RawMaster::RawID ID;
+	std::vector<NounReplacement> replacements;
+
+	bool operator==(const BodyGloss& other) const
+	{
+		return ID == other.ID;
+	}
+
+	bool operator!=(const BodyGloss& other) const
+	{
+		return ID != other.ID;
+	}
+
+	static std::shared_ptr<RawObjectChecker> get_checker();
+	static BodyGloss from_json(const json& j);
+};
+
 
 struct BodyMod
 {
@@ -137,6 +158,9 @@ struct BodyMod
 
 	std::vector<BodyConnectionPlan> add_connections;
 	std::vector<BodyConnectionPlan> add_relations;
+
+	std::vector<RawMaster::Ref<BodyGloss>> add_body_gloss;
+	std::vector<RawMaster::RawID> remove_body_gloss;
 
 	static std::shared_ptr<RawObjectChecker> get_checker();
 	static BodyMod from_json(const json& j);
@@ -258,5 +282,7 @@ namespace body_mod
 		}
 	};
 }
+
+
 
 #endif // !LEMONADE_GAME_SRC_BODY_PLAN_H

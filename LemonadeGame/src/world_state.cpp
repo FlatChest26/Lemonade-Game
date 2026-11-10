@@ -56,7 +56,7 @@ void WorldGameState::new_game()
 					.description = "That is you."
 				},
 				.species = RawMaster::get<Species>("HUMAN"),
-				.lifespan = static_cast<Age::age_t>(INFINITY),
+				.lifespan = static_cast<Age_t>(INFINITY),
 				.current_age = 20,
 				.body_mods = { RawMaster::get<BodyMod>("GirlCock") },
 				.starting_cash = Currency::from_dollars(100),
@@ -116,7 +116,7 @@ void WorldGameState::new_game()
 					.description = "The cutest boy."
 				},
 				.species = RawMaster::get<Species>("HUMAN"),
-				.lifespan = static_cast<Age::age_t>(INFINITY),
+				.lifespan = static_cast<Age_t>(INFINITY),
 				.current_age = 20,
 				.body_mods = { RawMaster::get<BodyMod>("MaleParts") },
 				.starting_cash = Currency::from_dollars(250),
