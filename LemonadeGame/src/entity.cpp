@@ -421,15 +421,16 @@ std::string Entity::display_name() const
 
 GrammarNoun Entity::display_noun() const
 {
-	GrammarNoun display_noun = noun();
+	GrammarNoun display_noun = GrammarNoun::from_noun(noun());
 
 	if (is_player() && GameSettings::USE_SECOND_PERSON_PRONOUNS)
 	{
-		display_noun = "you";
+		display_noun = GrammarNoun::from_string("you", true);
+		display_noun.noun.always_plural = true;
 	}
 	else if (is_name_known())
 	{
-		display_noun = nickname();
+		display_noun = GrammarNoun::from_string(nickname(), true);
 	}
 
 	else if (has_soul() && get_soul()->gender->uses_noun)
@@ -474,14 +475,8 @@ GrammarNoun Entity::display_noun() const
 		}
 		else
 		{
-			if (std::holds_alternative<std::string>(display_noun))
-			{
-				display_noun = std::get<std::string>(display_noun) + " " + gender_noun.singular;
-			}
-			else if (std::holds_alternative<Noun>(display_noun))
-			{
-				display_noun = std::get<Noun>(display_noun) + " " + gender_noun.singular;
-			}
+			display_noun.noun.singular = display_noun.noun.singular + " " + gender_noun.singular;
+			display_noun.noun.plural = display_noun.noun.singular + " " + gender_noun.plural;
 		}
 	}
 

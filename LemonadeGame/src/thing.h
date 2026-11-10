@@ -27,7 +27,7 @@ public:
 
 	// Misc //
 
-	virtual GrammarNoun display_noun() const { return prefix() + (is_named() ? nickname() : noun()) + suffix(); }
+	virtual GrammarNoun display_noun() const { return prefix() + (is_named() ? GrammarNoun::from_string(nickname(), true) : GrammarNoun::from_string(noun(), false)) + suffix(); }
 	virtual std::string display_name() const { return grammar::a(display_noun()); }
 
 	virtual operator std::string() const { return display_name(); }

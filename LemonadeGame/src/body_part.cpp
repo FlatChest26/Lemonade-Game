@@ -41,7 +41,7 @@ std::string BodyPart::prefix() const
 
 GrammarNoun BodyPart::display_noun() const
 { 
-	return m_prefix + m_type->noun;
+	return GrammarNoun::from_noun(m_prefix + m_type->noun, false);
 }
 
 void BodyPart::take_damage(const Damage& damage)

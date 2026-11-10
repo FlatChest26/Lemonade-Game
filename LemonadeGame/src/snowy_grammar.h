@@ -32,18 +32,16 @@ struct Noun
 
 	constexpr bool empty() const { return singular[0] == '\0' && plural[0] == '\0'; }
 
-	
-
 	static std::shared_ptr<RawObjectChecker> get_checker();
 	static Noun from_json(const json& j);
 };
 
-constexpr Noun operator+(const std::string& str, const Noun& noun)
+inline constexpr Noun operator+(const std::string& str, const Noun& noun)
 {
 	return Noun{ str + noun.singular, str + noun.plural, noun.always_plural };
 }
 
-constexpr Noun operator+(const Noun& noun, const std::string& other)
+inline constexpr Noun operator+(const Noun& noun, const std::string& other)
 {
 	return Noun{ noun.singular + other, noun.plural + other, noun.always_plural };
 }
@@ -61,8 +59,78 @@ struct Name
 	static Name from_json(const json& j);
 };
 
-#include <variant>
-using GrammarNoun = std::variant<Noun, std::string>; // std::string means its a PROPER NOUN for now! (fml)
+struct GrammarNoun
+{
+	Noun noun;
+	bool is_proper = false;
+
+	static GrammarNoun from_string(const std::string& str, bool is_proper = true)
+	{
+		GrammarNoun n;
+
+		n.noun = Noun{ str, str + "s", false };
+		n.is_proper = is_proper;
+
+		return n;
+	}
+
+	static GrammarNoun from_noun(const Noun& noun, bool is_proper = false)
+	{
+		GrammarNoun n;
+
+		n.noun = noun;
+		n.is_proper = is_proper;
+
+		return n;
+	}
+
+	static GrammarNoun from_name(const Name& name, bool is_proper = true)
+	{
+		GrammarNoun n;
+
+		n.noun = Noun{ name.nickname, name.nickname };
+		n.is_proper = is_proper;
+
+		return n;
+	}
+
+	std::string as_string() const { return noun.singular; }
+	Noun as_noun() const { return noun; }
+
+	GrammarNoun& operator=(const std::string& str)
+	{
+		noun = Noun{ str, str + "s", false };
+		return *this;
+	}
+
+	GrammarNoun& operator=(const Noun& other_noun)
+	{
+		noun = other_noun;
+		return *this;
+	}
+
+	GrammarNoun& operator=(const Name& name)
+	{
+		noun = Noun{ name.nickname, name.nickname };
+		return *this;
+	}
+
+	GrammarNoun& operator+=(const std::string& str)
+	{
+		noun = Noun{ noun.singular + str, noun.plural + str, noun.always_plural };
+		return *this;
+	}
+};
+
+inline GrammarNoun operator+(const std::string& str, const GrammarNoun& g_noun)
+{
+	return GrammarNoun::from_noun(Noun{ str + g_noun.noun.singular, str + g_noun.noun.plural, g_noun.noun.always_plural }, g_noun.is_proper);
+}
+
+inline GrammarNoun operator+(const GrammarNoun& g_noun, const std::string& str)
+{
+	return GrammarNoun::from_noun(Noun{ g_noun.noun.singular + str, g_noun.noun.plural + str, g_noun.noun.always_plural }, g_noun.is_proper);
+}
 
 namespace grammar
 {

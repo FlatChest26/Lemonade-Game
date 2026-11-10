@@ -119,88 +119,41 @@ namespace grammar
 
 	std::string poss(const GrammarNoun& noun, bool plural)
 	{
-		if (std::holds_alternative<Noun>(noun))
-		{
-			return poss(std::get<Noun>(noun), plural);
-		}
-		else if (std::holds_alternative<std::string>(noun))
-		{
-			return poss(std::string_view(std::get<std::string>(noun)));
-		}
-
-		return "";
+		return poss(noun.as_noun(), plural);
 	}
 
-	bool is_proper(const GrammarNoun& noun)
+	bool is_proper(const GrammarNoun& g_noun)
 	{
-		if (std::holds_alternative<Noun>(noun))
-		{
-			return false;
-		}
-		else if (std::holds_alternative<std::string>(noun))
-		{
-			return true;
-		}
-
-		return false;
+		return g_noun.is_proper;
 	}
 
-	bool is_plural(const GrammarNoun& noun)
+	bool is_plural(const GrammarNoun& g_noun)
 	{
-		if (std::holds_alternative<Noun>(noun))
-		{
-			return std::get<Noun>(noun).always_plural;
-		}
-		else if (std::holds_alternative<std::string>(noun))
-		{
-			if (std::get<std::string>(noun) == "you")
-				return true;
-
-			return false;
-		}
-
-		return false;
+		return g_noun.noun.always_plural;
 	}
 
 	std::string to_string(const GrammarNoun& g_noun, bool plural)
 	{
-		if (std::holds_alternative<Noun>(g_noun))
-		{
-			return plural ? std::get<Noun>(g_noun).plural : std::get<Noun>(g_noun).singular;
-		}
-		else if (std::holds_alternative<std::string>(g_noun)) // Proper noun
-		{
-			return std::get<std::string>(g_noun);
-		}
-
-		return "";
+		return g_noun.as_string();
 	}
 
 	std::string a(const GrammarNoun& g_noun, bool plural)
 	{
-		if (std::holds_alternative<Noun>(g_noun))
+		if (g_noun.is_proper)
 		{
-			return a(std::get<Noun>(g_noun), plural);
-		}
-		else if (std::holds_alternative<std::string>(g_noun)) // Proper noun
-		{
-			return std::get<std::string>(g_noun);
+			return g_noun.as_string();
 		}
 
-		return "a ";
+		return a(g_noun.as_noun(), plural);
 	}
 	std::string the(const GrammarNoun& g_noun, bool plural)
 	{
-		if (std::holds_alternative<Noun>(g_noun))
+		if (g_noun.is_proper)
 		{
-			return the(std::get<Noun>(g_noun), plural);
-		}
-		else if (std::holds_alternative<std::string>(g_noun)) // Proper noun
-		{
-			return std::get<std::string>(g_noun);
+			return g_noun.as_string();
 		}
 
-		return "the ";
+		return the(g_noun.as_noun(), plural);
 	}
 }
 

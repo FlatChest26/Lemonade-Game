@@ -249,7 +249,7 @@ GrammarNoun Material::display_noun() const
 	}
 	}
 
-	return grammar::a(GrammarNoun(noun));
+	return GrammarNoun::from_string(noun, false);
 }
 
 void Material::update_state()
