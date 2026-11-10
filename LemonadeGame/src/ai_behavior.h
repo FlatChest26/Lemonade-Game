@@ -12,6 +12,7 @@
 class AIBrain;
 class AIState;
 class Entity;
+class Action;
 
 class Behavior
 {
@@ -24,6 +25,8 @@ class Behavior_MoveTo : public Behavior
 protected:
 	Position m_move_to_pos{ -1, -1, -1 };
 	Position m_current_pos{};
+	Position m_previous_pos{ -1, -1, -1 };
+
 	std::vector<Position> m_path{};
 
 	std::function<bool(Behavior_MoveTo*)> m_callback;

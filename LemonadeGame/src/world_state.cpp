@@ -45,7 +45,7 @@ void WorldGameState::new_game()
 
 	// Create Creatures
 
-	m_player_id = m_world->add_entity_at(
+	m_player = m_world->add_entity_at(
 		EntityBuilder::create_creature(
 			"PLAYER",
 			{
@@ -66,13 +66,15 @@ void WorldGameState::new_game()
 					{ needs::HYGIENE, 18 },
 					{ needs::FATIGUE, 12 },
 					{ needs::MOOD, 7 },
+					{ attributes::AGILITY, 20 }
 				}
 			}
 		), 
 		lemonade_stand_pos + Position(-1, 1, 0)
-	)->ID();
+	);
 
-	get_player()->learn_name();
+	m_player->learn_name();
+	m_player->add_flag(EntityFlag::IS_PLAYER);
 
 	m_world->add_entity_at(
 		EntityBuilder::create_item(
@@ -269,7 +271,7 @@ void WorldGameState::new_game()
 	for (auto& entity : m_world->get_entities(
 		EntityFilter
 		{
-			.ignore_ids = { m_player_id },
+			.ignore_ids = { m_player->ID() },
 			.required_flags = EntityFlag::IS_CREATURE
 		}
 	))
@@ -296,7 +298,7 @@ void WorldGameState::new_game()
 
 void WorldGameState::update(double delta_time)
 {
-	TimeUnit time_progress = TimeUnit::from_seconds(delta_time * 6.0f);
+	TimeUnit time_progress = TimeUnit::from_ticks(1.0) * delta_time;
 
 	int step_count = 0;
 
@@ -338,7 +340,9 @@ void WorldGameState::update(double delta_time)
 		}
 	}
 
-	for (auto& entity : m_world->get_entities())
+	auto game = get_game();
+
+	for (auto& entity : m_world->get_entities({ .ignore_held = true, .ignore_flags = EntityFlag::IS_HIDDEN, .require_movable = true}))
 	{
 		auto prev = entity->is_flashing();
 
@@ -346,7 +350,38 @@ void WorldGameState::update(double delta_time)
 
 		if (prev != entity->is_flashing())
 		{
-			if (auto game = get_game()) game->request_screen_update();
+			game->request_screen_update();
+		}
+
+		if (entity->is_flashing())
+			continue;
+
+		for (auto& render_override : entity->render_overrides)
+		{
+			render_override.is_active = true;
+
+			if (render_override.active)
+			{
+				render_override.is_active = render_override.active(entity);
+			}
+
+			if (render_override.frames_on > 0)
+			{
+				FrameInt frame = game->frame_count() % (render_override.frames_on + render_override.frames_off);
+
+				bool prev = render_override.flash_on;
+				render_override.flash_on = frame <= render_override.frames_on;
+
+				if (prev != render_override.flash_on && render_override.is_active)
+				{
+					game->request_screen_update();
+				}
+			}
+			else if (render_override.is_active)
+			{
+				render_override.flash_on = true;
+				game->request_screen_update();
+			}
 		}
 	}
 }
@@ -365,7 +400,7 @@ void WorldGameState::render() const
 	{
 		.camera = m_camera.get(),
 		.world_render_frame = { Vec2D<Coord>(0, 0), Vec2D<Length>(tile_map_width + 2, tile_map_height + 2), 1 },
-		.use_fov = m_world->has_entity(m_player_id),
+		.use_fov = does_player_exist(),
 		.show_explored_tiles = GameSettings::SHOW_EXPLORED_TILES,
 		.render_world = true,
 		.render_entities = true,
@@ -429,6 +464,11 @@ void WorldGameState::step(const TimeUnit& time_delta)
 
 			elloted_time -= step_time;
 		}
+
+		if (auto game = m_game)
+		{
+			m_game->request_screen_update();
+		}
 	}
 	else
 	{
@@ -438,14 +478,14 @@ void WorldGameState::step(const TimeUnit& time_delta)
 		{
 			m_ai_manager->step(time_delta);
 		}
+
+		if (auto game = m_game)
+		{
+			m_game->request_screen_update();
+		}
 	}
 
 	auto tile_map = m_world->get_tile_map();
-
-	if (tile_map && tile_map->should_update_path())
-	{
-		tile_map->set_update_path(false);
-	}
 
 	update_camera();
 
@@ -475,10 +515,7 @@ void WorldGameState::step(const TimeUnit& time_delta)
 		input_handler->step(time_delta);
 	}
 
-	if (auto game = m_game)
-	{
-		m_game->request_screen_update();
-	}
+	
 
 	//COUT("Simulation stepped by " << time_delta.total_seconds() << " seconds");
 }

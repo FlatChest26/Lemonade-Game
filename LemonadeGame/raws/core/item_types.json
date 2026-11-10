@@ -5,7 +5,8 @@
     "noun": { "singular": "dildo", "plural": "dildoes" },
     "renderable": { "glyph": "!", "fg": "purple", "bg": "black" },
     "description": "That's quite lewd...",
-    "price": 80.0
+    "price": { "dollars": 80 },
+    "category": "general"
   },
   {
     "type": "item_definition",
@@ -13,8 +14,8 @@
     "noun": { "singular": "glass of lemonade", "plural": "glasses of lemonade" },
     "renderable": { "glyph": "u", "fg": "yellow", "bg": "black" },
     "description": "A glass of a sweet, refreshing drink.",
-    "price": 1.0,
-    "flags": [ "consumable" ],
+    "price": { "dollars": 1 },
+    "category": "drink",
     "consumable_effects": [
       { "modified_stat": "thirst", "amount": -30.0, "taste": "sweet" },
       { "modified_stat": "mood", "amount": 18.0, "taste": "refreshing" }
@@ -26,6 +27,31 @@
     "noun": { "singular": "knife", "plural": "knives" },
     "renderable": { "glyph": "/", "fg": "silver", "bg": "black" },
     "description": "An EVIL blade.",
-    "price": 112.0
+    "price": { "dollars": 112 },
+    "category": "weapon",
+    "weapon_info": {
+      "attacks": [
+        {
+          "range": "melee",
+          "name": "slash",
+          "damage_dice": "1d4",
+          "damage_type": "edge",
+          "prepare": 1,
+          "recover": 1,
+          "frequency": "main",
+          "attack_verb": { "singular": "slashes", "plural": "slash" }
+        },
+        {
+          "range": "melee",
+          "name": "stab",
+          "damage_dice": "1d8+2",
+          "damage_type": "pierce",
+          "prepare": 2,
+          "recover": 2,
+          "frequency": "secondary",
+          "attack_verb": { "singular": "stabs", "plural": "stab" }
+        }
+      ]
+    }
   }
 ]

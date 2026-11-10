@@ -36,34 +36,18 @@ World* NPCGenerator::get_world() const
 	return nullptr;
 }
 
-template<typename T>
-using WeightedVector = std::vector<std::tuple<double, T>>;
 
-template<typename T>
-static T get_weighted_random(WeightedVector<T> vector, std::mt19937 generator)
-{
-	std::vector<double> weights;
-	std::vector<T> values;
-
-	for (const auto& [key, val] : vector)
-	{
-		weights.push_back(key);
-		values.push_back(val);
-	}
-
-	std::discrete_distribution<size_t> weighted_distribution(weights.begin(), weights.end());
-	return values[weighted_distribution(generator)];
-}
 
 namespace npc_generator
 {
 	static bool _initialized = false;
 
-	static WeightedVector<color_t> ValidColors;
-	static WeightedVector<RawMaster::Ref<Species>> ValidSpecies;
-	static WeightedVector<RawMaster::Ref<BodyMod>> ValidBodyMods;
+	static snowy::rng::WeightedVector<color_t> ValidColors;
+	static snowy::rng::WeightedVector<RawMaster::Ref<Species>> ValidSpecies;
+	static snowy::rng::WeightedVector<RawMaster::Ref<BodyMod>> ValidBodyMods;
 
-	static std::unordered_map<SpeciesID, WeightedVector<RawMaster::Ref<Gender>>> ValidSpeciesGenders;
+	static std::unordered_map<SpeciesID, snowy::rng::WeightedVector<RawMaster::Ref<Gender>>> ValidSpeciesGenders;
+	static std::unordered_map<SpeciesID, snowy::rng::WeightedVector<RawMaster::Ref<BodyMod>>> ValidSpeciesBodyMods;
 
 	void initialize_npc_banks()
 	{
@@ -71,11 +55,6 @@ namespace npc_generator
 			return;
 
 		_initialized = true;
-
-		ValidBodyMods.emplace_back(10.0f, RawMaster::get<BodyMod>("FemaleParts"));
-		ValidBodyMods.emplace_back(10.0f, RawMaster::get<BodyMod>("MaleParts"));
-		ValidBodyMods.emplace_back(5.0f, RawMaster::get<BodyMod>("GirlCock"));
-		ValidBodyMods.emplace_back(5.0f, RawMaster::get<BodyMod>("BoyPussy"));
 
 		for (const auto& color_id : RawMaster::get_color_ids())
 		{
@@ -106,6 +85,11 @@ namespace npc_generator
 					RawMaster::get<Gender>(gender_id)
 				);
 			}
+
+			for (auto& [body_mod, frequency] : species_def->common_body_mods)
+			{
+				ValidSpeciesBodyMods[species_def->ID].emplace_back(frequency, body_mod);
+			}
 		}
 	}
 }
@@ -113,10 +97,10 @@ namespace npc_generator
 Entity NPCGenerator::generate_npc()
 {
 	// Random color
-	color_t random_color = get_weighted_random(npc_generator::ValidColors, snowy::rng::generator);
+	color_t random_color = snowy::rng::get_weighted_random(npc_generator::ValidColors, snowy::rng::generator);
 
 	// Generate random species
-	RawMaster::Ref<Species> random_species = get_weighted_random(npc_generator::ValidSpecies, snowy::rng::generator);
+	RawMaster::Ref<Species> random_species = snowy::rng::get_weighted_random(npc_generator::ValidSpecies, snowy::rng::generator);
 
 	// Generate random age
 	std::uniform_int_distribution<Age::age_t> lifespan_dist(random_species->lifespan_min, random_species->lifespan_max);
@@ -126,7 +110,7 @@ Entity NPCGenerator::generate_npc()
 	Age random_age{ age_distrib(snowy::rng::generator) };
 
 	// Generate gender
-	RawMaster::Ref<Gender> random_gender = get_weighted_random(npc_generator::ValidSpeciesGenders[random_species->ID], snowy::rng::generator);
+	RawMaster::Ref<Gender> random_gender = snowy::rng::get_weighted_random(npc_generator::ValidSpeciesGenders[random_species->ID], snowy::rng::generator);
 
 	// Generate name
 	RawMaster::Ref<NameSet> first_name_set;
@@ -171,7 +155,7 @@ Entity NPCGenerator::generate_npc()
 
 	// Generate body mods
 	std::vector<RawMaster::Ref<BodyMod>> random_body_mods;
-	random_body_mods.push_back(get_weighted_random(npc_generator::ValidBodyMods, snowy::rng::generator));
+	random_body_mods.push_back(snowy::rng::get_weighted_random(npc_generator::ValidSpeciesBodyMods[random_species->ID], snowy::rng::generator));
 
 	// Make NPC
 	auto npc = EntityBuilder::create_creature(

@@ -160,6 +160,7 @@
     <ClInclude Include="src\body_part_components.h" />
     <ClInclude Include="src\body_part_type.h" />
     <ClInclude Include="src\body_plan.h" />
+    <ClInclude Include="src\combat_actions.h" />
     <ClInclude Include="src\consumable.h" />
     <ClInclude Include="src\creature_soul.h" />
     <ClInclude Include="src\currency.h" />
@@ -211,6 +212,7 @@
     <ClInclude Include="src\tile_type.h" />
     <ClInclude Include="src\tile_map.h" />
     <ClInclude Include="src\time_units.h" />
+    <ClInclude Include="src\weapon_info.h" />
     <ClInclude Include="src\world.h" />
     <ClInclude Include="src\world_state.h" />
   </ItemGroup>
@@ -224,6 +226,7 @@
     <ClCompile Include="src\body_part.cpp" />
     <ClCompile Include="src\body_part_type.cpp" />
     <ClCompile Include="src\body_plan.cpp" />
+    <ClCompile Include="src\combat_actions.cpp" />
     <ClCompile Include="src\consumable.cpp" />
     <ClCompile Include="src\debug_info.cpp" />
     <ClCompile Include="src\direction_action.cpp" />
@@ -231,6 +234,7 @@
     <ClCompile Include="src\entity_builder.cpp" />
     <ClCompile Include="src\fov.cpp" />
     <ClCompile Include="src\furniture_def.cpp" />
+    <ClCompile Include="src\gait.cpp" />
     <ClCompile Include="src\game_log.cpp" />
     <ClCompile Include="src\game_loop.cpp" />
     <ClCompile Include="src\game_states.cpp" />
@@ -259,6 +263,7 @@
     <ClCompile Include="src\tile.cpp" />
     <ClCompile Include="src\tile_map.cpp" />
     <ClCompile Include="src\tile_type.cpp" />
+    <ClCompile Include="src\weapon_info.cpp" />
     <ClCompile Include="src\world.cpp" />
     <ClCompile Include="src\world_state.cpp" />
   </ItemGroup>

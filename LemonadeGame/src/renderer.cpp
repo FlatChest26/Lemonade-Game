@@ -162,33 +162,16 @@ void WorldRenderer::render_entity(const RenderParams& params, const Entity* enti
 
 	for (const auto& override : entity->render_overrides)
 	{
-		if (override.active && !override.active(entity))
+		if (!override.flash_on || !override.is_active)
 		{
 			continue;
-		}
-
-		if (override.flash_frames_on > 0)
-		{
-			FrameInt frame = params.current_frame % (override.flash_frames_on + override.flash_frames_off);
-
-			if (frame > override.flash_frames_on)
-			{
-				continue;
-			}
 		}
 
 		active_overrides.push_back(override);
 	}
 
-	if (!active_overrides.empty())
-	{
-		std::sort(active_overrides.begin(), active_overrides.end(),
-			[](const RenderOverride& a, const RenderOverride& b)
-			{
-				return a.priority < b.priority;
-			}
-		);
-	}
+	if (!active_overrides.empty() && active_overrides.front().hide_entity)
+		return;
 
 	auto unrotated_offsets = entity->get_movable()->get_offsets(false);
 	auto rotated_offsets = entity->get_movable()->get_offsets(true);

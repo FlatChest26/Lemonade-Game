@@ -6,6 +6,9 @@
 #include <iostream>
 #include <string>
 
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
 using MoneyInt_t = int32_t;
 
 struct Currency
@@ -24,6 +27,30 @@ struct Currency
 
 	static Currency from_dollars(MoneyInt_t dollars) { return Currency(dollars * 100); }
 	static Currency from_dollars(double dollars) { return Currency(static_cast<MoneyInt_t>(dollars * 100)); }
+
+	static Currency from_json(const json& j)
+	{
+		Currency c = Currency::none();
+
+		if (j.is_number())
+		{
+			c += Currency::from_dollars(j.get<double>());
+		}
+		else if (j.is_object())
+		{
+			if (j.contains("cents"))
+			{
+				c += Currency::from_cents(j.at("cents").get<MoneyInt_t>());
+			}
+
+			if (j.contains("dollars"))
+			{
+				c += Currency::from_dollars(j.at("dollars").get<double>());
+			}
+		}
+
+		return c;
+	}
 
 	constexpr operator MoneyInt_t() const
 	{

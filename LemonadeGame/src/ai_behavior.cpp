@@ -3,6 +3,7 @@
 #include "entity.h"
 #include "tile_map.h"
 #include "direction_action.h"
+#include "location_actions.h"
 #include "pathfinding.h"
 #include "snowy_rng.h"
 #include "world.h"
@@ -25,9 +26,10 @@ bool Behavior_MoveTo::perform(AIState* state, const TimeUnit& delta)
 		return true;
 	}
 
-	if (entity->get_movable()->pos() == m_move_to_pos)
+	auto entity_pos = entity->get_movable()->pos();
+
+	if (entity_pos == m_move_to_pos)
 	{
-		//CERR("entity is already at m_move_to!");
 		return true;
 	}
 
@@ -63,23 +65,59 @@ bool Behavior_MoveTo::perform(AIState* state, const TimeUnit& delta)
 		return false;
 	}
 
-	if (m_path.empty() || tile_map->should_update_path() || entity->get_movable()->pos() != m_current_pos || !m_callback(this))
+	bool has_dirty_path = false;
+
+	if (tile_map->has_dirty_tiles())
+	{
+		for (const auto& pos : m_path)
+		{
+			if (tile_map->is_dirty(pos))
+			{
+				has_dirty_path = true;
+				break;
+			}
+		}
+	}
+
+	if (
+		m_path.empty() || 
+		has_dirty_path || 
+		entity_pos != m_current_pos ||
+		m_callback(this)
+		)
 	{
 		m_path.clear();
 		m_current_pos = entity->get_movable()->pos();
 
-		m_path = Pathfinding::compute_path(entity->get_tile_map(), m_current_pos, m_move_to_pos, entity);
+		m_path = Pathfinding::compute_path(tile_map, m_current_pos, m_move_to_pos, entity);
 	}
 
-	if (!m_path.empty())
+	
+	bool close_behind = false;
+
+	if (tile_map->in_bounds(m_previous_pos))
+	{
+		auto tile = tile_map->get_tile(m_previous_pos);
+		if (tile->can_close())
+		{
+			close_behind = true;
+		}
+	}
+	
+	if (close_behind)
+	{
+		entity->start_action(new CloseAction(entity, m_previous_pos));
+	}
+	else if (!m_path.empty())
 	{
 		m_current_pos = m_path.back();
 		m_path.pop_back();
 
-		Position delta = m_current_pos - entity->get_movable()->pos();
-
-		entity->start_action(new BumpAction(entity, delta.unit()));
+		Position delta = (m_current_pos - entity_pos).unit();
+		entity->start_action(new BumpAction(entity, delta));
+		m_previous_pos = entity_pos;
 	}
+
 
 	return m_path.empty();
 }

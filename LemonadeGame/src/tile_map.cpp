@@ -43,7 +43,6 @@ TileMap::TileMap(World* world, Length width, Length height, Length depth) :
 	}
 
 	request_fov_update();
-	set_update_path(true);
 }
 
 TileMap::~TileMap()
@@ -139,7 +138,6 @@ void TileMap::set_tile(Coord x, Coord y, Coord z, RawMaster::Ref<TileType> type,
 	}
 
 	request_fov_update();
-	set_update_path(true);
 }
 
 void TileMap::set_material(Coord x, Coord y, Coord z, RawMaster::Ref<MaterialType> type, MaterialAmount amount, units::Temperature temperature, bool update)
@@ -176,7 +174,6 @@ void TileMap::set_material(Coord x, Coord y, Coord z, RawMaster::Ref<MaterialTyp
 	}
 
 	request_fov_update();
-	set_update_path(true);
 }
 
 void TileMap::set_temperature(Coord x, Coord y, Coord z, units::Temperature temperature, bool update)
@@ -202,7 +199,6 @@ void TileMap::set_temperature(Coord x, Coord y, Coord z, units::Temperature temp
 	}
 
 	request_fov_update();
-	set_update_path(true);
 }
 
 void TileMap::add_material(Coord x, Coord y, Coord z, RawMaster::Ref<MaterialType> type, MaterialAmount amount, units::Temperature temperature, bool update)
@@ -238,7 +234,6 @@ void TileMap::add_material(Coord x, Coord y, Coord z, RawMaster::Ref<MaterialTyp
 	}
 
 	request_fov_update();
-	set_update_path(true);
 }
 
 void TileMap::update_tile_at(Coord x, Coord y, Coord z)

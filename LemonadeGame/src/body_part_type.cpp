@@ -12,15 +12,17 @@ std::shared_ptr<RawObjectChecker> BodyPartType::get_checker()
 	checker->add_property("ID", RawValueType::RAW_String, true);
 	checker->add_property("noun", RawValueType::RAW_Custom, true, Noun::get_checker());
 
-	checker->add_property("default_relative_size", RawValueType::RAW_Number, false);
+	checker->add_property("relative_size", RawValueType::RAW_Number, false);
 	checker->add_property("category", RawValueType::RAW_String, false);
 
 	checker->add_property("flags", RawValueType::RAW_Array, false);
-	checker->add_property("plural", RawValueType::RAW_Bool, false);
+	checker->add_property("multiple", RawValueType::RAW_Number, false);
 
 	checker->add_property("copy_from", RawValueType::RAW_String, false);
 	checker->add_property("add_flags", RawValueType::RAW_Array, false);
 	checker->add_property("remove_flags", RawValueType::RAW_Array, false);
+
+	checker->add_property("max_health", RawValueType::RAW_Number, false);
 
 	return checker;
 }
@@ -51,16 +53,16 @@ BodyPartType BodyPartType::from_json(const json& j)
 	}
 
 	bp.ID = j.at("ID").get<std::string>();
-	bp.noun = Noun::from_json(j);
+	bp.noun = Noun::from_json(j.at("noun"));
 
-	if (checker->is_valid_property("default_relative_size", j))
+	if (checker->is_valid_property("relative_size", j))
 	{
-		bp.default_rel_size = j.at("default_relative_size").get<double>();
+		bp.default_rel_size = j.at("relative_size").get<double>();
 	}
 
-	if (checker->is_valid_property("plural", j))
+	if (checker->is_valid_property("multiple", j))
 	{
-		bp.plural = j.at("plural").get<bool>();
+		bp.multiple = j.at("multiple").get<int>();
 	}
 
 	if (checker->is_valid_property("category", j))
@@ -128,6 +130,11 @@ BodyPartType BodyPartType::from_json(const json& j)
 		{
 			flag_func(flag_name, false);
 		}
+	}
+
+	if (checker->is_valid_property("max_health", j))
+	{
+		bp.max_health = j.at("max_health").get<StatInt_t>();
 	}
 
 	return bp;

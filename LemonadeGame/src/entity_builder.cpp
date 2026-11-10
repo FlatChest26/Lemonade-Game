@@ -5,47 +5,75 @@
 #include "world.h"
 #include "entity_filter.h"
 
-void EntityBuilder::default_entity_render_overrides(std::vector<RenderOverride>& render_overrides)
+void EntityBuilder::default_entity_render_overrides(Entity* entity, std::vector<RenderOverride>& render_overrides)
 {
 	// Falling bg
-	render_overrides.push_back({
-		.priority = 1,
-		.renderable = Renderable{ .bg = color::get("col_falling") },
-		.override_bg = true,
-		.flash_frames_on = 20,
-		.active = [](const Entity* entity)
-			{
-				return !entity->is_on_floor();
-			}
-	});
+	if (entity->can_fall())
+	{
+		render_overrides.push_back({
+			.priority = 1,
+			.renderable = Renderable{ .bg = color::get("cyan") },
+			.override_bg = true,
+			.frames_on = 30,
+			.active = [](const Entity* entity)
+				{
+					return !entity->is_on_floor();
+				}
+		});
+	}
 
 	// Dead bg
 
-	render_overrides.push_back({
-		.priority = 4,
-		.renderable = Renderable{ .bg = color::get("red") },
-		.override_bg = true,
-		.flash_frames_on = 20,
-		.active = [](const Entity* entity)
-			{
-				if (entity->has_living())
-					return entity->get_living()->is_dead();
-				return false;
-			}
-	});
+	if (entity->has_living())
+	{
+		render_overrides.push_back({
+			.priority = 2,
+			.renderable = Renderable{ .bg = color::get("red") },
+			.override_bg = true,
+			.active = [](const Entity* entity)
+				{
+					if (entity->has_living())
+						return entity->get_living()->is_dead();
+					return false;
+				}
+		});
+
+		render_overrides.push_back({
+			.priority = 3,
+			.renderable = Renderable{ .glyph = 'Z', .fg = color::get("white"), .bg = color::get("blue") },
+			.override_glyph = true,
+			.override_fg = true,
+			.override_bg = true,
+			.frames_on = 50,
+			.active = [](const Entity* entity)
+				{
+					if (entity->has_living())
+						return entity->get_living()->is_asleep();
+					return false;
+				}
+		});
+
+	}
 
 	// Grapple bg
 
 	render_overrides.push_back({
-		.priority = 4,
+		.priority = 6,
 		.renderable = Renderable{ .bg = color::get("violet") },
 		.override_bg = true,
-		.flash_frames_on = 20,
 		.active = [](const Entity* entity)
 			{
 				return entity->has_grapple();
 			}
-		});
+	});
+
+
+	std::sort(render_overrides.begin(), render_overrides.end(),
+		[](const RenderOverride& a, const RenderOverride& b)
+		{
+			return a.priority < b.priority;
+		}
+	);
 }
 
 Entity EntityBuilder::create_creature(EntityID ID, CreatureInitializer init)
@@ -84,7 +112,7 @@ Entity EntityBuilder::create_creature(EntityID ID, CreatureInitializer init)
 		new_creature.set_anatomy(new Anatomy(species->default_body_plan, combined_body_mods));
 
 		// Gaits
-		new_creature.set_gait(new Gait(*species->default_gaits));
+		new_creature.set_gait(new Gait(species->gaits));
 
 		// Living
 		new_creature.set_living(new Living(&new_creature, init.current_age, init.lifespan));
@@ -98,7 +126,7 @@ Entity EntityBuilder::create_creature(EntityID ID, CreatureInitializer init)
 				continue;
 			}
 
-			new_creature.get_living()->get_stat(ID).value() = init_amount;
+			new_creature.get_living()->get_stat(ID).set_value(init_amount);
 		}
 
 		// Person
@@ -114,7 +142,7 @@ Entity EntityBuilder::create_creature(EntityID ID, CreatureInitializer init)
 		CERR("Creature: " << ID << " has no species assigned!");
 	}
 
-	default_entity_render_overrides(new_creature.render_overrides);
+	default_entity_render_overrides(&new_creature, new_creature.render_overrides);
 
 	return new_creature;
 }
@@ -134,7 +162,7 @@ Entity EntityBuilder::create_item(EntityID ID, ItemInitializer init)
 
 	new_item.set_item_def(init.item_definition);
 
-	default_entity_render_overrides(new_item.render_overrides);
+	default_entity_render_overrides(&new_item, new_item.render_overrides);
 
 	return new_item;
 }
@@ -163,7 +191,7 @@ Entity EntityBuilder::create_furniture(EntityID ID, FurnitureInitializer init)
 
 	new_furniture.set_movable(new TileMovable(TileTransform{ .size = init.furniture_definition->size }));
 
-	default_entity_render_overrides(new_furniture.render_overrides);
+	default_entity_render_overrides(&new_furniture, new_furniture.render_overrides);
 
 	return new_furniture;
 }

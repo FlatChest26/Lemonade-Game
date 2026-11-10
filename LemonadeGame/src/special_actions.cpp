@@ -28,19 +28,7 @@ ActionResult StartSleepAction::perform()
 	auto actor = get_actor();
 	actor->get_living()->fall_asleep();
 
-	auto n1 = actor->display_noun();
-
-	if (actor->is_player())
-	{
-		get_world_state()->set_tick_speed(TickSpeed::REAL_TIME_8X);
-	}
-
-	return ActionResult{
-		.success = true,
-		.responses = {
-			fmt::format("{} {} asleep.", grammar::A(n1), grammar::is_plural(n1) ? "fall" : "falls")
-		}
-	};
+	return ActionResult(true);
 }
 
 bool EndSleepAction::check_action() const
@@ -66,22 +54,9 @@ bool EndSleepAction::check_action() const
 ActionResult EndSleepAction::perform()
 {
 	auto actor = get_actor();
-
 	actor->get_living()->wake_up();
 
-	if (actor->is_player())
-	{
-		get_world_state()->set_tick_speed(TickSpeed::TURN_BASED);
-	}
-
-	auto n1 = actor->display_noun();
-
-	return ActionResult{
-		.success = true,
-		.responses = {
-			fmt::format("{} {} up.", grammar::A(n1), grammar::is_plural(n1) ? "wake" : "wakes")
-		}
-	};
+	return ActionResult(true);
 }
 
 bool DeathAction::check_action() const
@@ -91,7 +66,7 @@ bool DeathAction::check_action() const
 
 	if (!get_actor()->has_living())
 	{
-		ACTION_CERR("actor is not a living thing!");
+		ACTION_CERR("Actor is not a living thing!");
 		return false;
 	}
 
@@ -107,51 +82,23 @@ bool DeathAction::check_action() const
 ActionResult DeathAction::perform()
 {
 	auto actor = get_actor();
-
 	actor->get_living()->die();
-
-	if (actor->is_player())
-	{
-		get_world_state()->set_tick_speed(TickSpeed::REAL_TIME);
-	}
 
 	return ActionResult(true);
 }
 
 ActionResult StarveToDeathAction::perform()
 {
-	DeathAction::perform();
-
 	auto actor = get_actor();
-	auto n1 = actor->display_noun();
+	actor->get_living()->starve_to_death();
 
-	return ActionResult
-	{
-		.success = true,
-		.responses = {
-			GameMessage(
-				fmt::format("{} {} to death.", grammar::A(n1), grammar::is_plural(n1) ? "starve" : "starves"),
-				actor->is_player() ? color::get("red") : color::get("light_red")
-			)
-		}
-	};
+	return ActionResult(true);
 }
 
 ActionResult DieOfDehydrationAction::perform()
 {
-	DeathAction::perform();
-
 	auto actor = get_actor();
-	auto n1 = actor->display_noun();
+	actor->get_living()->die_of_dehydration();
 
-	return ActionResult
-	{
-		.success = true,
-		.responses = {
-			GameMessage(
-				fmt::format("{} {} of dehydration.", grammar::A(n1), grammar::is_plural(n1) ? "die" : "dies"),
-				actor->is_player() ? color::get("red") : color::get("light_red")
-			)
-		}
-	};
+	return ActionResult(true);
 }

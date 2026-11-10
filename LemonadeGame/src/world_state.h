@@ -32,7 +32,7 @@ private:
 	std::unique_ptr<GameLog> m_log;
 	std::unique_ptr<Sidebar> m_sidebar;
 
-	EntityID m_player_id{ "PLAYER" };
+	Entity* m_player{ nullptr };
 	Position m_previous_player_pos;
 
 	Position m_camera_focus{ 0, 0, 0 };
@@ -46,34 +46,12 @@ public:
 public:
 	// -- Getters & Setters -- //
 
-	const EntityID& get_player_id() const { return m_player_id; }
-	void set_player_id(const EntityID& player_id) { m_player_id = player_id; }
-	bool does_player_exist() const { return m_world->has_entity(m_player_id); }
+	bool does_player_exist() const { return m_player; }
 
-	const Entity* get_player() const
-	{
-		if (!m_world)
-			return nullptr;
+	const Entity* get_player() const { return m_player; }
+	Entity* get_player()  { return m_player; }
 
-		if (!does_player_exist())
-			return nullptr;
-
-		return m_world->get_entity(m_player_id);
-	}
-
-	Entity* get_player() 
-	{
-		if (!m_world)
-			return nullptr;
-
-		if (!does_player_exist())
-			return nullptr;
-
-		return m_world->get_entity(m_player_id);
-	}
-
-	void set_player(const Entity& player) { m_player_id = player.ID(); }
-	void set_player(Entity* player) { m_player_id = player->ID(); }
+	void set_player(Entity* player) { m_player = player; }
 
 	World* get_world() const { return m_world.get(); }
 	Camera* get_camera() const { return m_camera.get(); }

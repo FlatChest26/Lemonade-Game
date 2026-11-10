@@ -18,7 +18,7 @@
     "random_bg": [ "black" ],
     "flags": [ "IS_TRANSPARENT", "IS_WALKABLE", "HAS_FLOOR", "HAS_TRANSPARENT_CEILING" ],
     "tags": [ "OUTDOORS_FLOOR", "GRASS" ],
-    "move_cost": 10.0,
+    "move_cost": 2.0,
     "description": "This is some grass."
   },
   {

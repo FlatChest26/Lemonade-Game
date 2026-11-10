@@ -41,12 +41,12 @@ BodyPlan BodyPlan::from_json(const json& j)
 
 	if (checker->is_valid_property("default_height", j))
 	{
-		bp.height = units::Length(j.at("default_height").get<double>());
+		bp.height = units::length::from_json(j.at("default_height"));
 	}
 
 	if (checker->is_valid_property("default_weight", j))
 	{
-		bp.weight = units::Mass(j.at("default_weight").get<double>());
+		bp.weight = units::mass::from_json(j.at("default_weight"));
 	}
 
 	if (checker->is_valid_property("body_connections", j))
@@ -129,12 +129,12 @@ BodyMod BodyMod::from_json(const json& j)
 
 	if (checker->is_valid_property("set_height", j))
 	{
-		b.set_height = units::Length(j.at("default_height").get<double>());
+		b.set_height = units::length::from_json(j.at("set_height"));
 	}
 
 	if (checker->is_valid_property("add_height", j))
 	{
-		b.add_height = units::Length(j.at("add_height").get<double>());
+		b.add_height = units::length::from_json(j.at("add_height"));
 	}
 
 	if (checker->is_valid_property("modify_height", j))
@@ -144,12 +144,12 @@ BodyMod BodyMod::from_json(const json& j)
 
 	if (checker->is_valid_property("set_weight", j))
 	{
-		b.set_weight = units::Mass(j.at("default_weight").get<double>());
+		b.set_weight = units::mass::from_json(j.at("set_weight"));
 	}
 
 	if (checker->is_valid_property("add_weight", j))
 	{
-		b.add_weight = units::Mass(j.at("add_weight").get<double>());
+		b.add_weight = units::mass::from_json(j.at("add_weight"));
 	}
 
 	if (checker->is_valid_property("modify_weight", j))
@@ -240,6 +240,8 @@ std::shared_ptr<RawObjectChecker> BodyPartPlan::get_checker()
 	checker->add_property("position", RawValueType::RAW_String, false);
 	checker->add_property("prefix", RawValueType::RAW_String, false);
 
+	checker->add_property("is_root", RawValueType::RAW_Bool, false);
+
 	return checker;
 }
 
@@ -291,6 +293,15 @@ BodyPartPlan BodyPartPlan::from_json(const json& j)
 	if (checker->is_valid_property("prefix", j))
 	{
 		bpp.prefix = j.at("prefix").get<std::string>();
+	}
+
+	if (checker->is_valid_property("is_root", j))
+	{
+		bpp.is_root = j.at("is_root").get<bool>();
+	}
+	else
+	{
+		bpp.is_root = false;
 	}
 
 	return bpp;

@@ -40,6 +40,11 @@ std::shared_ptr<RawObjectChecker> Species::get_checker()
 	checker->add_property("add_common_genders", RawValueType::RAW_Array, false);
 	checker->add_property("remove_common_genders", RawValueType::RAW_Array, false);
 
+	checker->add_property("gaits", RawValueType::RAW_Array, false);
+	checker->add_property("add_gaits", RawValueType::RAW_Array, false);
+
+	checker->add_property("common_body_mods", RawValueType::RAW_Array, false);
+
 	return checker;
 }
 
@@ -76,6 +81,10 @@ Species Species::from_json(const json& j)
 	{
 		s.adjective = j.at("adjective").get<std::string>();
 	}
+	else
+	{
+		s.adjective = s.noun.singular;
+	}
 
 	if (checker->is_valid_property("gendered_nouns", j))
 	{
@@ -91,6 +100,12 @@ Species Species::from_json(const json& j)
 			{
 				for (auto& [json_key, json_noun] : gendered_nouns_json.at("immature").get<std::map<std::string, json>>())
 				{
+					if (!Noun::get_checker()->check_json(json_noun))
+					{
+						CERR("Invalid noun json: " << json_noun);
+						continue;
+					}
+
 					s.gendered_nouns.immature[AllGenderTypes[json_key]] = Noun::from_json(json_noun);
 				}
 			}
@@ -106,6 +121,12 @@ Species Species::from_json(const json& j)
 			{
 				for (auto& [json_key, json_noun] : gendered_nouns_json.at("mature").get<std::map<std::string, json>>())
 				{
+					if (!Noun::get_checker()->check_json(json_noun))
+					{
+						CERR("Invalid noun json: " << json_noun);
+						continue;
+					}
+
 					s.gendered_nouns.mature[AllGenderTypes[json_key]] = Noun::from_json(json_noun);
 				}
 			}
@@ -127,11 +148,17 @@ Species Species::from_json(const json& j)
 			}
 			else if (json_body_mod.is_object())
 			{
+				if (!BodyMod::get_checker()->check_json(json_body_mod))
+				{
+					CERR("Invalid body mod json: " << json_body_mod);
+					continue;
+				}
+
 				s.body_mods.push_back(std::make_shared<BodyMod>(BodyMod::from_json(json_body_mod)));
 			}
 			else
 			{
-				CERR("Unrecognized body mod in: " << j);
+				CERR("Unrecognized body mod: " << json_body_mod);
 			}
 		}
 	}
@@ -198,7 +225,6 @@ Species Species::from_json(const json& j)
 			s.mature_age = Age::from_json(life_stages_json.at("mature"));
 		}
 	}
-
 
 	if (checker->is_valid_property("frequency", j))
 	{
@@ -346,9 +372,77 @@ Species Species::from_json(const json& j)
 		}
 	}
 
-	if (s.adjective.empty())
+	if (checker->is_valid_property("gaits", j))
 	{
-		s.adjective = s.noun.singular;
+		s.gaits.clear();
+
+		for (const auto& gait_json : j.at("gaits"))
+		{
+			if (!GaitDef::get_checker()->check_json(gait_json))
+			{
+				CERR("Invalid gait json! " << gait_json);
+				continue;
+			}
+
+			GaitDef gait = GaitDef::from_json(gait_json);
+
+			s.gaits[gait.name] = gait;
+		}
+	}
+
+	if (checker->is_valid_property("add_gaits", j))
+	{
+		for (const auto& gait_json : j.at("add_gaits"))
+		{
+			if (!GaitDef::get_checker()->check_json(gait_json))
+			{
+				CERR("Invalid gait json! " << gait_json);
+				continue;
+			}
+
+			GaitDef gait = GaitDef::from_json(gait_json);
+
+			s.gaits[gait.name] = gait;
+		}
+	}
+
+	if (s.gaits.empty())
+	{
+		s.gaits = gaits::StandardGaits;
+	}
+
+	if (checker->is_valid_property("common_body_mods", j))
+	{
+		for (auto& json_common_body_mod : j.at("common_body_mods"))
+		{
+			if (!json_common_body_mod.contains("body_mod") || !json_common_body_mod.contains("frequency"))
+			{
+				CERR("Unrecognized common body mod: " << json_common_body_mod);
+				continue;
+			}
+
+			auto& body_mod_json = json_common_body_mod.at("body_mod");
+			auto frequency = json_common_body_mod.at("frequency").get<double>();
+
+			if (body_mod_json.is_string())
+			{
+				s.common_body_mods.push_back(std::tuple(RawMaster::get<BodyMod>(body_mod_json.get<std::string>()), frequency));
+			}
+			else if (body_mod_json.is_object())
+			{
+				if (!BodyMod::get_checker()->check_json(body_mod_json))
+				{
+					CERR("Invalid body mod json: " << body_mod_json);
+					continue;
+				}
+
+				s.common_body_mods.push_back(std::tuple(std::make_shared<BodyMod>(BodyMod::from_json(body_mod_json)), frequency));
+			}
+			else
+			{
+				CERR("Unrecognized body mod: " << body_mod_json);
+			}
+		}
 	}
 
 	return s;

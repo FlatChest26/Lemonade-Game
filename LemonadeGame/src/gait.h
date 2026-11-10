@@ -6,41 +6,51 @@
 #include <string>
 #include <unordered_map>
 
-struct GaitType
+#include "raw_object_checker.h"
+
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
+using GaitName = std::string;
+
+struct GaitDef
 {
-	std::string name{ "<unnamed gait>" };
+	GaitName name{ "<unnamed gait>" };
 	double speed{ 1.0f };
-	bool default_gait{ false };
+	bool is_default{ false };
+
+	static std::shared_ptr<RawObjectChecker> get_checker();
+	static GaitDef from_json(const json& j);
 };
 
-using GaitMap = std::unordered_map<std::string, GaitType>;
+using GaitMap = std::unordered_map<GaitName, GaitDef>;
 
 class Gait
 {
 protected:
 	GaitMap m_gaits{};
-	std::string m_current_gait{};
+	GaitName m_current{};
 
 public:
-	Gait(const GaitMap& gaits, const std::string& current_gait = "") :
-		m_gaits(gaits), m_current_gait(current_gait)
+	Gait(const GaitMap& gaits, const GaitName& current = "") :
+		m_gaits(gaits), m_current(current)
 	{
-		if (m_current_gait.empty())
+		if (m_current.empty())
 		{
 			for (auto& [gait_key, gait_type] : m_gaits)
 			{
-				if (gait_type.default_gait)
+				if (gait_type.is_default)
 				{
-					m_current_gait = gait_key;
+					m_current = gait_key;
 					break;
 				}
 			}
 		}
 	}
 
-	std::vector<GaitType*> get_gaits()
+	std::vector<const GaitDef*> get_gaits()
 	{
-		std::vector<GaitType*> gaits;
+		std::vector<const GaitDef*> gaits;
 
 		for (auto& [gait_key, gait_type] : m_gaits)
 		{
@@ -50,19 +60,32 @@ public:
 		return gaits;
 	}
 
-	const GaitType* get_current_gait() const
+	const GaitDef* get_current_gait() const
 	{
-		if (m_gaits.empty() || !m_gaits.contains(m_current_gait))
+		if (m_gaits.empty() || m_current.empty() || !m_gaits.contains(m_current))
 		{
 			return nullptr;
 		}
 
-		return &m_gaits.at(m_current_gait);
+		return &m_gaits.at(m_current);
+	}
+
+	GaitName get_default_gait_name() const
+	{
+		for (auto& [gait_key, gait_type] : m_gaits)
+		{
+			if (gait_type.is_default)
+			{
+				return gait_key;
+			}
+		}
+
+		return "walk";
 	}
 
 	void set_current_gait(std::string gait_id)
 	{
-		m_current_gait = gait_id;
+		m_current = gait_id;
 	}
 
 	double get_current_speed() const
@@ -73,12 +96,14 @@ public:
 
 namespace gaits
 {
-	inline std::unordered_map<std::string, GaitType> StandardGaits{
-		{ "CREEP",{ "stroll",	0.5 } },
-		{ "STROLL",{ "stroll",	0.8 } },
-		{ "WALK",{ "walk",	1.0, true } },
-		{ "RUN",{ "run",		1.4 } },
-		{ "SPRINT",{ "sprint",	2.0 } },
+	inline GaitMap StandardGaits
+	{
+		{ "creep",	{ "stroll",	0.4 } },
+		{ "stroll",	{ "stroll",	0.7 } },
+		{ "walk",	{ "walk",	1.0, true } },
+		{ "jog",	{ "jog",	1.3 } },
+		{ "run",	{ "run",	1.7 } },
+		{ "sprint",	{ "sprint",	2.2 } },
 	};
 }
 

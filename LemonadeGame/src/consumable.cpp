@@ -29,7 +29,7 @@ ConsumableEffect ConsumableEffect::from_json(const json& j)
 	if (checker->is_valid_property("taste", j))
 	{
 		effect.taste = j.at("taste").get<std::string>();
-		effect.taste = trim(effect.taste);
+		effect.taste = grammar::trim(effect.taste);
 	}
 
 	return effect;

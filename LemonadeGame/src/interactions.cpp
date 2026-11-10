@@ -17,9 +17,9 @@ bool Interaction::check_action() const
 	if (!EntityAction::check_action())
 		return false;
 
-	if (get_actor() == nullptr || get_subject() == nullptr)
+	if (get_subject() == nullptr)
 	{
-		ACTION_CERR("Actor or target was null!");
+		ACTION_CERR("Subject is null!");
 		return false;
 	}
 
@@ -206,7 +206,7 @@ ActionResult ConsumeAction::perform()
 
 	std::string taste = fmt::format(
 		"It tastes {}!",
-		english_list(taste_descriptions)
+		grammar::english_list(taste_descriptions)
 	);
 
 	return ActionResult{
@@ -418,6 +418,12 @@ bool KissAction::check_action() const
 		return false;
 	}
 
+	if (!transforms::is_adjacent(get_actor()->get_movable()->pos(), get_subject()->get_movable()->pos()))
+	{
+		ACTION_CERR("Actor and subject are not close enough!" << get_actor()->ID() << " " << get_subject()->ID());
+		return false;
+	}
+
 	return true;
 }
 
@@ -428,12 +434,12 @@ ActionResult KissAction::perform()
 
 	if (actor->has_living() && actor->get_living()->has_stat(needs::AROUSAL))
 	{
-		actor->get_living()->get_stat(needs::AROUSAL).value() += 12;
+		actor->get_living()->get_stat(needs::AROUSAL).add_value(12);
 	}
 
 	if (subject->has_living() && subject->get_living()->has_stat(needs::AROUSAL))
 	{
-		subject->get_living()->get_stat(needs::AROUSAL).value() += 12;
+		subject->get_living()->get_stat(needs::AROUSAL).add_value(12);
 	}
 
 	auto n1 = actor->display_noun();

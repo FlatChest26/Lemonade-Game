@@ -12,12 +12,16 @@ struct EntityFilter
 	EntityFlag ignore_flags = EntityFlag::NONE;
 	std::vector<Position> ignore_positions;
 	bool ignore_ai = false;
+	bool ignore_movable = false;
+	bool ignore_anatomy = false;
 
 	bool require_held = false;
 	std::vector<EntityID> required_ids;
 	EntityFlag required_flags = EntityFlag::NONE;
 	std::vector<Position> required_positions;
 	bool must_be_ai = false;
+	bool require_movable{ !required_positions.empty() };
+	bool require_anatomy = false;
 
 	bool has_required() const
 	{
@@ -36,6 +40,12 @@ struct EntityFilter
 		if (must_be_ai)
 			return true;
 
+		if (require_movable)
+			return true;
+
+		if (require_anatomy)
+			return true;
+
 		return false;
 	}
 
@@ -45,6 +55,12 @@ struct EntityFilter
 			return true;
 
 		if (must_be_ai && !entity.has_brain())
+			return false;
+
+		if (require_movable && !entity.has_movable())
+			return false;
+
+		if (require_anatomy && !entity.has_anatomy())
 			return false;
 
 		if (require_held && !entity.is_being_held())
@@ -100,6 +116,12 @@ struct EntityFilter
 		if (ignore_ai)
 			return true;
 
+		if (ignore_movable)
+			return true;
+
+		if (ignore_anatomy)
+			return true;
+
 		return false;
 	}
 
@@ -109,6 +131,12 @@ struct EntityFilter
 			return false;
 
 		if (ignore_ai && entity.has_brain())
+			return true;
+
+		if (ignore_movable && entity.has_movable())
+			return true;
+
+		if (ignore_anatomy && entity.has_anatomy())
 			return true;
 
 		if (ignore_held && entity.is_being_held())

@@ -10,12 +10,17 @@
 
 StatInt_t Stat::get_value() const
 {
-	if (!m_info.can_be_negative)
-	{
-		return std::clamp(m_value.current(), 0, 100);
-	}
+	return std::clamp<StatInt_t>(m_value, m_info.min_value, m_info.max_value);
+}
 
-	return std::clamp(m_value.current(), -100, 100);
+void Stat::set_value(StatInt_t value)
+{
+	m_value = std::clamp<StatInt_t>(value, m_info.min_value, m_info.max_value);
+}
+
+void Stat::add_value(StatInt_t value)
+{
+	m_value = std::clamp<StatInt_t>(m_value + value, m_info.min_value, m_info.max_value);
 }
 
 std::string Stat::name() const
@@ -52,6 +57,15 @@ color_t Stat::description_color() const
 	}
 
 	return color::get("gray");
+}
+
+Living::Living(Entity* owner, Age current_age, Age total_lifespan) :
+	m_owner(owner), m_current_age(current_age), m_total_lifespan(total_lifespan)
+{
+	if (m_owner->has_anatomy())
+	{
+		m_required_important_parts = m_owner->get_anatomy()->count_body_parts(BodyPartFilter{ .required_flags = BodyPartFlag::IMPORTANT });
+	}
 }
 
 bool Living::is_young() const
@@ -115,7 +129,8 @@ void Living::add_defaults()
 		{
 			.type = StatType::Need,
 			.positive_name = "arousal",
-			.can_be_negative = false,
+			.min_value = 0,
+			.max_value = 100,
 			.description = {
 				{ "cold",			0,  10, color::get("gray") },
 				{ "simulated",		10, 25, color::get("pale_pink") },
@@ -133,7 +148,8 @@ void Living::add_defaults()
 		{
 			.type = StatType::Need,
 			.positive_name = "hunger",
-			.can_be_negative = false,
+			.min_value = 0,
+			.max_value = 100,
 			.description = {
 				{ "full",			0,  10, color::get("gray") },
 				{ "peckish",		10, 30, color::get("tan") },
@@ -151,7 +167,8 @@ void Living::add_defaults()
 		{
 			.type = StatType::Need,
 			.positive_name = "thirst",
-			.can_be_negative = false,
+			.min_value = 0,
+			.max_value = 100,
 			.description = {
 				{ "hydrated",		0,  10, color::get("gray") },
 				{ "parched",		10, 30, color::get("light_blue") },
@@ -168,7 +185,8 @@ void Living::add_defaults()
 		{
 			.type = StatType::Need,
 			.positive_name = "hygiene",
-			.can_be_negative = false,
+			.min_value = 0,
+			.max_value = 100,
 			.description = {
 				{ "immaculate",		0,  10, color::get("gray") },
 				{ "presentable",	10, 40, color::get("peach") },
@@ -186,7 +204,8 @@ void Living::add_defaults()
 		{
 			.type = StatType::Need,
 			.positive_name = "fatigue",
-			.can_be_negative = false,
+			.min_value = 0,
+			.max_value = 100,
 			.description = {
 				{ "wide awake",		0,  10, color::get("gray") },
 				{ "alert",			10, 40, color::get("lavender") },
@@ -205,7 +224,8 @@ void Living::add_defaults()
 			.type = StatType::Need,
 			.positive_name = "mood",
 			.negative_name = "mood",
-			.can_be_negative = true,
+			.min_value = -100,
+			.max_value = 100,
 			.description = {
 				{ "hopeless",		-100, -80, color::get("dark_scarlet") },
 				{ "miserable",		-80,  -60, color::get("carmine") },
@@ -229,7 +249,8 @@ void Living::add_defaults()
 		{
 			.type = StatType::Attribute,
 			.positive_name = "strength",
-			.can_be_negative = false,
+			.min_value = 0,
+			.max_value = 20,
 			.description = {
 				{ "weak",			0,  10, color::get("purple") },
 				{ "average",		10, 40, color::get("gray") },
@@ -247,7 +268,8 @@ void Living::add_defaults()
 		{
 			.type = StatType::Attribute,
 			.positive_name = "agility",
-			.can_be_negative = false,
+			.min_value = 0,
+			.max_value = 20,
 			.description = {
 				{ "weak",			0,  10, color::get("purple") },
 				{ "average",		10, 40, color::get("gray") },
@@ -265,7 +287,8 @@ void Living::add_defaults()
 		{
 			.type = StatType::Attribute,
 			.positive_name = "endurance",
-			.can_be_negative = false,
+			.min_value = 0,
+			.max_value = 20,
 			.description = {
 				{ "weak",			0,  10, color::get("purple") },
 				{ "average",		10, 40, color::get("gray") },
@@ -407,13 +430,35 @@ bool Living::should_wake_up() const
 void Living::fall_asleep()
 {
 	add_timer("REST_TIMER", needs::FATIGUE, StatRate{ .amount = -1, .tick = TimeUnit::from_minutes(12.0) });
-	m_asleep = true;
+	
+	if (get_owner()->is_player())
+	{
+		get_owner()->get_world_state()->set_tick_speed(TickSpeed::REAL_TIME_8X);
+	}
+
+	auto n1 = m_owner->display_noun();
+	m_owner->game_message(
+		fmt::format("{} {} asleep.", grammar::The(n1), grammar::is_plural(n1) ? "fall" : "falls")
+	);
+	
+	set_asleep(true);
 }
 
 void Living::wake_up()
 {
 	remove_timer("REST_TIMER");
-	m_asleep = false;
+
+	if (get_owner()->is_player())
+	{
+		get_owner()->get_world_state()->set_tick_speed(TickSpeed::TURN_BASED);
+	}
+
+	auto n1 = m_owner->display_noun();
+	m_owner->game_message(
+		fmt::format("{} {} up.", grammar::The(n1), grammar::is_plural(n1) ? "wake" : "wakes")
+	);
+
+	set_asleep(false);
 }
 
 bool Living::take_consumable(const ConsumableEffect& effect)
@@ -424,10 +469,50 @@ bool Living::take_consumable(const ConsumableEffect& effect)
 	}
 
 	auto& stat = m_stats[effect.modified_stat];
-	stat.value() += effect.amount;
+	stat.add_value(effect.amount);
 
 	return true;
 }
+
+void Living::die()
+{
+	auto n1 = m_owner->display_noun();
+	m_owner->game_message(
+		GameMessage(
+			fmt::format("{} {}.", grammar::A(n1), grammar::is_plural(n1) ? "die" : "dies"),
+			m_owner->is_player() ? color::get("red") : color::get("light_red")
+		)
+	);
+	
+	set_alive(false);
+}
+
+void Living::starve_to_death()
+{
+	auto n1 = m_owner->display_noun();
+	m_owner->game_message(
+		GameMessage(
+			fmt::format("{} {} to death.", grammar::A(n1), grammar::is_plural(n1) ? "starve" : "starves"),
+			m_owner->is_player() ? color::get("red") : color::get("light_red")
+		)
+	);
+
+	set_alive(false);
+}
+
+void Living::die_of_dehydration()
+{
+	auto n1 = m_owner->display_noun();
+	m_owner->game_message(
+		GameMessage(
+			fmt::format("{} {} of dehydration.", grammar::A(n1), grammar::is_plural(n1) ? "die" : "dies"),
+			m_owner->is_player() ? color::get("red") : color::get("light_red")
+		)
+	);
+
+	set_alive(false);
+}
+
 
 void Living::step(const TimeUnit& time_delta)
 {
@@ -438,45 +523,40 @@ void Living::step(const TimeUnit& time_delta)
 	}
 
 	// Manage stats
-	for (auto& [ID, stat] : m_stats)
+	if (m_required_important_parts > 0)
 	{
-		if (!stat.info().can_be_negative)
+		if (m_required_important_parts > m_owner->get_anatomy()->count_body_parts(BodyPartFilter{ .required_flags = BodyPartFlag::IMPORTANT }))
 		{
-			stat.value() = std::clamp(stat.value().current(), 0, 100);
-		}
-		else
-		{
-			stat.value() = std::clamp(stat.value().current(), -100, 100);
+			die();
+			return;
 		}
 	}
 
 	// Manage needs
 	auto hunger = get_stat(needs::HUNGER);
 
-	if (hunger.value() > 95)
+	if (hunger.get_value() > 95)
 	{
-		m_owner->reset_actions(QueuedAction(new StarveToDeathAction(m_owner)));
+		starve_to_death();
 		return;
 	}
 
 	auto thirst = get_stat(needs::THIRST);
 
-	if (thirst.value() > 95)
+	if (thirst.get_value() > 95)
 	{
-		m_owner->reset_actions(QueuedAction(new DieOfDehydrationAction(m_owner)));
+		die_of_dehydration();
 		return;
 	}
 
 	if (is_asleep() && should_wake_up())
 	{
-		m_owner->reset_actions(QueuedAction(new EndSleepAction(m_owner)));
-		return;
+		wake_up();
 	}
 
 	if (!is_asleep() && should_sleep())
 	{
-		m_owner->reset_actions(QueuedAction(new StartSleepAction(m_owner)));
-		return;
+		fall_asleep();
 	}
 
 	// Manage timers
@@ -489,7 +569,7 @@ void Living::step(const TimeUnit& time_delta)
 
 		while (timer >= rate.tick)
 		{
-			stat.value() += rate.amount;
+			stat.add_value(rate.amount);
 			timer -= std::min(rate.tick, timer);
 		}
 	}

@@ -9,7 +9,7 @@
 
 namespace EntityBuilder
 {
-	extern void default_entity_render_overrides(std::vector<RenderOverride>& render_overrides);
+	extern void default_entity_render_overrides(Entity* entity, std::vector<RenderOverride>& render_overrides);
 
 	using StatInitializer = std::tuple<StatID, StatInt_t>;
 

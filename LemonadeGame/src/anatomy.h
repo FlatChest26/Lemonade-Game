@@ -84,6 +84,10 @@ protected:
 	std::vector<BodyConnection> m_relations{};
 
 	BodyPartID m_root_id;
+
+	std::set<BodyPartID> m_already_added_dirty_parts;
+	std::vector<BodyPartID> m_dirty_parts;
+
 public:
 
 	Anatomy(RawMaster::Ref<BodyPlan> bd_plan, std::vector<RawMaster::Ref<BodyMod>> bd_mods = {});
@@ -91,7 +95,8 @@ public:
 	Anatomy(const Anatomy& other);
 	Anatomy(Anatomy&& other);
 
-	void set_owner(Entity* entity);
+	void set_owner(Entity* owner);
+	Entity* get_owner() const { return m_owner; }
 
 	const BodyPartID& get_root_id() const { return m_root_id; }
 
@@ -105,12 +110,17 @@ public:
 		return &m_body_parts.at(m_root_id);
 	}
 
-	BodyPart& add_body_part(const BodyPartPlan& bp_plan);
+	bool is_root_part(const BodyPartID& bp_ID) const { return m_root_id == bp_ID; }
+
+	BodyPart* add_body_part(const BodyPartPlan& bp_plan);
 	bool add_body_connection(const BodyConnectionPlan& bc_plan);
 	bool add_body_relation(const BodyConnectionPlan& bc_plan);
 
 	bool remove_body_part(const BodyPartID& bp_ID);
+	void fix_relations_and_connections();
 
+	void add_dirty_part(const BodyPartID& bp_ID);
+	bool is_dirty_part(const BodyPartID& bp_ID) const;
 
 	// Body Part Utilities //
 
@@ -180,6 +190,8 @@ public:
 
 		return count;
 	}
+public:
+	void step(const TimeUnit& time_delta);
 
 };
 

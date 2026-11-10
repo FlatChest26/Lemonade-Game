@@ -25,6 +25,7 @@ struct BodyPartPlan
 	BodyPartPosition position{ BodyPartPosition::CENTER };
 
 	std::string prefix{ "" };
+	bool is_root = false;
 
 	static std::shared_ptr<RawObjectChecker> get_checker();
 	static BodyPartPlan from_json(const json& j);
@@ -64,32 +65,32 @@ namespace body_plan
 		.weight = AVERAGE_WEIGHT,
 		.body_parts
 		{
-			{ .type = "BP_HEAD",			.ID = "BP_HEAD",			.position = BodyPartPosition::TOP },
-			{ .type = "BP_NECK",			.ID = "BP_NECK",			.position = BodyPartPosition::CENTER },
+			{ .type = "upper_body",		.ID = "BP_UPPERBODY",		.position = BodyPartPosition::CENTER, .is_root = true },
+			{ .type = "lower_body",		.ID = "BP_LOWERBODY",		.position = BodyPartPosition::CENTER },
 
-			{ .type = "BP_UPPERBODY",	.ID = "BP_UPPERBODY",		.position = BodyPartPosition::CENTER },
-			{ .type = "BP_LOWERBODY",	.ID = "BP_LOWERBODY",		.position = BodyPartPosition::CENTER },
+			{ .type = "head",			.ID = "BP_HEAD",			.position = BodyPartPosition::TOP },
+			{ .type = "neck",			.ID = "BP_NECK",			.position = BodyPartPosition::CENTER },
 
-			{ .type = "BP_UPPER_ARM",	.ID = "BP_LEFT_UPPER_ARM",	.position = BodyPartPosition::LEFT, .prefix = "left " },
-			{ .type = "BP_LOWER_ARM",	.ID = "BP_LEFT_LOWER_ARM",	.position = BodyPartPosition::LEFT, .prefix = "left " },
-			{ .type = "BP_HAND",			.ID = "BP_LEFT_HAND",		.position = BodyPartPosition::LEFT, .prefix = "left " },
+			{ .type = "upper_arm",		.ID = "BP_LEFT_UPPER_ARM",	.position = BodyPartPosition::LEFT, .prefix = "left " },
+			{ .type = "lower_arm",		.ID = "BP_LEFT_LOWER_ARM",	.position = BodyPartPosition::LEFT, .prefix = "left " },
+			{ .type = "hand",			.ID = "BP_LEFT_HAND",		.position = BodyPartPosition::LEFT, .prefix = "left " },
 
-			{ .type = "BP_GROIN",		.ID = "BP_GROIN",			.position = BodyPartPosition::CENTER },
+			{ .type = "groin",			.ID = "BP_GROIN",			.position = BodyPartPosition::CENTER },
 
-			{ .type = "BP_UPPER_ARM",	.ID = "BP_RIGHT_UPPER_ARM",	.position = BodyPartPosition::RIGHT, .prefix = "right " },
-			{ .type = "BP_LOWER_ARM",	.ID = "BP_RIGHT_LOWER_ARM",	.position = BodyPartPosition::RIGHT, .prefix = "right " },
-			{ .type = "BP_HAND",			.ID = "BP_RIGHT_HAND",		.position = BodyPartPosition::RIGHT, .prefix = "right " },
+			{ .type = "upper_arm",		.ID = "BP_RIGHT_UPPER_ARM",	.position = BodyPartPosition::RIGHT, .prefix = "right " },
+			{ .type = "lower_arm",		.ID = "BP_RIGHT_LOWER_ARM",	.position = BodyPartPosition::RIGHT, .prefix = "right " },
+			{ .type = "hand",			.ID = "BP_RIGHT_HAND",		.position = BodyPartPosition::RIGHT, .prefix = "right " },
 
-			{ .type = "BP_UPPER_LEG",	.ID = "BP_LEFT_UPPER_LEG",	.position = BodyPartPosition::LEFT, .prefix = "left " },
-			{ .type = "BP_LOWER_LEG",	.ID = "BP_LEFT_LOWER_LEG",	.position = BodyPartPosition::LEFT, .prefix = "left " },
-			{ .type = "BP_FOOT",			.ID = "BP_LEFT_FOOT",		.position = BodyPartPosition::LEFT, .prefix = "left " },
+			{ .type = "upper_leg",		.ID = "BP_LEFT_UPPER_LEG",	.position = BodyPartPosition::LEFT, .prefix = "left " },
+			{ .type = "lower_leg",		.ID = "BP_LEFT_LOWER_LEG",	.position = BodyPartPosition::LEFT, .prefix = "left " },
+			{ .type = "foot",			.ID = "BP_LEFT_FOOT",		.position = BodyPartPosition::LEFT, .prefix = "left " },
 
-			{ .type = "BP_UPPER_LEG",	.ID = "BP_RIGHT_UPPER_LEG",	.position = BodyPartPosition::RIGHT, .prefix = "right " },
-			{ .type = "BP_LOWER_LEG",	.ID = "BP_RIGHT_LOWER_LEG",	.position = BodyPartPosition::RIGHT, .prefix = "right " },
-			{ .type = "BP_FOOT",			.ID = "BP_RIGHT_FOOT",		.position = BodyPartPosition::RIGHT, .prefix = "right " },
+			{ .type = "upper_leg",		.ID = "BP_RIGHT_UPPER_LEG",	.position = BodyPartPosition::RIGHT, .prefix = "right " },
+			{ .type = "lower_leg",		.ID = "BP_RIGHT_LOWER_LEG",	.position = BodyPartPosition::RIGHT, .prefix = "right " },
+			{ .type = "foot",			.ID = "BP_RIGHT_FOOT",		.position = BodyPartPosition::RIGHT, .prefix = "right " },
 
-			{ .type = "BP_BUTT", .ID = "BP_BUTT", .position = BodyPartPosition::CENTER },
-			{ .type = "BP_ANUS", .ID = "BP_ANUS", .position = BodyPartPosition::CENTER },
+			{ .type = "butt",			.ID = "BP_BUTT", .position = BodyPartPosition::CENTER },
+			{ .type = "anus",			.ID = "BP_ANUS", .position = BodyPartPosition::CENTER },
 		},
 
 		.body_connections
@@ -149,8 +150,8 @@ namespace body_mod
 
 		.add_parts
 		{
-			{ .type = "BP_HORNS",	.ID = "BP_HORNS",	.position = BodyPartPosition::TOP },
-			{ .type = "BP_TAIL",		.ID = "BP_TAIL",	.position = BodyPartPosition::BACK },
+			{ .type = "horns",	.ID = "BP_HORNS",	.position = BodyPartPosition::TOP },
+			{ .type = "tail",	.ID = "BP_TAIL",	.position = BodyPartPosition::BACK },
 		},
 
 		.add_connections
@@ -166,8 +167,8 @@ namespace body_mod
 
 		.add_parts
 		{
-			{ .type = "BP_BREASTS",	.ID = "BP_BREASTS",		.position = BodyPartPosition::FRONT },
-			{ .type = "BP_VAGINA",	.ID = "BP_VAGINA",		.position = BodyPartPosition::BOTTOM },
+			{ .type = "breasts",	.ID = "BP_BREASTS",		.position = BodyPartPosition::FRONT },
+			{ .type = "vagina",		.ID = "BP_VAGINA",		.position = BodyPartPosition::BOTTOM },
 		},
 
 		.add_connections
@@ -183,8 +184,8 @@ namespace body_mod
 
 		.add_parts
 		{
-			{ .type = "BP_PENIS",			.ID = "BP_PENIS",		.position = BodyPartPosition::FRONT },
-			{ .type = "BP_TESTICLES",		.ID = "BP_TESTICLES",	.position = BodyPartPosition::BOTTOM },
+			{ .type = "penis",			.ID = "BP_PENIS",		.position = BodyPartPosition::FRONT },
+			{ .type = "testicles",		.ID = "BP_TESTICLES",	.position = BodyPartPosition::BOTTOM },
 		},
 
 		.add_connections
@@ -200,9 +201,9 @@ namespace body_mod
 
 		.add_parts
 		{
-			{ .type = "BP_BREASTS",		.ID = "BP_BREASTS",		.position = BodyPartPosition::FRONT },
-			{ .type = "BP_PENIS",		.ID = "BP_PENIS",		.position = BodyPartPosition::FRONT },
-			{ .type = "BP_TESTICLES",	.ID = "BP_TESTICLES",	.position = BodyPartPosition::BOTTOM },
+			{ .type = "breasts",		.ID = "BP_BREASTS",		.position = BodyPartPosition::FRONT },
+			{ .type = "penis",		.ID = "BP_PENIS",		.position = BodyPartPosition::FRONT },
+			{ .type = "testicles",	.ID = "BP_TESTICLES",	.position = BodyPartPosition::BOTTOM },
 		},
 
 		.add_connections
@@ -219,7 +220,7 @@ namespace body_mod
 
 		.add_parts
 		{
-			{ .type = "BP_VAGINA",	.ID = "BP_VAGINA",		.position = BodyPartPosition::BOTTOM },
+			{ .type = "vagina",		.ID = "BP_VAGINA",		.position = BodyPartPosition::BOTTOM },
 		},
 
 		.add_connections
@@ -234,11 +235,11 @@ namespace body_mod
 
 		.add_parts
 		{
-			{ .type = "BP_EYES",		.ID = "BP_EYES",	.position = BodyPartPosition::FRONT },
-			{ .type = "BP_MOUTH",	.ID = "BP_MOUTH",	.position = BodyPartPosition::FRONT },
-			{ .type = "BP_EARS",		.ID = "BP_EARS",	.position = BodyPartPosition::SIDES },
-			{ .type = "BP_NOSE",		.ID = "BP_NOSE",	.position = BodyPartPosition::FRONT },
-			{ .type = "BP_TONGUE",	.ID = "BP_TONGUE",	.position = BodyPartPosition::INSIDE },
+			{ .type = "eyes",		.ID = "BP_EYES",	.position = BodyPartPosition::FRONT },
+			{ .type = "mouth",		.ID = "BP_MOUTH",	.position = BodyPartPosition::FRONT },
+			{ .type = "ears",		.ID = "BP_EARS",	.position = BodyPartPosition::SIDES },
+			{ .type = "nose",		.ID = "BP_NOSE",	.position = BodyPartPosition::FRONT },
+			{ .type = "tongue",		.ID = "BP_TONGUE",	.position = BodyPartPosition::INSIDE },
 		},
 
 		.add_connections

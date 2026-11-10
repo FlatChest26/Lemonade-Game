@@ -36,7 +36,6 @@ protected:
 
 	std::vector<std::unique_ptr<TCODMap>> m_tcod_map_layers{};
 
-	bool m_should_update_path{ false };
 	bool m_should_update_fov{ false };
 
 	std::set<Position> m_already_added_dirty_tiles;
@@ -161,14 +160,12 @@ public:
 	bool should_update_fov() const { return m_should_update_fov; }
 	void request_fov_update() { m_should_update_fov = true; }
 
-	bool should_update_path() const { return m_should_update_path; }
-	void set_update_path(bool should_update_path) { m_should_update_path = should_update_path; }
-
 	void add_dirty_tile(const Position& position);
-	void add_dirty_tile(Coord x, Coord y, Coord z)
-	{
-		add_dirty_tile(Position(x, y, z));
-	}
+	void add_dirty_tile(Coord x, Coord y, Coord z) { add_dirty_tile(Position(x, y, z)); }
+
+	bool has_dirty_tiles() const { return !m_dirty_tiles.empty(); }
+	bool is_dirty(const Position& position) const { return m_already_added_dirty_tiles.contains(position); }
+	bool is_dirty(Coord x, Coord y, Coord z) const { return is_dirty(Position(x, y, z)); }
 
 public:
 

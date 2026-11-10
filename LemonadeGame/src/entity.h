@@ -95,6 +95,8 @@ enum class EntityFlag : int64_t
 	IS_TRANSPARENT = ~IS_OPAQUE,								// The entity will never act as a visual obstactle to other entities
 
 	CAN_BE_GRAPPLED = 1 << 19,									// The entity can be put in a grapple.
+
+	IS_PLAYER = 1 << 20											// The entity is the player.
 };
 
 IS_FLAG_ENUM(EntityFlag);
@@ -102,6 +104,7 @@ IS_FLAG_ENUM(EntityFlag);
 struct RenderOverride
 {
 	size_t priority{ 0 };
+	bool hide_entity = false;
 
 	Renderable renderable{ ' ', color::get("white"), color::get("black") };
 
@@ -109,10 +112,14 @@ struct RenderOverride
 	bool override_fg{ false };
 	bool override_bg{ false };
 
-	FrameInt flash_frames_on{ 0 };
-	FrameInt flash_frames_off{ flash_frames_on };
+	FrameInt frames_on{ 0 };
+	FrameInt frames_off{ frames_on };
+
+	bool flash_on = false;
+	bool is_active = false;
 
 	std::function<bool(const Entity*)> active;
+
 };
 
 struct Grapple
@@ -195,7 +202,6 @@ public:
 	Game* get_game() const;
 
 	Entity* get_player() const;
-	EntityID get_player_id() const;
 	bool does_player_exist() const;
 
 	TileMap* get_tile_map() const;
@@ -616,6 +622,9 @@ public:
 	// Checks if EntityFlag::CAN_BE_GRAPPLED is set.
 	virtual bool can_be_grappled() const { return m_flags & EntityFlag::CAN_BE_GRAPPLED; }
 
+	// Checks if EntityFlag::IS_PLAYER is set.
+	virtual bool is_player() const { return m_flags & EntityFlag::IS_PLAYER; }
+
 public:
 	// - Field of View -- //
 
@@ -630,12 +639,9 @@ public:
 	// -- Utilities -- //
 
 	bool operator==(const Entity& other) const;
-	Entity& operator=(Entity& other);
-	Entity& operator=(const Entity& other);
 
 	virtual Position escape_wall(const Position& pos) const;
 
-	virtual bool is_player() const;
 	virtual bool is_visible_to_player() const;
 
 	virtual void on_flags_updated();
@@ -644,7 +650,7 @@ public:
 
 	virtual bool can_move_on_own() const;
 
-	virtual bool should_flash();
+	virtual bool should_flash() const;
 	virtual void game_message(GameMessage msg);
 
 public:

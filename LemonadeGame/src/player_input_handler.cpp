@@ -5,6 +5,7 @@
 #include "location_actions.h"
 #include "interactions.h"
 #include "special_actions.h"
+#include "combat_actions.h"
 
 #include "game.h"
 
@@ -470,7 +471,7 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 
 	if (can_act && InputMap::is_action_pressed(Keybind::Grapple, event))
 	{
-		std::vector<Entity*> potential_grapple_target;
+		std::unordered_map<Position, std::vector<Entity*>> grapple_entities;
 
 		if (player->is_being_grappled() || player->is_grappling_other())
 		{
@@ -491,34 +492,46 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 
 				if (!entities_at.empty())
 				{
-					potential_grapple_target.insert(potential_grapple_target.end(), entities_at.begin(), entities_at.end());
+					grapple_entities[p].insert(grapple_entities[p].end(), entities_at.begin(), entities_at.end());
 				}
 			}
 		}
-		
-		if (!potential_grapple_target.empty())
+
+		if (grapple_entities.empty())
 		{
-			if (potential_grapple_target.size() == 1)
+			return InputResult();
+		}
+		
+		auto position_callback = [=](const Position& pos)
 			{
-				return InputResult(new CheckGrappleAction(player, potential_grapple_target.front()));
-			}
-			else
-			{
+				if (!grapple_entities.contains(pos))
+					return InputResult();
+
+				auto& entities = grapple_entities.at(pos);
+
+				if (entities.empty())
+					return InputResult();
+
+				if (entities.size() == 1)
+				{
+					return InputResult(new GrappleAction(player, entities.front()));
+				}
+
 				return InputResult(new InputHandler_ListSelector(
 					{
-						.title = "Grapple what?",
-						.input_keybind = Keybind::Interact,
+						.title = "Grapple who?",
+						.input_keybind = Keybind::Grapple,
 						.display_input_keybind = false,
 						.items = [&]()
 						{
 							std::vector<ListSelectorItem> items;
-							for (auto& entity : potential_grapple_target)
+							for (auto& entity : entities)
 							{
 								items.push_back(ListSelectorItem(
 									entity->display_name(), entity->fg(), entity->bg(),
 									[=]()
 									{
-										return InputResult(new CheckGrappleAction(player, entity));
+										return InputResult(new GrappleAction(player, entity));
 									}
 								));
 							}
@@ -526,9 +539,131 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 						}(),
 					}
 				));
+			};
 
+		if (grapple_entities.size() == 1 && !grapple_entities.begin()->second.empty())
+		{
+			return position_callback(grapple_entities.begin()->first);
+		}
+
+		return InputResult(new InputHandler_PositionSelector(
+			{
+				.title = "Grapple where?",
+				.input_keybind = Keybind::Grapple,
+				.center = player_pos,
+				.valid_positions = [&]()
+				{
+					std::set<Position> positions;
+
+					for (auto& [pos, entities] : grapple_entities)
+					{
+						if (entities.empty())
+							continue;
+
+						positions.insert(pos);
+					}
+
+					return positions;
+				}(),
+
+				.callback = position_callback
+			}
+		));
+	}
+
+	if (can_act && InputMap::is_action_pressed(Keybind::AutoAttack, event))
+	{
+		std::unordered_map<Position, std::vector<Entity*>> attack_entities;
+
+		for (const auto& p : transforms::get_surrounding_locations(player_pos, false, false, true))
+		{
+			auto entities_at = world->get_entities_at(p,
+				EntityFilter
+				{
+					.ignore_held = true,
+					.ignore_ids = { player->ID() },
+					.require_anatomy = true
+				}
+			);
+
+			if (!entities_at.empty())
+			{
+				attack_entities[p].insert(attack_entities[p].end(), entities_at.begin(), entities_at.end());
 			}
 		}
+
+		if (attack_entities.empty())
+		{
+			return InputResult();
+		}
+
+		auto position_callback = [=](const Position& pos)
+			{
+				if (!attack_entities.contains(pos))
+					return InputResult();
+
+				auto& entities = attack_entities.at(pos);
+
+				if (entities.empty())
+					return InputResult();
+
+				if (entities.size() == 1)
+				{
+					return InputResult(new AutoAttackAction(player, entities.front()));
+				}
+
+				return InputResult(new InputHandler_ListSelector(
+					{
+						.title = "Attack who?",
+						.input_keybind = Keybind::AutoAttack,
+						.display_input_keybind = false,
+						.items = [&]()
+						{
+							std::vector<ListSelectorItem> items;
+							for (auto& entity : entities)
+							{
+								items.push_back(ListSelectorItem(
+									entity->display_name(), entity->fg(), entity->bg(),
+									[=]()
+									{
+										return InputResult(new AutoAttackAction(player, entity));
+									}
+								));
+							}
+							return items;
+						}(),
+					}
+				));
+			};
+
+		if (attack_entities.size() == 1 && !attack_entities.begin()->second.empty())
+		{
+			return position_callback(attack_entities.begin()->first);
+		}
+
+		return InputResult(new InputHandler_PositionSelector(
+			{
+				.title = "Attack where?",
+				.input_keybind = Keybind::AutoAttack,
+				.center = player_pos,
+				.valid_positions = [&]()
+				{
+					std::set<Position> positions;
+
+					for (auto& [pos, entities] : attack_entities)
+					{
+						if (entities.empty())
+							continue;
+
+						positions.insert(pos);
+					}
+
+					return positions;
+				}(),
+
+				.callback = position_callback
+			}
+		));
 	}
 
 	if (InputMap::is_action_pressed(Keybind::Quit, event))
@@ -596,7 +731,7 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 	{
 		if (player->has_movable())
 		{
-			for (auto& entity : world->get_entities(EntityFilter{ .must_be_ai = true }))
+			for (auto& entity : world->get_entities(EntityFilter{ .required_ids{ "SNOW" }}))
 			{
 				entity->get_brain()->push_state(new AIState_Horny({ .horny_target = player }));
 			}

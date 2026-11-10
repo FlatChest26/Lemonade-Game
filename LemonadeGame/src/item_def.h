@@ -7,6 +7,7 @@
 #include "snowy_grammar.h"
 #include "currency.h"
 #include "consumable.h"
+#include "weapon_info.h"
 
 #include <string>
 
@@ -18,13 +19,33 @@ enum class ItemFlags : int32_t
 	NONE = 0,
 
 	IS_CONSUMABLE = 1 << 0,
+	HAS_WEAPON_INFO = 1 << 1,
 };
+
 
 IS_FLAG_ENUM(ItemFlags)
 
-inline std::map<std::string, ItemFlags> AllItemFlags
+inline std::unordered_map<std::string, ItemFlags> AllItemFlags
 {
-	{ "consumable",		ItemFlags::IS_CONSUMABLE }
+	{ "consumable",		ItemFlags::IS_CONSUMABLE },
+};
+
+enum class ItemCategory : uint32_t
+{
+	GENERAL,
+	WEAPON,
+	CLOTHING,
+	FOOD,
+	DRINK,
+};
+
+inline std::unordered_map<std::string, ItemCategory> AllItemCategories
+{
+	{ "general",	ItemCategory::GENERAL },
+	{ "weapon",		ItemCategory::WEAPON },
+	{ "clothing",	ItemCategory::CLOTHING },
+	{ "food",		ItemCategory::FOOD },
+	{ "drink",		ItemCategory::DRINK },
 };
 
 struct ItemDefinition
@@ -36,10 +57,14 @@ struct ItemDefinition
 	std::string description; 
 	ItemFlags flags;
 
+	ItemCategory category{ ItemCategory::GENERAL };
+
 	Currency price{ Currency::from_dollars(1.0) };
 	size_t carry_slots{ 1 };
 
 	std::vector<ConsumableEffect> consumable_effects;
+
+	WeaponInfo weapon_info;
 
 	static std::shared_ptr<RawObjectChecker> get_checker();
 	static ItemDefinition from_json(const json& j);
@@ -47,6 +72,7 @@ struct ItemDefinition
 public:
 	// -- Flags -- //
 	bool is_consumable() const { return flags & ItemFlags::IS_CONSUMABLE; }
+	bool has_weapon_info() const { return flags & ItemFlags::HAS_WEAPON_INFO; }
 };
 
 #endif // !LEMONADE_GAME_SRC_ITEM_DEF_H

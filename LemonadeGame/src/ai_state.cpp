@@ -68,7 +68,6 @@ Behavior* AIState::current_behavior() const
 	return m_behavior_stack.back().get();
 }
 
-
 void AIState::cancel_behavior()
 {
 	m_behavior_stack.pop_back();
@@ -87,7 +86,6 @@ void AIState::run_behaviors(const TimeUnit& time_delta)
 StateResult AIState::step(const TimeUnit& time_delta)
 {
 	run_behaviors(time_delta);
-
 	return StateResult(StateResultType::NONE);
 }
 
@@ -113,9 +111,9 @@ StateResult AIState_Wander::step(const TimeUnit& time_delta)
 
 void AIState_WalkAlongSidewalk::reinit()
 {
-	if (get_entity())
+	if (auto entity = get_entity())
 	{
-		get_entity()->get_gait()->set_current_gait("STROLL");
+		entity->get_gait()->set_current_gait("stroll");
 	}
 }
 
@@ -125,18 +123,20 @@ StateResult AIState_WalkAlongSidewalk::step(const TimeUnit& time_delta)
 
 	if (!has_behavior())
 	{
-		auto entity_pos = get_entity()->get_movable()->pos();
+		auto entity = get_entity();
+		auto& entity_pos = entity->get_movable()->pos();
+
 		auto sidewalk_1 = get_ai_manager()->get_sidewalk_end();
 		auto sidewalk_2 = get_ai_manager()->get_sidewalk_end() + Position(1, 0, 0);
 
 		if (transforms::is_adjacent(entity_pos, sidewalk_1) || transforms::is_adjacent(entity_pos, sidewalk_2))
 		{
-			get_entity()->queue_remove();
+			entity->queue_remove();
 		}
 		else
 		{
 			add_behavior(new Behavior_MoveTo({ .move_to_pos = m_preferred_sidewalk_end } ));
-			get_entity()->get_gait()->set_current_gait("STROLL");
+			entity->get_gait()->set_current_gait("stroll");
 		}
 	}
 
@@ -145,30 +145,31 @@ StateResult AIState_WalkAlongSidewalk::step(const TimeUnit& time_delta)
 
 void AIState_Horny::reinit()
 {
-	if (get_entity())
+	if (auto entity = get_entity())
 	{
-		get_entity()->get_gait()->set_current_gait("WALK");
+		entity->get_gait()->set_current_gait("walk");
 	}
 }
 
 StateResult AIState_Horny::step(const TimeUnit& time_delta)
 {
-	auto entity_pos = get_entity()->get_movable()->pos();
-	auto target_pos = m_horny_target->get_movable()->pos();
+	auto entity = get_entity();
+
+	auto& entity_pos = entity->get_movable()->pos();
+	auto& target_pos = m_horny_target->get_movable()->pos();
 
 	run_behaviors(time_delta);
 
 	if (!has_behavior())
 	{
-		if (!transforms::is_adjacent(entity_pos, target_pos))
+		if (entity->start_action(new KissAction(entity, m_horny_target)))
 		{
-			add_behavior(new Behavior_GetAdjacentToEntity({ .target = m_horny_target }));
-			get_entity()->get_gait()->set_current_gait("WALK");
+			return StateResult(StateResultType::POP);
 		}
 		else
 		{
-			get_entity()->start_action(new KissAction(get_entity(), m_horny_target));
-			return StateResult(StateResultType::POP);
+			add_behavior(new Behavior_GetAdjacentToEntity({ .target = m_horny_target }));
+			entity->get_gait()->set_current_gait("walk");
 		}
 	}
 

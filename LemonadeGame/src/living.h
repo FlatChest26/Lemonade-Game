@@ -6,6 +6,7 @@
 #include "species.h"
 #include "time_units.h"
 #include "stat_values.h"
+#include "anatomy.h"
 
 class Entity;
 struct ConsumableEffect;
@@ -40,9 +41,12 @@ struct StatInfo
 {
 	StatID ID;
 	StatType type;
+
 	std::string positive_name;
 	std::string negative_name;
-	bool can_be_negative = false;
+	
+	StatInt_t min_value = 0;
+	StatInt_t max_value = 100;
 
 	std::vector<StatDescription> description;
 };
@@ -51,7 +55,7 @@ class Stat
 {
 protected:
 	StatInfo m_info;
-	PosNegValue m_value;
+	StatInt_t m_value;
 
 public:
 
@@ -62,9 +66,9 @@ public:
 
 	const StatInfo& info() const { return m_info; }
 
-	PosNegValue& value() { return m_value; }
-	const PosNegValue& value() const { return m_value; }
 	StatInt_t get_value() const;
+	void set_value(StatInt_t value);
+	void add_value(StatInt_t value);
 
 	std::string name() const;
 	std::string description() const;
@@ -119,10 +123,10 @@ protected:
 	bool m_asleep = false;
 	bool m_alive = true;
 
+	int m_required_important_parts{ 0 };
+
 public:
-	Living(Entity* owner = nullptr, Age current_age = { 18 }, Age total_lifespan = { 80 }) :
-		m_owner(owner), m_current_age(current_age), m_total_lifespan(total_lifespan)
-	{}
+	Living(Entity* owner = nullptr, Age current_age = { 18 }, Age total_lifespan = { 80 });
 
 	void set_owner(Entity* owner) { m_owner = owner; }
 	Entity* get_owner() const { return m_owner; }
@@ -207,11 +211,10 @@ public:
 
 	// Sleep //
 
+	void set_asleep(bool asleep) { m_asleep = asleep; }
+
 	bool is_asleep() const { return m_asleep; }
 	bool is_awake() const { return !m_asleep; }
-
-	void fall_asleep();
-	void wake_up();
 
 	double get_sleep_quality() const;
 
@@ -221,9 +224,6 @@ public:
 	bool is_dead() const { return !m_alive; }
 
 	void set_alive(bool alive) { m_alive = alive; }
-
-	void revive() { set_alive(true); }
-	void die() { set_alive(false); }
 
 	bool can_sleep() const;
 	bool can_wake_up() const;
@@ -235,6 +235,15 @@ public:
 
 	bool can_act() const { return is_alive() && is_awake(); }
 	bool take_consumable(const ConsumableEffect& effect);
+
+	// Actions //
+
+	void die();
+	void starve_to_death();
+	void die_of_dehydration();
+
+	void fall_asleep();
+	void wake_up();
 
 public:
 

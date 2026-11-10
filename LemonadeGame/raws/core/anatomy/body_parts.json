@@ -1,0 +1,223 @@
+[
+  {
+    "type": "body_part_type",
+    "ID": "head",
+    "noun": { "singular": "head", "plural": "heads" },
+    "relative_size": 8.0,
+    "category": "HEAD",
+    "flags": [ "important" ],
+    "max_health": 8
+  },
+  {
+    "type": "body_part_type",
+    "ID": "neck",
+    "noun": { "singular": "neck", "plural": "necks" },
+    "relative_size": 2.0,
+    "category": "NECK",
+    "flags": [  ],
+    "max_health": 5
+  },
+  {
+    "type": "body_part_type",
+    "ID": "upper_body",
+    "noun": { "singular": "upper body", "plural": "upper bodies" },
+    "relative_size": 22.0,
+    "category": "UPPER_BODY",
+    "flags": [ "important" ],
+    "max_health": 24
+  },
+  {
+    "type": "body_part_type",
+    "ID": "lower_body",
+    "noun": { "singular": "lower body", "plural": "lower bodies" },
+    "relative_size": 16.0,
+    "category": "LOWER_BODY",
+    "flags": [  ],
+    "max_health": 18
+  },
+  {
+    "type": "body_part_type",
+    "ID": "groin",
+    "noun": { "singular": "groin", "plural": "groins" },
+    "relative_size": 10.0,
+    "category": "GROIN",
+    "flags": [ "important" ],
+    "max_health": 12
+  },
+  {
+    "type": "body_part_type",
+    "ID": "upper_arm",
+    "noun": { "singular": "upper arm", "plural": "upper arms" },
+    "relative_size": 6.0,
+    "category": "UPPER_ARM",
+    "flags": [  ],
+    "max_health": 8
+  },
+  {
+    "type": "body_part_type",
+    "ID": "lower_arm",
+    "noun": { "singular": "lower arm", "plural": "lower arms" },
+    "relative_size": 4.0,
+    "category": "LOWER_ARM",
+    "flags": [  ],
+    "max_health": 8
+  },
+  {
+    "type": "body_part_type",
+    "ID": "hand",
+    "noun": { "singular": "hand", "plural": "hands" },
+    "relative_size": 1.5,
+    "category": "HAND",
+    "flags": [ "grasp" ],
+    "max_health": 6
+  },
+  {
+    "type": "body_part_type",
+    "ID": "upper_leg",
+    "noun": { "singular": "upper leg", "plural": "upper legs" },
+    "relative_size": 16.0,
+    "category": "UPPER_LEG",
+    "flags": [  ],
+    "max_health": 14
+  },
+  {
+    "type": "body_part_type",
+    "ID": "lower_leg",
+    "noun": { "singular": "lower leg", "plural": "lower legs" },
+    "relative_size": 9.0,
+    "category": "LOWER_LEG",
+    "flags": [  ],
+    "max_health": 12
+  },
+  {
+    "type": "body_part_type",
+    "ID": "foot",
+    "noun": { "singular": "foot", "plural": "feet" },
+    "relative_size": 3.0,
+    "category": "FOOT",
+    "flags": [ "stance" ],
+    "max_health": 6
+  },
+  {
+    "type": "body_part_type",
+    "ID": "penis",
+    "noun": { "singular": "penis", "plural": "penises" },
+    "relative_size": 2.0,
+    "category": "FOOT",
+    "flags": [ "phallus" ],
+    "max_health": 6
+  },
+  {
+    "type": "body_part_type",
+    "ID": "testicles",
+    "noun": { "singular": "testicles", "plural": "pairs of testicles", "always_plural": true },
+    "relative_size": 0.5,
+    "category": "TESTICLES",
+    "flags": [  ],
+    "max_health": 4,
+    "multiple": 2
+  },
+  {
+    "type": "body_part_type",
+    "ID": "vagina",
+    "noun": { "singular": "vagina", "plural": "vaginas" },
+    "relative_size": 2.0,
+    "category": "VAGINA",
+    "flags": [ "embedded", "orifice" ],
+    "max_health": 6
+  },
+  {
+    "type": "body_part_type",
+    "ID": "breasts",
+    "noun": { "singular": "breasts", "plural": "pairs of breasts", "always_plural": true },
+    "relative_size": 2.0,
+    "category": "BREASTS",
+    "flags": [  ],
+    "max_health": 8,
+    "multiple": 2
+  },
+  {
+    "type": "body_part_type",
+    "ID": "butt",
+    "noun": { "singular": "butt", "plural": "butts" },
+    "relative_size": 10.0,
+    "category": "BUTT",
+    "flags": [  ],
+    "max_health": 12
+  },
+  {
+    "type": "body_part_type",
+    "ID": "anus",
+    "noun": { "singular": "anus", "plural": "anuses" },
+    "relative_size": 0.5,
+    "category": "ANUS",
+    "flags": [ "embedded", "orifice" ],
+    "max_health": 1
+  },
+  {
+    "type": "body_part_type",
+    "ID": "eyes",
+    "noun": { "singular": "eyes", "plural": "pairs of eyes", "always_plural": true },
+    "relative_size": 0.8,
+    "category": "EYES",
+    "flags": [ "embedded", "small" ],
+    "max_health": 2,
+    "multiple": 2
+  },
+  {
+    "type": "body_part_type",
+    "ID": "nose",
+    "noun": { "singular": "nose", "plural": "noses" },
+    "relative_size": 0.8,
+    "category": "NOSE",
+    "flags": [ "small" ],
+    "max_health": 2
+  },
+  {
+    "type": "body_part_type",
+    "ID": "mouth",
+    "noun": { "singular": "mouth", "plural": "mouths" },
+    "relative_size": 1.2,
+    "category": "MOUTH",
+    "flags": [ "embedded", "orifice", "small" ],
+    "max_health": 4
+  },
+  {
+    "type": "body_part_type",
+    "ID": "ears",
+    "noun": { "singular": "ears", "plural": "pairs of ears", "always_plural": true },
+    "relative_size": 1.0,
+    "category": "EARS",
+    "flags": [ "small" ],
+    "max_health": 2,
+    "multiple": 2
+  },
+  {
+    "type": "body_part_type",
+    "ID": "tongue",
+    "noun": { "singular": "tongue", "plural": "tongues" },
+    "relative_size": 0.5,
+    "category": "TONGUE",
+    "flags": [ "internal", "small" ],
+    "max_health": 2
+  },
+  {
+    "type": "body_part_type",
+    "ID": "tail",
+    "noun": { "singular": "tail", "plural": "tails" },
+    "relative_size": 22.0,
+    "category": "TAIL",
+    "flags": [  ],
+    "max_health": 18
+  },
+  {
+    "type": "body_part_type",
+    "ID": "horns",
+    "noun": { "singular": "horns", "plural": "pairs of horns", "always_plural": true },
+    "relative_size": 6.0,
+    "category": "HORNS",
+    "flags": [  ],
+    "max_health": 30,
+    "multiple": 2
+  }
+]

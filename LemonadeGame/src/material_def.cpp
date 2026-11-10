@@ -13,7 +13,7 @@ std::shared_ptr<RawObjectChecker> MaterialStateDefinition::get_checker()
 	checker->add_property("description", RawValueType::RAW_String, false);
 	checker->add_property("flags", RawValueType::RAW_Array, false);
 	checker->add_property("consumable_effects", RawValueType::RAW_Array, false);
-	checker->add_property("value", RawValueType::RAW_Number, false);
+	checker->add_property("value", RawValueType::RAW_Custom, false);
 
 	return checker;
 }
@@ -39,7 +39,7 @@ MaterialStateDefinition MaterialStateDefinition::from_json(const json& j)
 
 	if (checker->is_valid_property("value", j))
 	{
-		ms.value = Currency::from_dollars(j.at("value").get<double>());;
+		ms.value = Currency::from_json(j.at("value"));
 	}
 
 	if (checker->is_valid_property("flags", j))
@@ -91,8 +91,8 @@ std::shared_ptr<RawObjectChecker> MaterialType::get_checker()
 
 	checker->add_property("ID", RawValueType::RAW_String, true);
 
-	checker->add_property("boiling_point", RawValueType::RAW_Object, true);
-	checker->add_property("melting_point", RawValueType::RAW_Object, true);
+	checker->add_property("boiling_point", RawValueType::RAW_Custom, true);
+	checker->add_property("melting_point", RawValueType::RAW_Custom, true);
 
 	checker->add_property("states", RawValueType::RAW_Object, true);
 
@@ -112,39 +112,8 @@ MaterialType MaterialType::from_json(const json& j)
 
 	mt.ID = j.at("ID").get<std::string>();
 
-	if (j.at("boiling_point").contains("celsius"))
-	{
-		mt.boiling_point = units::temperature::celsius_t(j.at("boiling_point").at("celsius").get<double>());
-	}
-	else if (j.at("boiling_point").contains("kelvin"))
-	{
-		mt.boiling_point = units::temperature::kelvin_t(j.at("boiling_point").at("kelvin").get<double>());
-	}
-	else if (j.at("boiling_point").contains("fahrenheit"))
-	{
-		mt.boiling_point = units::temperature::fahrenheit_t(j.at("boiling_point").at("fahrenheit").get<double>());
-	}
-	else
-	{
-		CERR("Invalid melting point " << j.at("boiling_point") << " in json: " << j);
-	}
-
-	if (j.at("melting_point").contains("celsius"))
-	{
-		mt.melting_point = units::temperature::celsius_t(j.at("melting_point").at("celsius").get<double>());
-	}
-	else if (j.at("melting_point").contains("kelvin"))
-	{
-		mt.melting_point = units::temperature::kelvin_t(j.at("melting_point").at("kelvin").get<double>());
-	}
-	else if (j.at("melting_point").contains("fahrenheit"))
-	{
-		mt.melting_point = units::temperature::fahrenheit_t(j.at("melting_point").at("fahrenheit").get<double>());
-	}
-	else
-	{
-		CERR("Invalid melting point " << j.at("melting_point") << " in json: " << j);
-	}
+	mt.boiling_point = units::temperature::from_json(j.at("boiling_point"));
+	mt.melting_point = units::temperature::from_json(j.at("melting_point"));
 
 	for (auto& [state_name, state_json] : j.at("states").get<std::unordered_map<std::string, json>>())
 	{
@@ -280,7 +249,7 @@ GrammarNoun Material::display_noun() const
 	}
 	}
 
-	return grammar::a(noun);
+	return grammar::a(GrammarNoun(noun));
 }
 
 void Material::update_state()

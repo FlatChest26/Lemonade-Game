@@ -30,4 +30,10 @@ struct Allure
 	AllureStat beauty;
 };
 
+struct Health
+{
+	StatInt_t current;
+	StatInt_t max;
+};
+
 #endif // !LEMONADE_GAME_SRC_BODY_PART_COMPONENTS_H

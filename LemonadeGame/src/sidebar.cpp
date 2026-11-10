@@ -98,16 +98,16 @@ int SidebarMenu_GameInfo::render(const RenderParams& params, const SidebarParams
 			print_text("Game Speed | Turn-based");
 			break;
 		case TickSpeed::REAL_TIME:
-			print_text("Game Speed | x1");
+			print_text("Game Speed | >");
 			break;
 		case TickSpeed::REAL_TIME_2X:
-			print_text("Game Speed | x2");
+			print_text("Game Speed | >>");
 			break;
 		case TickSpeed::REAL_TIME_4X:
-			print_text("Game Speed | x4");
+			print_text("Game Speed | >>>>");
 			break;
 		case TickSpeed::REAL_TIME_8X:
-			print_text("Game Speed | x8");
+			print_text("Game Speed | >>>>>>>>");
 			break;
 		}
 	}
@@ -179,11 +179,18 @@ int SidebarMenu_Look::render(const RenderParams& params, const SidebarParams& sb
 
 	// Write info at look focus
 
+	for (const auto& entity : entities_at)
+	{
+		print_text(fmt::format("{}", entity->display_name()), entity->fg());
+	}
+
 	if (material.amount() > 0 && (!params.use_fov || tile->is_visible()))
 	{
-		print_text(material.display_name() + fmt::format(" ({}/{})", material.amount(), DEFAULT_MAX_MATERIAL_AMOUNT), material.fg());
+		//print_text(material.display_name() + fmt::format(" ({}/{})", material.amount(), DEFAULT_MAX_MATERIAL_AMOUNT), material.fg());
+		print_text(material.display_name(), material.fg());
 	}
-	else if (tile->get_type())
+
+	if (tile->get_type())
 	{
 		if (!params.use_fov || tile->is_visible())
 		{
@@ -197,11 +204,6 @@ int SidebarMenu_Look::render(const RenderParams& params, const SidebarParams& sb
 		{
 			print_text("unexplored", color::get("gray"));
 		}
-	}
-
-	for (const auto& entity : entities_at)
-	{
-		print_text(fmt::format("{}", entity->display_name()), entity->fg());
 	}
 
 	panel_height = std::max(panel_height, (draw_y - panel_y) + 1);
@@ -249,7 +251,7 @@ int SidebarMenu_Needs::render(const RenderParams& params, const SidebarParams& s
 	for (const auto& need_id : entity->get_living()->get_needs())
 	{
 		const auto& need = entity->get_living()->get_stat(need_id);
-		print_text(fmt::format("{}", capitalize(need.name()), need.get_value()), fg);
+		print_text(fmt::format("{}", grammar::capitalize(need.name()), need.get_value()), fg);
 		print_text(fmt::format(" You are {}.", need.description()), need.description_color());
 	}
 

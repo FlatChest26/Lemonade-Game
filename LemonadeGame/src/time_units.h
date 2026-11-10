@@ -6,6 +6,9 @@
 #include <iostream>
 #include <string>
 
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
 using TimeUnit_t = uint64_t;
 
 constexpr TimeUnit_t MILISECONDS_IN_SECOND = 1000;
@@ -13,6 +16,8 @@ constexpr TimeUnit_t SECONDS_IN_MINUTE = 60;
 constexpr TimeUnit_t MINUTES_IN_HOUR = 60;
 constexpr TimeUnit_t HOURS_IN_DAY = 24;
 constexpr TimeUnit_t MONTHS_IN_YEAR = 12;
+
+constexpr TimeUnit_t MILISECONDS_PER_TICK = MILISECONDS_IN_SECOND * 6;
 
 struct TimeUnit
 {
@@ -31,10 +36,51 @@ struct TimeUnit
 
 	static TimeUnit none() { return TimeUnit(0); }
 
-	static TimeUnit from_miliseconds(const TimeUnit_t& miliseconds) { return TimeUnit(miliseconds); }
-	static TimeUnit from_seconds(const double& seconds) { return TimeUnit(static_cast<TimeUnit_t>(seconds * (double)MILISECONDS_IN_SECOND)); }
-	static TimeUnit from_minutes(const double& minutes) { return TimeUnit(static_cast<TimeUnit_t>(minutes * (double)SECONDS_IN_MINUTE * (double)MILISECONDS_IN_SECOND)); }
-	static TimeUnit from_hours(const double& hours) { return TimeUnit(static_cast<TimeUnit_t>(hours * (double)MINUTES_IN_HOUR * (double)SECONDS_IN_MINUTE * (double)MILISECONDS_IN_SECOND)); }
+	static TimeUnit from_miliseconds(TimeUnit_t miliseconds) { return TimeUnit(miliseconds); }
+	static TimeUnit from_seconds(double seconds) { return TimeUnit(static_cast<TimeUnit_t>(seconds * (double)MILISECONDS_IN_SECOND)); }
+	static TimeUnit from_minutes(double minutes) { return TimeUnit(static_cast<TimeUnit_t>(minutes * (double)SECONDS_IN_MINUTE * (double)MILISECONDS_IN_SECOND)); }
+	static TimeUnit from_hours(double hours) { return TimeUnit(static_cast<TimeUnit_t>(hours * (double)MINUTES_IN_HOUR * (double)SECONDS_IN_MINUTE * (double)MILISECONDS_IN_SECOND)); }
+	
+	static TimeUnit from_ticks(double ticks) { return TimeUnit(static_cast<TimeUnit_t>(ticks * (double)MILISECONDS_PER_TICK)); }
+
+	static TimeUnit from_json(const json& j)
+	{
+		TimeUnit t = TimeUnit::none();
+
+		if (j.is_number())
+		{
+			t += TimeUnit::from_ticks(j.get<double>());
+		}
+		else if (j.is_object())
+		{
+			if (j.contains("miliseconds"))
+			{
+				t += TimeUnit::from_miliseconds(j.at("miliseconds").get<TimeUnit_t>());
+			}
+			
+			if (j.contains("seconds"))
+			{
+				t += TimeUnit::from_seconds(j.at("seconds").get<double>());
+			}
+
+			if (j.contains("minutes"))
+			{
+				t += TimeUnit::from_minutes(j.at("minutes").get<double>());
+			}
+
+			if (j.contains("hours"))
+			{
+				t += TimeUnit::from_hours(j.at("hours").get<double>());
+			}
+
+			if (j.contains("ticks"))
+			{
+				t += TimeUnit::from_ticks(j.at("ticks").get<double>());
+			}
+		}
+
+		return t;
+	}
 
 	// -- Utilities -- //
 

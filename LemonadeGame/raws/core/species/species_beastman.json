@@ -20,15 +20,27 @@
     "description": "A humanoid with feline features.",
     "frequency": 6.0,
     "lifespan": { "min": 60, "max": 80 },
-    "child_age": 12,
-    "adult_age": 18,
-    "mature_age": 20,
+    "life_stages": { "child": 12, "adult": 18, "mature": 26 },
     "flags": [ "part_of_society" ],
+    "gaits": [
+      { "name": "creep", "speed": 0.4 },
+      { "name": "stroll", "speed": 0.7 },
+      { "name": "walk", "speed": 1.0, "is_default": true },
+      { "name": "jog", "speed": 1.3 },
+      { "name": "run", "speed": 1.7 },
+      { "name": "sprint", "speed": 2.2 }
+    ],
     "common_genders": [
       { "type": "NEUTER", "frequency": 2.0 },
       { "type": "EPICENE", "frequency": 25.0 },
       { "type": "FEMININE", "frequency": 100.0 },
       { "type": "MASCULINE", "frequency": 100.0 }
+    ],
+    "common_body_mods": [
+      { "body_mod": "FemaleParts", "frequency": 100.0 },
+      { "body_mod": "MaleParts", "frequency": 100.0 },
+      { "body_mod": "GirlCock", "frequency": 50.0 },
+      { "body_mod": "BoyPussy", "frequency": 50.0 }
     ]
   }
 ]

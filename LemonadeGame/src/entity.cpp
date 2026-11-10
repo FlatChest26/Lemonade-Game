@@ -153,6 +153,7 @@ Entity::Entity(EntityID ID, EntityFlag entity_flags) :
 	m_ID(ID), m_flags(entity_flags)
 {
 	on_flags_updated();
+	m_action_queue.reserve(max_actions_queued());
 }
 
 Entity::~Entity()
@@ -161,16 +162,6 @@ Entity::~Entity()
 }
 
 Entity::Entity(const Entity& other)
-{
-	*this = other;
-}
-
-Entity::Entity(Entity&& other)
-{
-	*this = other;
-}
-
-Entity& Entity::operator=(const Entity& other)
 {
 	m_ID = other.m_ID;
 	m_flags = other.m_flags;
@@ -183,11 +174,10 @@ Entity& Entity::operator=(const Entity& other)
 	render_overrides = other.render_overrides;
 
 	on_flags_updated();
-
-	return *this;
+	m_action_queue.reserve(max_actions_queued());
 }
 
-Entity& Entity::operator=(Entity& other)
+Entity::Entity(Entity&& other)
 {
 	m_ID = other.m_ID;
 	m_flags = other.m_flags;
@@ -201,8 +191,7 @@ Entity& Entity::operator=(Entity& other)
 	render_overrides = std::move(other.render_overrides);
 
 	on_flags_updated();
-
-	return *this;
+	m_action_queue.reserve(max_actions_queued());
 }
 
 double Entity::move_speed() const
@@ -330,11 +319,6 @@ Entity* Entity::get_player() const
 	return get_world_state()->get_player();
 }
 
-EntityID Entity::get_player_id() const
-{
-	return get_world_state()->get_player_id();
-}
-
 bool Entity::does_player_exist() const
 {
 	return get_world_state()->does_player_exist();
@@ -427,29 +411,32 @@ std::string Entity::description() const
 		desc += " " + get_species()->description;
 	}
 
-	return trim(desc);
+	return grammar::trim(desc);
 }
 
 std::string Entity::display_name() const
 {
-	return grammar::a(display_noun());
+	return grammar::a(display_noun(), false);
 }
 
 GrammarNoun Entity::display_noun() const
 {
-	if (is_player() && GameSettings::USE_SECOND_PERSON_PRONOUNS)
-		return "you";
+	GrammarNoun display_noun = noun();
 
-	if (is_name_known())
+	if (is_player() && GameSettings::USE_SECOND_PERSON_PRONOUNS)
 	{
-		return nickname();
+		display_noun = "you";
+	}
+	else if (is_name_known())
+	{
+		display_noun = nickname();
 	}
 
-	Noun display_noun = noun();
-
-	if (has_soul() && get_soul()->gender->uses_noun)
+	else if (has_soul() && get_soul()->gender->uses_noun)
 	{
-		Noun gender_noun = get_soul()->gender->mature_noun;
+		auto& gender = get_soul()->gender;
+
+		Noun gender_noun = gender->mature_noun;
 
 		bool species_mention = false;
 
@@ -457,38 +444,50 @@ GrammarNoun Entity::display_noun() const
 		{
 			if (get_living()->is_young())
 			{
-				if (has_species() && get_species()->gendered_nouns.has_immature_gendered_noun(get_soul()->gender->gender_type))
+				if (has_species() && get_species()->gendered_nouns.has_immature_gendered_noun(gender->gender_type))
 				{
-					gender_noun = get_species()->gendered_nouns.get_immature_gendered_noun(get_soul()->gender->gender_type);
+					gender_noun = get_species()->gendered_nouns.get_immature_gendered_noun(gender->gender_type);
 					species_mention = true;
 				}
 				else
 				{
-					gender_noun = get_soul()->gender->immature_noun;
+					gender_noun = gender->immature_noun;
 				}
 			}
 			else
 			{
-				if (has_species() && get_species()->gendered_nouns.has_mature_gendered_noun(get_soul()->gender->gender_type))
+				if (has_species() && get_species()->gendered_nouns.has_mature_gendered_noun(gender->gender_type))
 				{
-					gender_noun = get_species()->gendered_nouns.get_mature_gendered_noun(get_soul()->gender->gender_type);
+					gender_noun = get_species()->gendered_nouns.get_mature_gendered_noun(gender->gender_type);
 					species_mention = true;
 				}
 				else
 				{
-					gender_noun = get_soul()->gender->mature_noun;
+					gender_noun = gender->mature_noun;
 				}
 			}
 		}
 
-		if (species_mention || (has_species() && get_species()->is_mundane()))
+		if (species_mention)
 		{
 			display_noun = gender_noun;
 		}
 		else
 		{
-			display_noun.singular += " " + gender_noun.singular;
+			if (std::holds_alternative<std::string>(display_noun))
+			{
+				display_noun = std::get<std::string>(display_noun) + " " + gender_noun.singular;
+			}
+			else if (std::holds_alternative<Noun>(display_noun))
+			{
+				display_noun = std::get<Noun>(display_noun) + " " + gender_noun.singular;
+			}
 		}
+	}
+
+	if (has_living() && get_living()->is_dead())
+	{
+		display_noun = grammar::poss(display_noun) + " corpse";
 	}
 
 	return display_noun;
@@ -607,14 +606,14 @@ Renderable Entity::renderable() const
 	{
 		renderable.glyph = nickname()[0];
 
-		if (has_living() && get_living()->is_young())
+		if (has_living() && !get_living()->is_adult())
 		{
 			renderable.glyph = tolower(nickname()[0]);
 		}
 		else
 		{
 			renderable.glyph = toupper(nickname()[0]);
-		}
+		}	
 	}
 
 	if (has_soul())
@@ -1041,6 +1040,11 @@ bool Entity::can_see(Coord x, Coord y, Coord z) const
 	}
 	else if (has_movable())
 	{
+		if ((get_movable()->pos() - Position(x, y, z)).length_squared() > (view_range() * view_range()))
+		{
+			return false;
+		}
+
 		auto result = los::raycast3D(
 			get_world(),
 			get_movable()->pos(),
@@ -1092,17 +1096,6 @@ bool Entity::operator==(const Entity& other) const
 	return m_ID == other.m_ID;
 }
 
-
-bool Entity::is_player() const
-{
-	if (does_player_exist())
-	{
-		return ID() == get_player_id();
-	}
-
-	return false;
-}
-
 bool Entity::can_move_on_own() const
 {
 	if (!has_movable())
@@ -1129,36 +1122,29 @@ void Entity::on_flags_updated()
 		remove_component<Inventory>();
 	}
 
-	if (can_do_actions())
-	{
-		m_action_queue.reserve(max_actions_queued());
-	}
-
 	if (!can_do_actions())
 	{
 		m_action_queue.clear();
 	}
 }
 
-bool Entity::should_flash()
+bool Entity::should_flash() const
 {
-	if (is_being_held() || is_hidden())
-	{
-		return false;
-	}
-
-	if (!has_movable())
+	if (is_being_held() || is_hidden() || !has_movable())
 	{
 		return false;
 	}
 
 	if (auto world = get_world())
 	{
-		auto entities_in_tile = world->get_entities(EntityFilter{
-			.ignore_held = true,
-			.required_flags = type_flag(),
-			.required_positions = { get_movable()->pos() }
-		});
+		auto entities_in_tile = world->get_entities_at(
+			get_movable()->pos(), 
+			EntityFilter
+			{
+				.ignore_flags = EntityFlag::IS_HIDDEN,
+				.required_flags = type_flag(),
+			}
+		);
 
 		if (entities_in_tile.size() < 2)
 		{
@@ -1264,6 +1250,11 @@ void Entity::step(const TimeUnit& time_delta)
 	if (can_do_actions())
 	{
 		continue_action(time_delta);
+	}
+
+	if (has_anatomy())
+	{
+		get_anatomy()->step(time_delta);
 	}
 	
 	if (has_living())

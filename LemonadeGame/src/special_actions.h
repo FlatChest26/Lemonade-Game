@@ -13,6 +13,8 @@ public:
 	{
 	}
 
+	virtual TimeUnit get_action_length() const override { return TimeUnit::none(); }
+
 	virtual bool check_action() const override;
 	virtual ActionResult perform();
 
@@ -26,6 +28,8 @@ public:
 		EntityAction(actor)
 	{
 	}
+
+	virtual TimeUnit get_action_length() const override { return TimeUnit::none(); }
 
 	virtual bool check_action() const override;
 	virtual ActionResult perform();
@@ -41,6 +45,8 @@ public:
 	{
 	}
 
+	virtual TimeUnit get_action_length() const override { return TimeUnit::none(); }
+
 	virtual bool check_action() const override;
 	virtual ActionResult perform();
 
@@ -55,6 +61,8 @@ public:
 	{
 	}
 
+	virtual TimeUnit get_action_length() const override { return TimeUnit::none(); }
+
 	virtual ActionResult perform();
 
 	static std::string action_name() { return "starve to death"; }
@@ -67,6 +75,8 @@ public:
 		DeathAction(actor)
 	{
 	}
+
+	virtual TimeUnit get_action_length() const override { return TimeUnit::none(); }
 
 	virtual ActionResult perform();
 

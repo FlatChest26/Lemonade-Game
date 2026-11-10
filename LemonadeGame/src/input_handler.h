@@ -39,7 +39,6 @@ public:
 	WorldGameState* get_world_state() const;
 
 	Entity* get_player() const;
-	EntityID get_player_id() const;
 	bool does_player_exist() const;
 
 	World* get_world() const;

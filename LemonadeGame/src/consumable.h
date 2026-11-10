@@ -11,7 +11,7 @@ using json = nlohmann::json;
 struct ConsumableEffect
 {
 	StatID modified_stat{ needs::HUNGER };
-	PosNegValue amount{ -5 };
+	StatInt_t amount{ -5 };
 	std::string taste{ "like something unknown" };
 
 	static std::shared_ptr<RawObjectChecker> get_checker();

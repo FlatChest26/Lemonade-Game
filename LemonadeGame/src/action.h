@@ -12,7 +12,7 @@
 #include <string>
 #include <utility>
 
-#define _LG_USE_ACTION_WARNINGS
+//#define _LG_USE_ACTION_WARNINGS
 
 #ifdef _LG_USE_ACTION_WARNINGS
 #define ACTION_CERR(...) CERR(__VA_ARGS__)

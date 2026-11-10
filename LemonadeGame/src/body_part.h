@@ -9,6 +9,7 @@
 #include "body_part_components.h"
 
 #include "raw_master.h"
+#include "weapon_info.h"
 
 class Entity;
 class Anatomy;
@@ -91,6 +92,7 @@ protected:
 	// Components //
 
 	Allure m_allure;
+	Health m_health;
 
 public:
 	BodyPart(Entity* owner = nullptr, ThingID ID = "", RawMaster::Ref<BodyPartType> type = nullptr, double rel_size = 25.0, BodyPartPosition position = BodyPartPosition::CENTER, std::string prefix = "");
@@ -103,13 +105,25 @@ public:
 	Entity* get_owner() const;
 	Anatomy* get_anatomy() const;
 
+	double get_relative_size() const { return m_rel_size; }
+
+	Health& health() { return m_health; }
+	const Health& health() const { return m_health; }
+
+	Allure& allure() { return m_allure; }
+	const Allure& allure() const { return m_allure; }
+
+	void take_damage(const Damage& damage);
+
+
 	// -- Thing -- //
 
 	BodyPartID ID() const { return m_ID; }
 
 	virtual Noun noun() const override { return m_type->noun; }
+	virtual GrammarNoun display_noun() const override;
 
-	bool is_plural() const override { return m_type->plural; }
+	bool is_plural() const override { return m_type->multiple > 1; }
 
 	BodyPartCategory category() const { return m_type->category; }
 
@@ -144,32 +158,43 @@ public:
 
 	bool has_flag(BodyPartFlag flag) const { return m_type->flags & flag; }
 
-	bool is_sensory() const { return m_type->flags & BodyPartFlag::SENSORY; }
-
-	bool can_choke() const { return m_type->flags & BodyPartFlag::CHOKABLE; }
+	bool is_important() const { return m_type->flags & BodyPartFlag::IMPORTANT; }
 
 	bool is_grasp() const { return m_type->flags & BodyPartFlag::GRASP; }
-	bool is_limb() const { return m_type->flags & BodyPartFlag::LIMB; }
 	bool is_stance() const { return m_type->flags & BodyPartFlag::STANCE; }
 
+	bool is_embedded() const { return m_type->flags & BodyPartFlag::EMBEDDED; }
 	bool is_internal() const { return m_type->flags & BodyPartFlag::INTERNAL; }
-
-	bool is_used_for_thought() const { return m_type->flags & BodyPartFlag::THOUGHT; }
-	bool is_used_for_circulation() const { return m_type->flags & BodyPartFlag::CIRCULATION; }
-	bool is_used_for_digestion() const { return m_type->flags & BodyPartFlag::DIGESTION; }
-
-	bool is_used_to_eat() const { return m_type->flags & BodyPartFlag::EAT; }
-	bool is_used_to_speak() const { return m_type->flags & BodyPartFlag::SPEAK; }
 
 	bool is_phallus() const { return m_type->flags & BodyPartFlag::PHALLUS; }
 	bool is_orifice() const { return m_type->flags & BodyPartFlag::ORIFICE; }
-	bool is_handle() const { return m_type->flags & BodyPartFlag::HANDLE; }
-	bool is_cleavage() const { return m_type->flags & BodyPartFlag::CLEAVAGE; }
 
-	bool is_lewd() const { return m_type->flags & BodyPartFlag::LEWD; }
-	bool is_suggestive() const { return m_type->flags & BodyPartFlag::SUGGESTIVE; }
-	bool is_kinky() const { return m_type->flags & BodyPartFlag::KINKY; }
-	bool is_pretty() const { return m_type->flags & BodyPartFlag::PRETTY; }
+	bool is_small() const { return m_type->flags & BodyPartFlag::SMALL; }
+
+	//bool is_sensory() const { return m_type->flags & BodyPartFlag::SENSORY; }
+
+	//bool can_choke() const { return m_type->flags & BodyPartFlag::CHOKABLE; }
+	//bool is_limb() const { return m_type->flags & BodyPartFlag::LIMB; }
+	//bool is_stance() const { return m_type->flags & BodyPartFlag::STANCE; }
+	
+	//bool is_used_for_thought() const { return m_type->flags & BodyPartFlag::THOUGHT; }
+	//bool is_used_for_circulation() const { return m_type->flags & BodyPartFlag::CIRCULATION; }
+	//bool is_used_for_digestion() const { return m_type->flags & BodyPartFlag::DIGESTION; }
+
+	//bool is_used_to_eat() const { return m_type->flags & BodyPartFlag::EAT; }
+	//bool is_used_to_speak() const { return m_type->flags & BodyPartFlag::SPEAK; }
+
+	//
+	//
+	//bool is_handle() const { return m_type->flags & BodyPartFlag::HANDLE; }
+	//bool is_cleavage() const { return m_type->flags & BodyPartFlag::CLEAVAGE; }
+
+	//bool is_lewd() const { return m_type->flags & BodyPartFlag::LEWD; }
+	//bool is_suggestive() const { return m_type->flags & BodyPartFlag::SUGGESTIVE; }
+	//bool is_kinky() const { return m_type->flags & BodyPartFlag::KINKY; }
+	//bool is_pretty() const { return m_type->flags & BodyPartFlag::PRETTY; }
+
+	//bool is_small() const { return m_type->flags & BodyPartFlag::SMALL; }
 
 public:
 

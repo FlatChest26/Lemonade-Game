@@ -4,60 +4,130 @@
 #define LEMONADE_GAME_SRC_DICE_ROLLS_H
 
 #include <random>
-#include "snowy_rng.h"
+#include <cctype>
+#include <string>
 
-struct dice_roll
+using DiceInt = uint16_t;
+
+struct DiceRoll
 {
 	// -- Variables -- //
 
-	unsigned short rolls = 1;
-	unsigned short sides = 4;
+	DiceInt rolls = 1;
+	DiceInt sides = 4;
 
 	int modifer = 0;
 	double multiplier = 1.0;
 
+	static DiceRoll from_string(std::string_view str)
+	{
+		DiceRoll d;
+
+		if (str.empty())
+			return d;
+
+		std::string rolls_str;
+		std::string sides_str;
+
+		std::string modifier_str;
+
+		bool hit_d = false;
+		bool hit_mod = false;
+
+		bool subtract_mod = false;
+
+		for (auto& chr : str)
+		{
+			if (!hit_d)
+			{
+				if (chr == 'd')
+				{
+					hit_d = true;
+				}
+				else
+				{
+					rolls_str.push_back(chr);
+				}
+			}
+			else if (!hit_mod)
+			{
+				if (chr == '-' || chr == '+')
+				{
+					hit_mod = true;
+
+					subtract_mod = chr == '-';
+				}
+				else
+				{
+					sides_str.push_back(chr);
+				}
+			}
+			else
+			{
+				modifier_str.push_back(chr);
+			}
+		}
+
+		if (rolls_str.empty() || sides_str.empty())
+		{
+			return d;
+		}
+
+
+		d.rolls = static_cast<DiceInt>(std::stoi(rolls_str));
+		d.sides = static_cast<DiceInt>(std::stoi(sides_str));
+
+		if (!modifier_str.empty())
+		{
+			d.modifer = subtract_mod ? -static_cast<DiceInt>(std::stoi(modifier_str)) : static_cast<DiceInt>(std::stoi(modifier_str));
+		}
+
+		return d;
+	}
+
 	// -- Operators -- //
 
-	constexpr dice_roll operator+(const int& other) const
+	constexpr DiceRoll operator+(const int& other) const
 	{
-		return dice_roll{ rolls, sides, modifer + other };
+		return DiceRoll{ rolls, sides, modifer + other };
 	}
 
-	constexpr dice_roll operator-(const int& other) const
+	constexpr DiceRoll operator-(const int& other) const
 	{
-		return dice_roll{ rolls, sides, modifer - other };
+		return DiceRoll{ rolls, sides, modifer - other };
 	}
 
-	constexpr dice_roll operator+() const
+	constexpr DiceRoll operator+() const
 	{
-		return dice_roll{ rolls, sides, modifer, +multiplier };
+		return DiceRoll{ rolls, sides, modifer, +multiplier };
 	}
 
-	constexpr dice_roll operator-() const
+	constexpr DiceRoll operator-() const
 	{
-		return dice_roll{ rolls, sides, modifer, -multiplier };
+		return DiceRoll{ rolls, sides, modifer, -multiplier };
 	}
 
-	constexpr dice_roll operator*(const double& other) const
+	constexpr DiceRoll operator*(const double& other) const
 	{
-		return dice_roll{ rolls, sides, modifer, other };
+		return DiceRoll{ rolls, sides, modifer, other };
 	}
 
-	constexpr dice_roll operator/(const double& other) const
+	constexpr DiceRoll operator/(const double& other) const
 	{
-		return dice_roll{ rolls, sides, modifer, 1 / other };
+		return DiceRoll{ rolls, sides, modifer, 1 / other };
 	}
 };
 
-inline int roll(const dice_roll& dice)
+template <typename T>
+inline int roll(const DiceRoll& dice, T& generator)
 {
 	int total = 0;
 
-	std::uniform_int_distribution<int> distrib(1, dice.sides);
+	std::uniform_int_distribution<int> dist(1, dice.sides);
 
 	for (int roll_count = 0; roll_count < static_cast<int>(dice.rolls); roll_count++)
 	{
-		total += distrib(snowy::rng::generator);
+		total += dist(generator);
 	}
 
 	total = static_cast<int>(round(total * dice.multiplier));
@@ -66,34 +136,36 @@ inline int roll(const dice_roll& dice)
 	return total;
 }
 
-#pragma warning( push )
-#pragma warning( disable : 4455 ) // Diable the warning for user-defined literals not starting with an underscore
 
-inline constexpr dice_roll operator "" d4(unsigned long long int amount)
+
+inline constexpr DiceRoll operator "" _d4(unsigned long long int amount)
 {
-	return dice_roll{ static_cast<unsigned short>(amount), 4 };
+	return DiceRoll{ static_cast<DiceInt>(amount), 4 };
 }
 
-inline constexpr dice_roll operator "" d6(unsigned long long int amount)
+inline constexpr DiceRoll operator "" _d6(unsigned long long int amount)
 {
-	return dice_roll{ static_cast<unsigned short>(amount), 6 };
+	return DiceRoll{ static_cast<DiceInt>(amount), 6 };
 }
 
-inline constexpr dice_roll operator "" d8(unsigned long long int amount)
+inline constexpr DiceRoll operator "" _d8(unsigned long long int amount)
 {
-	return dice_roll{ static_cast<unsigned short>(amount), 8 };
+	return DiceRoll{ static_cast<DiceInt>(amount), 8 };
 }
 
-inline constexpr dice_roll operator "" d12(unsigned long long int amount)
+inline constexpr DiceRoll operator "" _d10(unsigned long long int amount)
 {
-	return dice_roll{ static_cast<unsigned short>(amount), 12 };
+	return DiceRoll{ static_cast<DiceInt>(amount), 10 };
 }
 
-inline constexpr dice_roll operator "" d20(unsigned long long int amount)
+inline constexpr DiceRoll operator "" _d12(unsigned long long int amount)
 {
-	return dice_roll{ static_cast<unsigned short>(amount), 20 };
+	return DiceRoll{ static_cast<DiceInt>(amount), 12 };
 }
 
-#pragma warning( pop )
+inline constexpr DiceRoll operator "" _d20(unsigned long long int amount)
+{
+	return DiceRoll{ static_cast<DiceInt>(amount), 20 };
+}
 
 #endif // !LEMONADE_GAME_SRC_DICE_ROLLS_H

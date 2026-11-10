@@ -83,21 +83,23 @@ struct GenderedNouns
 
 using SpeciesID = std::string;
 
+
 struct Species
 {
 	SpeciesID ID;
+
 	Noun noun{ "unknown creature", "unknown creatures" };
 	std::string adjective{ noun.singular };
 	GenderedNouns gendered_nouns;
 
 	Renderable renderable{ '@', color::get("cyan"), color::get("black") };
 
+	std::string description{ "A generic species." };
+
 	RawMaster::Ref<BodyPlan> default_body_plan{ nullptr };
 	std::vector<RawMaster::Ref<BodyMod>> body_mods{};
 
-	std::string description{ "A generic species." };
-
-	GaitMap* default_gaits{ &gaits::StandardGaits };
+	GaitMap gaits;
 
 	Age lifespan_min{ 60 }; // The minimum age a creature of this species can live to
 	Age lifespan_max{ 120 }; // The max age a creature of this species can live to
@@ -111,16 +113,7 @@ struct Species
 	SpeciesFlag flags{ SpeciesFlag::NONE };
 
 	std::unordered_map<GenderType, double> common_genders;
-
-	bool has_common_gender_type(GenderType gender_type) const
-	{
-		return common_genders.contains(gender_type);
-	}
-
-	double get_common_gender_type_frequency(GenderType gender_type) const
-	{
-		return common_genders.at(gender_type);
-	}
+	std::vector<std::tuple<RawMaster::Ref<BodyMod>, double>> common_body_mods;
 
 public:
 
@@ -130,11 +123,17 @@ public:
 	bool does_not_exist() const { return flags & SpeciesFlag::DOES_NOT_EXIST; }
 	bool is_part_of_society() const { return flags & SpeciesFlag::PART_OF_SOCIETY; }
 
+	// -- Utilities -- //
+
+	bool has_common_gender_type(GenderType gender_type) const { return common_genders.contains(gender_type); }
+	double get_common_gender_type_frequency(GenderType gender_type) const { return common_genders.at(gender_type); }
+
 public:
 	bool operator==(const Species& other) const { return other.ID == ID; }
 
 	static std::shared_ptr<RawObjectChecker> get_checker();
 	static Species from_json(const json& j);
+
 };
 
 namespace species

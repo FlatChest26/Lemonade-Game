@@ -66,6 +66,9 @@ enum class Keybind : uint64_t
 	Sleep,
 	Consume,
 
+	AutoAttack,
+	PreciseAttack,
+
 	SetToTurnBasedSpeed,
 	SetToRealTimeSpeed,
 	SetToRealTime2xSpeed,

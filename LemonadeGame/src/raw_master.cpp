@@ -71,32 +71,32 @@ namespace RawMaster
 		});
 
 		BodyPartTypeDB::init();
-		BodyPartTypeDB::add({
-			{ "BP_HEAD",			std::make_shared<BodyPartType>(body_part::Head) },
-			{ "BP_NECK",			std::make_shared<BodyPartType>(body_part::Neck) },
-			{ "BP_UPPERBODY",		std::make_shared<BodyPartType>(body_part::UpperBody) },
-			{ "BP_LOWERBODY",		std::make_shared<BodyPartType>(body_part::LowerBody) },
-			{ "BP_UPPER_ARM",		std::make_shared<BodyPartType>(body_part::UpperArm) },
-			{ "BP_LOWER_ARM",		std::make_shared<BodyPartType>(body_part::LowerArm) },
-			{ "BP_HAND",			std::make_shared<BodyPartType>(body_part::Hand) },
-			{ "BP_GROIN",			std::make_shared<BodyPartType>(body_part::Groin) },
-			{ "BP_UPPER_LEG",		std::make_shared<BodyPartType>(body_part::UpperLeg) },
-			{ "BP_LOWER_LEG",		std::make_shared<BodyPartType>(body_part::LowerLeg) },
-			{ "BP_FOOT",			std::make_shared<BodyPartType>(body_part::Foot) },
-			{ "BP_PENIS",			std::make_shared<BodyPartType>(body_part::Penis) },
-			{ "BP_VAGINA",			std::make_shared<BodyPartType>(body_part::Vagina) },
-			{ "BP_BREASTS",			std::make_shared<BodyPartType>(body_part::Breasts) },
-			{ "BP_TESTICLES",		std::make_shared<BodyPartType>(body_part::Testicles) },
-			{ "BP_BUTT",			std::make_shared<BodyPartType>(body_part::Butt) },
-			{ "BP_ANUS",			std::make_shared<BodyPartType>(body_part::Anus) },
-			{ "BP_EYES",			std::make_shared<BodyPartType>(body_part::Eyes) },
-			{ "BP_MOUTH",			std::make_shared<BodyPartType>(body_part::Mouth) },
-			{ "BP_EARS",			std::make_shared<BodyPartType>(body_part::Ears) },
-			{ "BP_NOSE",			std::make_shared<BodyPartType>(body_part::Nose) },
-			{ "BP_TONGUE",			std::make_shared<BodyPartType>(body_part::Tongue) },
-			{ "BP_TAIL",			std::make_shared<BodyPartType>(body_part::Tail) },
-			{ "BP_HORNS",			std::make_shared<BodyPartType>(body_part::Horns) },
-		});
+		//BodyPartTypeDB::add({
+		//	{ "BP_HEAD",			std::make_shared<BodyPartType>(body_part::Head) },
+		//	{ "BP_NECK",			std::make_shared<BodyPartType>(body_part::Neck) },
+		//	{ "BP_UPPERBODY",		std::make_shared<BodyPartType>(body_part::UpperBody) },
+		//	{ "BP_LOWERBODY",		std::make_shared<BodyPartType>(body_part::LowerBody) },
+		//	{ "BP_UPPER_ARM",		std::make_shared<BodyPartType>(body_part::UpperArm) },
+		//	{ "BP_LOWER_ARM",		std::make_shared<BodyPartType>(body_part::LowerArm) },
+		//	{ "BP_HAND",			std::make_shared<BodyPartType>(body_part::Hand) },
+		//	{ "BP_GROIN",			std::make_shared<BodyPartType>(body_part::Groin) },
+		//	{ "BP_UPPER_LEG",		std::make_shared<BodyPartType>(body_part::UpperLeg) },
+		//	{ "BP_LOWER_LEG",		std::make_shared<BodyPartType>(body_part::LowerLeg) },
+		//	{ "BP_FOOT",			std::make_shared<BodyPartType>(body_part::Foot) },
+		//	{ "BP_PENIS",			std::make_shared<BodyPartType>(body_part::Penis) },
+		//	{ "BP_VAGINA",			std::make_shared<BodyPartType>(body_part::Vagina) },
+		//	{ "BP_BREASTS",			std::make_shared<BodyPartType>(body_part::Breasts) },
+		//	{ "BP_TESTICLES",		std::make_shared<BodyPartType>(body_part::Testicles) },
+		//	{ "BP_BUTT",			std::make_shared<BodyPartType>(body_part::Butt) },
+		//	{ "BP_ANUS",			std::make_shared<BodyPartType>(body_part::Anus) },
+		//	{ "BP_EYES",			std::make_shared<BodyPartType>(body_part::Eyes) },
+		//	{ "BP_MOUTH",			std::make_shared<BodyPartType>(body_part::Mouth) },
+		//	{ "BP_EARS",			std::make_shared<BodyPartType>(body_part::Ears) },
+		//	{ "BP_NOSE",			std::make_shared<BodyPartType>(body_part::Nose) },
+		//	{ "BP_TONGUE",			std::make_shared<BodyPartType>(body_part::Tongue) },
+		//	{ "BP_TAIL",			std::make_shared<BodyPartType>(body_part::Tail) },
+		//	{ "BP_HORNS",			std::make_shared<BodyPartType>(body_part::Horns) },
+		//});
 
 		TileTypeDB::init();
 		TileTypeDB::add({
