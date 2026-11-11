@@ -190,6 +190,79 @@ bool Behavior_Wander::perform(AIState* state, const TimeUnit& delta)
 	return false;
 }
 
+bool Behavior_GetToEntity::perform(AIState* state, const TimeUnit& delta)
+{
+	auto entity = state->get_entity();
+
+	if (!entity || !entity->has_movable())
+	{
+		return true;
+	}
+
+	if (!m_target || !m_target->has_movable())
+	{
+		return true;
+	}
+
+	auto entity_pos = entity->get_movable()->pos();
+	auto target_pos = m_target->get_movable()->pos();
+
+	if (entity_pos == target_pos)
+	{
+		return true;
+	}
+
+	auto get_move_to = [=]()
+		{
+			auto move_to = target_pos;
+			auto world = state->get_world();
+
+			if (world->is_blocked(move_to, entity))
+			{
+				std::list<Position> valid_positions;
+
+				for (const auto& p : transforms::get_surrounding_locations(target_pos))
+				{
+					if (!world->is_blocked(p, entity))
+					{
+						valid_positions.push_back(p);
+					}
+				}
+
+				if (!valid_positions.empty())
+				{
+					valid_positions.sort(
+						[&](const Position& p1, const Position& p2)
+						{
+							return (p1 - entity_pos).length_squared() > (p2 - entity_pos).length_squared();
+						}
+					);
+
+					move_to = valid_positions.front();
+				}
+			}
+
+			return move_to;
+		};
+
+	state->add_behavior(new Behavior_MoveTo({
+		.move_to_pos = get_move_to(),
+		.callback = [=](Behavior_MoveTo* behavior)
+			{
+				if (m_target->get_movable()->pos() != target_pos)
+				{
+					behavior->set_move_to(get_move_to());
+					return true;
+				}
+
+				return false;
+			}
+		})
+	);
+
+	return false;
+}
+
 bool Behavior_GetAdjacentToEntity::perform(AIState* state, const TimeUnit& delta)
 {
 	auto entity = state->get_entity();
@@ -212,41 +285,47 @@ bool Behavior_GetAdjacentToEntity::perform(AIState* state, const TimeUnit& delta
 		return true;
 	}
 
-	auto move_to = transforms::get_closest_adjacent(entity_pos, target_pos);
-	auto world = state->get_world();
 
-	if (world->is_blocked(move_to, entity))
-	{
-		std::list<Position> valid_positions;
-
-		for (const auto& p : transforms::get_surrounding_locations(target_pos))
+	auto get_move_to = [=]()
 		{
-			if (!world->is_blocked(p, entity))
+			auto move_to = transforms::get_closest_adjacent(entity_pos, target_pos);
+			auto world = state->get_world();
+
+			if (world->is_blocked(move_to, entity))
 			{
-				valid_positions.push_back(p);
-			}
-		}
+				std::list<Position> valid_positions;
 
-		if (!valid_positions.empty())
-		{
-			valid_positions.sort(
-				[&](const Position& p1, const Position& p2)
+				for (const auto& p : transforms::get_surrounding_locations(target_pos))
 				{
-					return (p1 - entity_pos).length_squared() > (p2 - entity_pos).length_squared();
+					if (!world->is_blocked(p, entity))
+					{
+						valid_positions.push_back(p);
+					}
 				}
-			);
 
-			move_to = valid_positions.front();
-		}
-	}
+				if (!valid_positions.empty())
+				{
+					valid_positions.sort(
+						[&](const Position& p1, const Position& p2)
+						{
+							return (p1 - entity_pos).length_squared() > (p2 - entity_pos).length_squared();
+						}
+					);
 
+					move_to = valid_positions.front();
+				}
+			}
+
+			return move_to;
+		};
+	
 	state->add_behavior(new Behavior_MoveTo({
-		.move_to_pos = move_to,
+		.move_to_pos = get_move_to(),
 		.callback = [=](Behavior_MoveTo* behavior)
 			{
 				if (m_target->get_movable()->pos() != target_pos)
 				{
-					behavior->set_move_to(m_target->get_movable()->pos());
+					behavior->set_move_to(get_move_to());
 					return true;
 				}
 

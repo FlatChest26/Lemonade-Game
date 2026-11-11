@@ -22,22 +22,21 @@ void EntityBuilder::default_entity_render_overrides(Entity* entity, std::vector<
 		});
 	}
 
-	// Dead bg
 
 	if (entity->has_living())
 	{
+		// Dead bg
 		render_overrides.push_back({
 			.priority = 2,
 			.renderable = Renderable{ .bg = color::get("red") },
 			.override_bg = true,
 			.active = [](const Entity* entity)
 				{
-					if (entity->has_living())
-						return entity->get_living()->is_dead();
-					return false;
+					return entity->get_living()->is_dead();
 				}
 		});
 
+		// Sleeping renderable
 		render_overrides.push_back({
 			.priority = 3,
 			.renderable = Renderable{ .glyph = 'Z', .fg = color::get("white"), .bg = color::get("blue") },
@@ -47,11 +46,24 @@ void EntityBuilder::default_entity_render_overrides(Entity* entity, std::vector<
 			.frames_on = 50,
 			.active = [](const Entity* entity)
 				{
-					if (entity->has_living())
-						return entity->get_living()->is_asleep();
-					return false;
+					return entity->get_living()->is_asleep();
 				}
 		});
+
+	}
+
+	if (entity->has_anatomy())
+	{
+		// Crawling bg
+		render_overrides.push_back({
+			.priority = 4,
+			.renderable = Renderable{ .bg = color::get("orange") },
+			.override_bg = true,
+			.active = [](const Entity* entity)
+				{
+					return entity->get_anatomy()->posture().get_current_posture()->type == PostureType::CRAWL;
+				}
+			});
 
 	}
 

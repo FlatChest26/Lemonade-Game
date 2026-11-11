@@ -59,7 +59,7 @@ ActionResult AutoAttackAction::perform()
 	for (auto& attack : chosen_weapon->get_item_def()->weapon_info.attacks)
 	{
 		attacks.push_back(std::tuple(
-			attack.frequency == AttackFrequency::MAIN ? 10.0 : 5.0,
+			attack.frequency == AttackFrequency::MAIN ? 10.0 : 1.0,
 			&attack
 		));
 	}
@@ -176,8 +176,8 @@ ActionResult AttackAction::perform()
 			auto actor_agility = actor->get_living()->get_stat(attributes::AGILITY);
 			auto subject_agility = subject->get_living()->get_stat(attributes::AGILITY);
 
-			auto actor_roll = roll(1_d20, snowy::rng::generator) + actor_agility.get_value();
-			auto subject_roll = roll(1_d20, snowy::rng::generator) + subject_agility.get_value();
+			auto actor_roll = roll(1_d20, snowy::rng::generator) + (actor_agility.get_value() / 2);
+			auto subject_roll = roll(1_d20, snowy::rng::generator) + (subject_agility.get_value() / 2);
 
 			is_miss = actor_roll < subject_roll;
 		}
@@ -196,17 +196,18 @@ ActionResult AttackAction::perform()
 						subject->is_player() ? grammar::The(n1) : grammar::A(n1),
 						grammar::say_regarding(attack_info->attack_verb, n1),
 						actor->is_player() ? grammar::the(n2) : grammar::a(n2),
-						grammar::say_regarding(Verb{ "miss", "misses" }, n1)
+						grammar::say_regarding(Verb{ "misses", "miss" }, n1)
 					)
 				)
 			}
 		};
 	}
 
-	Damage damage;
-
-	damage.amount = roll(attack_info->damage_dice, snowy::rng::generator);
-	damage.type = attack_info->damage_type;
+	Damage damage
+	{
+		.amount = roll(attack_info->damage_dice, snowy::rng::generator),
+		.type = attack_info->damage_type
+	};
 
 	target_part->take_damage(damage);
 
@@ -232,7 +233,7 @@ ActionResult AttackAction::perform()
 					actor->is_player() ? grammar::the(n2) : grammar::a(n2), grammar::the(n3),
 					damage.amount
 				),
-				actor->is_player() ? color::get("purple") : color::get("light_red")
+				actor->is_player() ? color::get("purple") : color::get("red")
 			}
 		}
 	};

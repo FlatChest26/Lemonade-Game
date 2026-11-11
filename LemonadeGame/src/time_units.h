@@ -17,7 +17,7 @@ constexpr TimeUnit_t MINUTES_IN_HOUR = 60;
 constexpr TimeUnit_t HOURS_IN_DAY = 24;
 constexpr TimeUnit_t MONTHS_IN_YEAR = 12;
 
-constexpr TimeUnit_t MILISECONDS_PER_TICK = MILISECONDS_IN_SECOND * 6;
+constexpr TimeUnit_t MILISECONDS_PER_TICK = MILISECONDS_IN_SECOND / 2;
 
 struct TimeUnit
 {

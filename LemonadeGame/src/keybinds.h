@@ -69,6 +69,11 @@ enum class Keybind : uint64_t
 	AutoAttack,
 	PreciseAttack,
 
+	QuickPosture,
+	SwitchPosture,
+
+	SwitchGait,
+
 	SetToTurnBasedSpeed,
 	SetToRealTimeSpeed,
 	SetToRealTime2xSpeed,

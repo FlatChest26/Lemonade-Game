@@ -414,6 +414,84 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 		}
 	}
 	
+	if (InputMap::is_action_pressed(Keybind::QuickPosture, event))
+	{
+		if (!player->has_anatomy())
+		{
+			return InputResult();
+		}
+
+		auto& posture = player->get_anatomy()->posture();
+
+		PostureID next_posture;
+
+		if (posture.get_current_posture()->type == PostureType::STAND)
+		{
+			next_posture = posture.get_default_posture_id(PostureType::CRAWL);
+		}
+		else if (posture.get_current_posture()->type == PostureType::CRAWL)
+		{
+			next_posture = posture.get_default_posture_id(PostureType::STAND);
+		}
+
+		if (next_posture.empty())
+		{
+			return InputResult();
+		}
+
+		return InputResult(new SwitchPostureAction(player, PostureActionParams{ .next_posture = next_posture }));
+	}
+
+	if (InputMap::is_action_pressed(Keybind::SwitchPosture, event))
+	{
+		if (!player->has_anatomy())
+		{
+			return InputResult();
+		}
+
+		auto& posture = player->get_anatomy()->posture();
+
+		std::vector<PostureID> potential_postures;
+
+		for (auto& posture_def : posture.get_postures())
+		{
+			potential_postures.push_back(posture_def->ID);
+		}
+
+		if (potential_postures.empty())
+		{
+			return InputResult();
+		}
+
+		if (potential_postures.size() == 1)
+		{
+			return InputResult(new SwitchPostureAction(player, PostureActionParams{ .next_posture = potential_postures.front() }));
+		}
+
+		return InputResult(new InputHandler_ListSelector(InputHandler_ListSelector::initializer
+			{
+				.title = "Select posture",
+				.input_keybind = Keybind::SwitchPosture,
+				.display_input_keybind = false,
+				.items = [&]()
+				{
+					std::vector<ListSelectorItem> items;
+					for (auto& posture_id : potential_postures)
+					{
+						items.push_back(ListSelectorItem(
+							posture_id, color::get("white"), color::get("black"),
+							[=]()
+							{
+								return InputResult(new SwitchPostureAction(player, PostureActionParams{ .next_posture = posture_id }));
+							}
+						));
+					}
+					return items;
+				}(),
+			}
+		));
+	}
+
 	if (InputMap::is_action_pressed(Keybind::WaitShort, event))
 	{
 		return InputResult(new WaitAction(TimeUnit::from_seconds(1.0)));
@@ -730,7 +808,7 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 		{
 			for (auto& entity : world->get_entities(EntityFilter{ .required_ids{ "SNOW" }}))
 			{
-				entity->get_brain()->push_state(new AIState_Horny({ .horny_target = player }));
+				entity->get_brain()->push_state(new AIState_Kill({ .kill_target = player }));
 			}
 		}
 		break;
@@ -1312,7 +1390,7 @@ InputResult InputHandler_ListSelector::ev_key_down(SDL_Event event)
 
 	if (InputMap::is_action_pressed(Keybind::MenuUp, event))
 	{
-		m_selected_slot += 1;
+		m_selected_slot -= 1;
 		m_selected_slot = m_selected_slot % m_items.size();
 
 		return InputResult();
@@ -1320,7 +1398,7 @@ InputResult InputHandler_ListSelector::ev_key_down(SDL_Event event)
 
 	if (InputMap::is_action_pressed(Keybind::MenuDown, event))
 	{
-		m_selected_slot -= 1;
+		m_selected_slot += 1;
 		m_selected_slot = m_selected_slot % m_items.size();
 
 		return InputResult();
@@ -1375,6 +1453,7 @@ void InputHandler_ListSelector::render(const RenderParams& params) const
 	for (const auto& item : m_items)
 	{
 		bool selected = idx == m_selected_slot;
+		output::draw_rect(draw_x, draw_y, panel_width - 1, 1, ' ', color::get("white"), color::get("black"));
 		print_text(std::get<0>(item), selected ? std::get<2>(item) : std::get<1>(item), selected ? std::get<1>(item) : std::get<2>(item));
 		idx++;
 	}

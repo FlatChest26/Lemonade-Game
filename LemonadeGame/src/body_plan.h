@@ -12,6 +12,8 @@
 #include "snowy_units.h"
 #include "thing.h"
 
+#include "posture.h"
+
 #include "raw_master.h"
 
 #include <nlohmann/json.hpp>
@@ -51,6 +53,8 @@ struct BodyPlan
 	std::vector<BodyPartPlan> body_parts;
 	std::vector<BodyConnectionPlan> body_connections;
 	std::vector<BodyConnectionPlan> body_relations;
+
+	PostureMap postures{ postures::DEFAULT_POSTURES };
 
 	static std::shared_ptr<RawObjectChecker> get_checker();
 	static BodyPlan from_json(const json& j);

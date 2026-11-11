@@ -56,6 +56,58 @@
       "//buttocks",
       { "parent": "groin", "child": "butt", "relation": "BEHIND" },
       { "parent": "butt", "child": "anus", "relation": "INSIDE" }
+    ],
+    "postures": [
+      {
+        "ID": "stand",
+        "verb": { "singular": "stands", "plural": "stand" },
+        "type": "STAND",
+        "height": 1.0,
+        "directional_verb": true,
+        "is_default": true
+      },
+      {
+        "ID": "sit",
+        "verb": { "singular": "sits", "plural": "sit" },
+        "type": "CRAWL",
+        "height": 0.4,
+        "directional_verb": true,
+        "is_default": true
+      },
+      {
+        "ID": "bend over",
+        "verb": { "singular": "bends over", "plural": "bend over" },
+        "type": "CRAWL",
+        "height": 0.6,
+        "is_default": false
+      },
+      {
+        "ID": "on knees",
+        "verb": { "singular": "gets", "plural": "get" },
+        "on_noun": { "singular": "knees", "plural": "knees", "always_plural": true },
+        "type": "CRAWL",
+        "directional_verb": true,
+        "height": 0.6,
+        "is_default": false
+      },
+      {
+        "ID": "prone",
+        "verb": { "singular": "lies", "plural": "lie" },
+        "type": "CRAWL",
+        "on_noun": { "singular": "belly", "plural": "bellies" },
+        "directional_verb": true,
+        "height": 0.3,
+        "is_default": false
+      },
+      {
+        "ID": "supine",
+        "verb": { "singular": "lies", "plural": "lie" },
+        "type": "CRAWL",
+        "on_noun": { "singular": "back", "plural": "backs" },
+        "directional_verb": true,
+        "height": 0.3,
+        "is_default": false
+      }
     ]
   }
 ]

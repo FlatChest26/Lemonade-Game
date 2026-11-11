@@ -6,6 +6,8 @@ std::shared_ptr<RawObjectChecker> GaitDef::get_checker()
 
 	checker->set_type_name("gait");
 
+	checker->add_property("type", RawValueType::RAW_String, true);
+
 	checker->add_property("name", RawValueType::RAW_String, true);
 	checker->add_property("speed", RawValueType::RAW_Number, true);
 
@@ -27,6 +29,17 @@ GaitDef GaitDef::from_json(const json& j)
 
 	gait.name = j.at("name").get<std::string>();
 	gait.speed = j.at("speed").get<double>();
+
+	auto it = AllPostureTypes.find(j.at("type").get<std::string>());
+	if (it != AllPostureTypes.end())
+	{
+		gait.posture_type = it->second;
+	}
+	else
+	{
+		CERR("Invalid posture type name: " << j.at("type"));
+		gait.posture_type = PostureType::STAND;
+	}
 
 	if (checker->is_valid_property("is_default", j))
 	{

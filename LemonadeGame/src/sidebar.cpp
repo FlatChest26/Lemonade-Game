@@ -140,7 +140,7 @@ int SidebarMenu_PersonInfo::render(const RenderParams& params, const SidebarPara
 			draw_y += output::console_printf_rgb_rect_ex(draw_x, draw_y, panel_width - 1, 0, new_fg, bg, DEFAULT_BKGND_FLAG, TCOD_LEFT, text);
 		};
 
-	print_text(fmt::format("{} ({})", entity->full_name(), entity->pronouns()->shortened), entity->fg());
+	print_text(fmt::format("{}", entity->full_name()), entity->fg());
 	print_text(fmt::format("${:.2f}", entity->get_person()->cash().total_dollars()), color::get("yellow"));
 
 	panel_height = std::max(panel_height, (draw_y - panel_y) + 1);

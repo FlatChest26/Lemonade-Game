@@ -68,6 +68,10 @@ namespace grammar
 	std::string poss(std::string_view noun)
 	{ 
 		std::string new_string{ noun };
+
+		if (new_string == "you")
+			return "your";
+
 		return new_string + "'s";
 	}
 

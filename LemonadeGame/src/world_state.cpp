@@ -14,6 +14,8 @@
 
 #include "map_builder.h"
 
+#include "ai_state.h"
+
 #include <utility>
 
 void WorldGameState::new_game()
@@ -66,7 +68,7 @@ void WorldGameState::new_game()
 					{ needs::HYGIENE, 18 },
 					{ needs::FATIGUE, 12 },
 					{ needs::MOOD, 7 },
-					{ attributes::AGILITY, 20 }
+					{ attributes::AGILITY, 12 }
 				}
 			}
 		), 
@@ -95,6 +97,13 @@ void WorldGameState::new_game()
 			"KNIFE_1", { .item_definition = RawMaster::get<ItemDefinition>("KNIFE") }
 		),
 		lemonade_stand_pos + Position(-2, 1, 0)
+	);
+
+	m_world->add_entity_at(
+		EntityBuilder::create_item(
+			"KNIFE_2", { .item_definition = RawMaster::get<ItemDefinition>("KNIFE") }
+		),
+		lemonade_stand_pos + Position(-2, 2, 0)
 	);
 
 	m_world->add_entity_at(
@@ -276,7 +285,9 @@ void WorldGameState::new_game()
 		}
 	))
 	{
-		entity->set_brain(m_ai_manager->create_brain());
+		auto brain = entity->set_brain(m_ai_manager->create_brain());
+
+		brain->push_state(new AIState_Wander());
 	}
 
 	m_previous_player_pos = Position(-1, -1, -1);
@@ -298,7 +309,7 @@ void WorldGameState::new_game()
 
 void WorldGameState::update(double delta_time)
 {
-	TimeUnit time_progress = TimeUnit::from_ticks(1.0) * delta_time;
+	TimeUnit time_progress = TimeUnit::from_ticks(10.0) * delta_time;
 
 	int step_count = 0;
 

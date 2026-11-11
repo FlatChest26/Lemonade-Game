@@ -192,6 +192,7 @@
     <ClInclude Include="src\interactions.h" />
     <ClInclude Include="src\line_of_sight.h" />
     <ClInclude Include="src\material_def.h" />
+    <ClInclude Include="src\posture.h" />
     <ClInclude Include="src\special_actions.h" />
     <ClInclude Include="src\name_set.h" />
     <ClInclude Include="src\npc_generator.h" />
@@ -253,6 +254,7 @@
     <ClCompile Include="src\pathfinding.cpp" />
     <ClCompile Include="src\person.cpp" />
     <ClCompile Include="src\player_input_handler.cpp" />
+    <ClCompile Include="src\posture.cpp" />
     <ClCompile Include="src\raw_master.cpp" />
     <ClCompile Include="src\line_of_sight.cpp" />
     <ClCompile Include="src\renderer.cpp" />

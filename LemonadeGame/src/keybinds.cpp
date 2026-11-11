@@ -117,6 +117,11 @@ void keybinds::initialize()
 	InputMap::add_input_action(Keybind::AutoAttack, SDLK_a, KMOD_NONE, KMOD_SHIFT);
 	InputMap::add_input_action(Keybind::PreciseAttack, SDLK_a, KMOD_SHIFT, KMOD_NONE);
 
+	InputMap::add_input_action(Keybind::QuickPosture, SDLK_s, KMOD_NONE, KMOD_SHIFT);
+	InputMap::add_input_action(Keybind::SwitchPosture, SDLK_s, KMOD_SHIFT, KMOD_NONE);
+
+	InputMap::add_input_action(Keybind::SwitchGait, SDLK_QUOTE, KMOD_SHIFT, KMOD_NONE);
+
 	InputMap::add_input_action(Keybind::SetToTurnBasedSpeed, SDLK_1, KMOD_NONE, KMOD_SHIFT);
 	InputMap::add_input_action(Keybind::SetToRealTimeSpeed, SDLK_2, KMOD_NONE, KMOD_SHIFT);
 	InputMap::add_input_action(Keybind::SetToRealTime2xSpeed, SDLK_3, KMOD_NONE, KMOD_SHIFT);

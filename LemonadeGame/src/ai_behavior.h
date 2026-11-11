@@ -82,6 +82,26 @@ public:
 	virtual bool perform(AIState* state, const TimeUnit& delta = TimeUnit::none()) override;
 };
 
+struct Behavior_GetToEntity : public Behavior
+{
+protected:
+	Entity* m_target;
+
+public:
+	struct initializer
+	{
+		Entity* target;
+	};
+
+public:
+	Behavior_GetToEntity(const initializer& init) :
+		m_target(init.target)
+	{
+	}
+
+	virtual bool perform(AIState* state, const TimeUnit& delta = TimeUnit::none()) override;
+};
+
 
 struct Behavior_GetAdjacentToEntity : public Behavior
 {

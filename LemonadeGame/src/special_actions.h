@@ -5,6 +5,9 @@
 
 #include "interactions.h"
 
+#include "posture.h"
+#include "gait.h"
+
 class StartSleepAction : public EntityAction
 {
 public:
@@ -81,6 +84,28 @@ public:
 	virtual ActionResult perform();
 
 	static std::string action_name() { return "die of dehydration"; }
+};
+
+struct PostureActionParams
+{
+	PostureID next_posture;
+};
+
+class SwitchPostureAction : public EntityAction
+{
+protected:
+	PostureActionParams m_params;
+
+public:
+	SwitchPostureAction(Entity* actor, const PostureActionParams& params) :
+		EntityAction(actor), m_params(params)
+	{
+	}
+
+	virtual bool check_action() const override;
+	virtual ActionResult perform();
+
+	static std::string action_name() { return "switch posture"; }
 };
 
 #endif // !LEMONADE_GAME_SRC_SPECIAL_ACTIONS_H

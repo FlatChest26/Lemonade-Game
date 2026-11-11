@@ -102,3 +102,98 @@ ActionResult DieOfDehydrationAction::perform()
 
 	return ActionResult(true);
 }
+
+bool SwitchPostureAction::check_action() const
+{
+	if (!EntityAction::check_action())
+		return false;
+
+	if (!get_actor()->has_anatomy())
+	{
+		ACTION_CERR("Actor does not have anatomy!");
+		return false;
+	}
+
+	return true;
+}
+
+ActionResult SwitchPostureAction::perform()
+{
+	auto actor = get_actor();
+	auto& posture = actor->get_anatomy()->posture();
+	auto n1 = actor->display_noun();
+
+	auto new_posture = posture.get_posture(m_params.next_posture);
+
+	if (!actor->get_anatomy()->can_stand() && new_posture->type == PostureType::STAND)
+	{
+		return ActionResult
+		{
+			.success = false,
+			.responses = {
+				actor->is_player() ? 
+				GameMessage(fmt::format(
+					"{} can no longer stand!",
+					grammar::The(n1)
+				), 
+					color::get("light_red")
+				) 
+				: GameMessage()
+			}
+		};
+	}
+
+	double old_height = posture.get_current_posture()->height;
+
+	if (!posture.set_current_posture(m_params.next_posture))
+	{
+		return ActionResult(false);
+	}
+
+	double new_height = posture.get_current_posture()->height;
+
+	
+
+	auto verb = grammar::say_regarding(new_posture->verb, n1);
+
+	if (new_posture->directional_verb && std::fabs(new_height - old_height) > DBL_EPSILON)
+	{
+		verb += fmt::format("{}", new_height > old_height ? " up" : " down");
+	}
+
+	if (!new_posture->on_noun.empty())
+	{
+		verb += fmt::format(" on {} {}", grammar::their(actor), new_posture->on_noun.singular);
+	}
+	else if (!new_posture->on_bp.empty())
+	{
+		auto bp = actor->get_anatomy()->get_body_part(new_posture->on_bp);
+
+		if (bp)
+		{
+			verb += fmt::format(" on {} {}", grammar::their(actor), grammar::to_string(bp->display_noun()));
+		}
+	}
+
+	if (actor->has_gait())
+	{
+		auto current_gait = actor->get_gait()->get_current_gait();
+
+		if (current_gait && current_gait->posture_type != new_posture->type)
+		{
+			actor->get_gait()->set_current_gait(actor->get_gait()->get_default_gait_name(new_posture->type));
+		}
+	}
+
+	return ActionResult{
+		.success = true,
+		.responses = {
+			fmt::format(
+				"{} {}.", 
+				grammar::The(n1),
+				verb
+			),
+		}
+	
+	};
+}

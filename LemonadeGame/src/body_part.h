@@ -11,6 +11,7 @@
 #include "raw_master.h"
 #include "weapon_info.h"
 
+
 class Entity;
 class Anatomy;
 struct BodyPartPlan;
@@ -97,7 +98,7 @@ protected:
 	Health m_health;
 
 public:
-	BodyPart(Entity* owner = nullptr, ThingID ID = "", RawMaster::Ref<BodyPartType> type = nullptr, double rel_size = 25.0, BodyPartPosition position = BodyPartPosition::CENTER, std::string prefix = "");
+	BodyPart(Entity* owner = nullptr, BodyPartID ID = "", RawMaster::Ref<BodyPartType> type = nullptr, double rel_size = 25.0, BodyPartPosition position = BodyPartPosition::CENTER, std::string prefix = "");
 
 	// -- Getters -- //
 

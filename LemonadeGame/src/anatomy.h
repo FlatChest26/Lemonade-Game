@@ -9,6 +9,7 @@
 #include "body_part_type.h"
 #include "body_part.h"
 #include "body_plan.h"
+#include "posture.h"
 
 #include "raw_master.h"
 
@@ -89,12 +90,19 @@ protected:
 	std::set<BodyPartID> m_already_added_dirty_parts;
 	std::vector<BodyPartID> m_dirty_parts;
 
+	Posture m_posture;
+
 public:
 
-	Anatomy(RawMaster::Ref<BodyPlan> bd_plan, std::vector<RawMaster::Ref<BodyMod>> bd_mods = {});
+	Anatomy(RawMaster::Ref<BodyPlan> bd_plan, const std::vector<RawMaster::Ref<BodyMod>>& bd_mods = {});
 
 	Anatomy(const Anatomy& other);
 	Anatomy(Anatomy&& other);
+
+	void from_plan(RawMaster::Ref<BodyPlan> bd_plan);
+	void from_plan(const BodyPlan* bd_plan) { from_plan(RawMaster::Ref<BodyPlan>(bd_plan)); }
+
+	void from_mods(const std::vector<RawMaster::Ref<BodyMod>>& bd_mods);
 
 	void set_owner(Entity* owner);
 	Entity* get_owner() const { return m_owner; }
@@ -103,6 +111,9 @@ public:
 	BodyPart* get_root_part() { return get_body_part(m_root_id); }
 	const BodyPart* get_root_part() const { return get_body_part(m_root_id); }
 	bool is_root_part(const BodyPartID& bp_ID) const { return m_root_id == bp_ID; }
+
+	Posture& posture() { return m_posture; }
+	const Posture& posture() const { return m_posture; }
 
 	BodyPart* add_body_part(const BodyPartPlan& bp_plan);
 	bool add_body_connection(const BodyConnectionPlan& bc_plan);
@@ -116,6 +127,8 @@ public:
 
 	void apply_body_gloss(const BodyGloss& bdg);
 	void apply_body_gloss(BodyGloss* bdg) { apply_body_gloss(*bdg); }
+
+	bool can_stand() const;
 
 	// Body Part Utilities //
 

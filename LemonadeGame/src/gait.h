@@ -5,6 +5,7 @@
 
 #include <string>
 #include <unordered_map>
+#include "posture.h"
 
 #include "raw_object_checker.h"
 
@@ -17,6 +18,9 @@ struct GaitDef
 {
 	GaitName name{ "<unnamed gait>" };
 	double speed{ 1.0f };
+
+	PostureType posture_type{ PostureType::STAND };
+
 	bool is_default{ false };
 
 	static std::shared_ptr<RawObjectChecker> get_checker();
@@ -37,18 +41,11 @@ public:
 	{
 		if (m_current.empty())
 		{
-			for (auto& [gait_key, gait_type] : m_gaits)
-			{
-				if (gait_type.is_default)
-				{
-					m_current = gait_key;
-					break;
-				}
-			}
+			m_current = get_default_gait_name();
 		}
 	}
 
-	std::vector<const GaitDef*> get_gaits()
+	std::vector<const GaitDef*> get_gaits() const
 	{
 		std::vector<const GaitDef*> gaits;
 
@@ -70,10 +67,13 @@ public:
 		return &m_gaits.at(m_current);
 	}
 
-	GaitName get_default_gait_name() const
+	GaitName get_default_gait_name(const PostureType& posture_type = PostureType::STAND) const
 	{
 		for (auto& [gait_key, gait_type] : m_gaits)
 		{
+			if (gait_type.posture_type != posture_type)
+				continue;
+
 			if (gait_type.is_default)
 			{
 				return gait_key;
@@ -83,8 +83,14 @@ public:
 		return "walk";
 	}
 
-	void set_current_gait(std::string gait_id)
+	void set_current_gait(const GaitName& gait_id)
 	{
+		if (!m_gaits.contains(gait_id))
+		{
+			CERR("Invalid gait name: " << gait_id);
+			return;
+		}
+
 		m_current = gait_id;
 	}
 
@@ -98,12 +104,8 @@ namespace gaits
 {
 	inline GaitMap StandardGaits
 	{
-		{ "creep",	{ "stroll",	0.4 } },
-		{ "stroll",	{ "stroll",	0.7 } },
-		{ "walk",	{ "walk",	1.0, true } },
-		{ "jog",	{ "jog",	1.3 } },
-		{ "run",	{ "run",	1.7 } },
-		{ "sprint",	{ "sprint",	2.2 } },
+		{ "walk", GaitDef{ .name = "walk", .speed = 1.0, .posture_type = PostureType::STAND, .is_default = true } },
+		{ "crawl", GaitDef{ .name = "crawl", .speed = 0.8, .posture_type = PostureType::CRAWL, .is_default = true } }
 	};
 }
 

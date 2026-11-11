@@ -4,8 +4,55 @@
 
 #include <ranges>
 
-Anatomy::Anatomy(RawMaster::Ref<BodyPlan> bd_plan, std::vector<RawMaster::Ref<BodyMod>> bd_mods)
+Anatomy::Anatomy(RawMaster::Ref<BodyPlan> bd_plan, const std::vector<RawMaster::Ref<BodyMod>>& bd_mods)
 {
+	from_plan(bd_plan);
+	from_mods(bd_mods);
+}
+
+Anatomy::Anatomy(const Anatomy& other)
+{
+	m_owner = other.m_owner;
+
+	m_height = other.m_height;
+	m_weight = other.m_weight;
+
+	m_body_parts = other.m_body_parts;
+	m_body_parts_by_id = other.m_body_parts_by_id;
+
+	m_connections = other.m_connections;
+	m_relations = other.m_relations;
+
+	m_root_id = other.m_root_id;
+
+	m_posture = other.m_posture;
+
+	set_owner(other.m_owner);
+}
+
+Anatomy::Anatomy(Anatomy&& other)
+{
+	m_height = other.m_height;
+	m_weight = other.m_weight;
+
+	m_body_parts = std::move(other.m_body_parts);
+	m_body_parts_by_id = std::move(other.m_body_parts_by_id);
+
+	m_connections = std::move(other.m_connections);
+	m_relations = std::move(other.m_relations);
+
+	m_root_id = other.m_root_id;
+
+	m_posture = other.m_posture;
+
+	set_owner(other.m_owner);
+}
+
+void Anatomy::from_plan(RawMaster::Ref<BodyPlan> bd_plan)
+{
+	if (!bd_plan)
+		return;
+
 	m_height = bd_plan->height;
 	m_weight = bd_plan->weight;
 
@@ -14,6 +61,21 @@ Anatomy::Anatomy(RawMaster::Ref<BodyPlan> bd_plan, std::vector<RawMaster::Ref<Bo
 		add_body_part(bp);
 	}
 
+	m_posture = Posture(bd_plan->postures);
+
+	for (auto& bc : bd_plan->body_connections)
+	{
+		add_body_connection(bc);
+	}
+
+	for (auto& bc : bd_plan->body_relations)
+	{
+		add_body_relation(bc);
+	}
+}
+
+void Anatomy::from_mods(const std::vector<RawMaster::Ref<BodyMod>>& bd_mods)
+{
 	std::vector<BodyGloss> body_gloss;
 
 	for (auto& bdm : bd_mods)
@@ -88,16 +150,6 @@ Anatomy::Anatomy(RawMaster::Ref<BodyPlan> bd_plan, std::vector<RawMaster::Ref<Bo
 		}
 	}
 
-	for (auto& bc : bd_plan->body_connections)
-	{
-		add_body_connection(bc);
-	}
-
-	for (auto& bc : bd_plan->body_relations)
-	{
-		add_body_relation(bc);
-	}
-
 	for (auto& bdm : bd_mods)
 	{
 		for (auto& bc : bdm->add_connections)
@@ -115,40 +167,6 @@ Anatomy::Anatomy(RawMaster::Ref<BodyPlan> bd_plan, std::vector<RawMaster::Ref<Bo
 	{
 		apply_body_gloss(bdg);
 	}
-}
-
-Anatomy::Anatomy(const Anatomy& other)
-{
-	m_owner = other.m_owner;
-
-	m_height = other.m_height;
-	m_weight = other.m_weight;
-
-	m_body_parts = other.m_body_parts;
-	m_body_parts_by_id = other.m_body_parts_by_id;
-
-	m_connections = other.m_connections;
-	m_relations = other.m_relations;
-
-	m_root_id = other.m_root_id;
-
-	set_owner(other.m_owner);
-}
-
-Anatomy::Anatomy(Anatomy&& other)
-{
-	m_height = other.m_height;
-	m_weight = other.m_weight;
-
-	m_body_parts = std::move(other.m_body_parts);
-	m_body_parts_by_id = std::move(other.m_body_parts_by_id);
-
-	m_connections = std::move(other.m_connections);
-	m_relations = std::move(other.m_relations);
-
-	m_root_id = other.m_root_id;
-
-	set_owner(other.m_owner);
 }
 
 void Anatomy::set_owner(Entity* entity)
@@ -335,6 +353,11 @@ void Anatomy::fix_relations_and_connections()
 	}
 }
 
+bool Anatomy::can_stand() const
+{
+	return count_body_parts(BodyPartFilter{ .required_flags = BodyPartFlag::STANCE }) >= 2;
+}
+
 void Anatomy::step(const TimeUnit& time_delta)
 {
 	m_already_added_dirty_parts.clear();
@@ -356,24 +379,36 @@ void Anatomy::step(const TimeUnit& time_delta)
 						"{} {} {} destroyed!",
 						grammar::Poss(std::string_view(grammar::the(n1))),
 						grammar::to_string(n2),
-						grammar::say_regarding(Verb{"is", "are"}, n2)
+						grammar::say_regarding(Verb{ "is", "are" }, n2)
 					),
 					color::get("red")
 				)
 			);
 
 			remove_body_part(bp->ID());
-
-			COUT("Remaining parts: ");
-			for (auto& bp : m_body_parts)
-			{
-				COUT("\t" << bp.ID());
-			}
 		}
 
 		if (still_dirty)
 		{
 			add_dirty_part(dirty_id);
 		}
+	}
+
+	if (m_posture.is_standing() && !can_stand())
+	{
+		auto n1 = get_owner()->display_noun();
+
+		get_owner()->game_message(
+			GameMessage(
+				fmt::format(
+					"{} {} over.",
+					grammar::The(n1),
+					grammar::say_regarding(Verb{ "falls", "fall" }, n1)
+				),
+				color::get("light_red")
+			)
+		);
+
+		m_posture.set_current_posture(m_posture.get_fallen_over_id());
 	}
 }

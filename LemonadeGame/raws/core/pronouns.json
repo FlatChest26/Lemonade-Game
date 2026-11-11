@@ -1,6 +1,17 @@
 [
   {
     "type": "pronouns",
+    "ID": "you/your",
+    "subjective": "you",
+    "objective": "you",
+    "determiner": "your",
+    "independent_possessive": "yours",
+    "reflexive": "yourself",
+    "shortened": "you/your",
+    "acts_plural": true
+  },
+  {
+    "type": "pronouns",
     "ID": "it/its",
     "subjective": "it",
     "objective": "it",

@@ -87,6 +87,12 @@ public:
 
 	bool is_valid_property(std::string value_name, const json& j)
 	{
+		if (!m_values.contains(value_name))
+		{
+			CERR(value_name << " is not a valid json property name in " << m_type_name);
+			return false;
+		}
+
 		const auto& value_tuple = m_values[value_name];
 
 		RawValueType value_type = std::get<0>(value_tuple);

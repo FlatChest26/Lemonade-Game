@@ -155,7 +155,7 @@ class InputHandler_ListSelector : public InputHandler_Player
 {
 protected:
 	std::vector<ListSelectorItem> m_items;
-	size_t m_selected_slot{ 0 };
+	int m_selected_slot{ 0 };
 	std::string m_title;
 	Keybind m_input_keybind;
 	bool m_display_input_keybind;

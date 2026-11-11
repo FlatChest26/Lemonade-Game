@@ -116,4 +116,27 @@ public:
 };
 
 
+class AIState_Kill : public AIState
+{
+protected:
+	Entity* m_kill_target;
+	Entity* m_weapon_target{ nullptr };
+
+public:
+	struct initializer
+	{
+		Entity* kill_target;
+	};
+
+	AIState_Kill(initializer init) :
+		m_kill_target(init.kill_target)
+	{
+	}
+
+public:
+	virtual void reinit() override;
+	virtual StateResult step(const TimeUnit& time_delta) override;
+};
+
+
 #endif // !LEMONADE_GAME_SRC_AI_STATE_H

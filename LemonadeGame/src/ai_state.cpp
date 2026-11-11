@@ -4,6 +4,7 @@
 #include "world.h"
 #include "ai_handler.h"
 #include "interactions.h"
+#include "combat_actions.h"
 
 AIState::AIState(const AIState& other)
 {
@@ -171,6 +172,100 @@ StateResult AIState_Horny::step(const TimeUnit& time_delta)
 			add_behavior(new Behavior_GetAdjacentToEntity({ .target = m_horny_target }));
 			entity->get_gait()->set_current_gait("walk");
 		}
+	}
+
+	return StateResult(StateResultType::NONE);
+}
+
+void AIState_Kill::reinit()
+{
+	if (auto entity = get_entity())
+	{
+		entity->get_gait()->set_current_gait("run");
+	}
+}
+
+StateResult AIState_Kill::step(const TimeUnit& time_delta)
+{
+	auto entity = get_entity();
+
+	auto& entity_pos = entity->get_movable()->pos();
+	auto& target_pos = m_kill_target->get_movable()->pos();
+
+	run_behaviors(time_delta);
+
+	if (!has_behavior())
+	{
+		if (m_kill_target->get_living()->is_dead())
+		{
+			return StateResult(StateResultType::POP);
+		}
+
+		if (m_weapon_target)
+		{
+			if (entity->get_inventory()->has_item(m_weapon_target))
+			{
+				m_weapon_target = nullptr;
+			}
+			else
+			{
+				auto weapon_pos = m_weapon_target->get_movable()->pos();
+
+				if (entity_pos != weapon_pos)
+				{
+					add_behavior(new Behavior_GetToEntity({ .target = m_weapon_target }));
+					entity->get_gait()->set_current_gait("run");
+
+					return StateResult(StateResultType::NONE);
+				}
+				else
+				{
+					entity->reset_actions(new GrabAction(entity, m_weapon_target));
+				}
+			}
+
+			return StateResult(StateResultType::NONE);
+		}
+
+		bool has_weapon = false;
+
+		for (auto& item : entity->get_inventory()->get_items())
+		{
+			if (item->get_item_def()->has_weapon_info())
+			{
+				has_weapon = true;
+				break;
+			}
+		}
+
+		if (!has_weapon)
+		{
+			for (auto& item : get_world()->get_entities(EntityFilter{ .required_flags = EntityFlag::IS_ITEM }))
+			{
+				if (entity->can_see(item) && item->has_item_def() && item->get_item_def()->has_weapon_info())
+				{
+					m_weapon_target = item;
+					break;
+				}
+			}
+
+			if (!m_weapon_target)
+			{
+				return StateResult(StateResultType::POP);
+			}
+
+			return StateResult(StateResultType::NONE);
+		}
+
+		if (!((entity_pos == target_pos) || transforms::is_adjacent(entity_pos, target_pos)))
+		{
+			add_behavior(new Behavior_GetAdjacentToEntity({ .target = m_kill_target }));
+			entity->get_gait()->set_current_gait("run");
+
+			return StateResult(StateResultType::NONE);
+		}
+
+		entity->reset_actions(new AutoAttackAction(entity, m_kill_target));
 	}
 
 	return StateResult(StateResultType::NONE);

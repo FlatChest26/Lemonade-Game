@@ -454,6 +454,9 @@ Species Species::from_json(const json& j)
 
 		for (const auto& gait_json : j.at("gaits"))
 		{
+			if (!gait_json.is_object())
+				continue;
+
 			if (!GaitDef::get_checker()->check_json(gait_json))
 			{
 				CERR("Invalid gait json! " << gait_json);
@@ -470,6 +473,9 @@ Species Species::from_json(const json& j)
 	{
 		for (const auto& gait_json : j.at("add_gaits"))
 		{
+			if (!gait_json.is_object())
+				continue;
+
 			if (!GaitDef::get_checker()->check_json(gait_json))
 			{
 				CERR("Invalid gait json! " << gait_json);

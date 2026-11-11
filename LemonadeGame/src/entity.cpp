@@ -223,7 +223,7 @@ int Entity::view_range() const
 	{
 		if (has_anatomy() && !get_anatomy()->has_body_parts({ .required_flags = BodyPartFlag::SIGHT }))
 		{
-			return 2;
+			return 1;
 		}
 
 		return 32;
@@ -656,12 +656,17 @@ Name Entity::name() const
 
 RawMaster::Ref<Pronouns> Entity::pronouns() const
 {
+	if (is_player() && GameSettings::USE_SECOND_PERSON_PRONOUNS)
+	{
+		return RawMaster::get<Pronouns>("you/your");
+	}
+
 	if (has_soul())
 	{
 		return get_soul()->gender->pronouns;
 	}
 
-	return is_animate() ? RawMaster::get<Pronouns>("NEUTRAL") : RawMaster::get<Pronouns>("OBJECT");
+	return is_animate() ? RawMaster::get<Pronouns>("it/its") : RawMaster::get<Pronouns>("they/them");
 }
 
 bool Entity::is_visible_to_player() const

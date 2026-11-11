@@ -12,6 +12,9 @@ std::shared_ptr<RawObjectChecker> BodyPlan::get_checker()
 	checker->add_property("default_weight", RawValueType::RAW_Number, false);
 
 	checker->add_property("connections", RawValueType::RAW_Array, false);
+	checker->add_property("relations", RawValueType::RAW_Array, false);
+
+	checker->add_property("postures", RawValueType::RAW_Array, false);
 
 	return checker;
 }
@@ -68,9 +71,9 @@ BodyPlan BodyPlan::from_json(const json& j)
 		}
 	}
 
-	if (checker->is_valid_property("body_relations", j))
+	if (checker->is_valid_property("relations", j))
 	{
-		for (auto& json_connection : j.at("body_relations"))
+		for (auto& json_connection : j.at("relations"))
 		{
 			if (!BodyConnectionPlan::get_checker()->check_json(json_connection, true))
 			{
@@ -78,6 +81,21 @@ BodyPlan BodyPlan::from_json(const json& j)
 			}
 
 			bp.body_relations.push_back(BodyConnectionPlan::from_json(json_connection));
+		}
+	}
+
+	if (checker->is_valid_property("postures", j))
+	{
+		for (auto& json_posture : j.at("postures"))
+		{
+			if (!PostureDef::get_checker()->check_json(json_posture, true))
+			{
+				continue;
+			}
+
+			auto posture_def = PostureDef::from_json(json_posture);
+
+			bp.postures[posture_def.ID] = posture_def;
 		}
 	}
 

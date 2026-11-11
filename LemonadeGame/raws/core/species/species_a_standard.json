@@ -13,12 +13,17 @@
     "life_stages": { "child": 12, "adult": 18, "mature": 26 },
     "flags": [ "mundane", "part_of_society" ],
     "gaits": [
-      { "name": "creep", "speed": 0.4 },
-      { "name": "stroll", "speed": 0.7 },
-      { "name": "walk", "speed": 1.0, "is_default": true },
-      { "name": "jog", "speed": 1.3 },
-      { "name": "run", "speed": 1.7 },
-      { "name": "sprint", "speed": 2.2 }
+      "//standing",
+      { "type": "STAND", "name": "creep", "speed": 0.4 },
+      { "type": "STAND", "name": "stroll", "speed": 0.7 },
+      { "type": "STAND", "name": "walk", "speed": 1.0, "is_default": true },
+      { "type": "STAND", "name": "jog", "speed": 1.3 },
+      { "type": "STAND", "name": "run", "speed": 1.7 },
+      { "type": "STAND", "name": "sprint", "speed": 2.2 },
+      "//crawling",
+      { "type": "CRAWL", "name": "slow crawl", "speed": 0.4 },
+      { "type": "CRAWL", "name": "crawl", "speed": 0.8, "is_default": true },
+      { "type": "CRAWL", "name": "fast crawl", "speed": 1.1 }
     ],
     "common_genders": [
       { "type": "NEUTER", "frequency": 2.0 },
