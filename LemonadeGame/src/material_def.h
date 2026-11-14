@@ -59,17 +59,23 @@ inline std::map<std::string, MaterialFlag> AllMaterialFlags
 
 struct MaterialStateDefinition
 {
-	Noun noun{ "material", "materials" };
-	std::string prefix;
-	std::string description;
-	color_t color;
+	Noun noun{ "<unnamed material state>", "<unnamed material state>" };
+	color_t color{ color::get("white") };
 
-	MaterialFlag flags;
+	std::string prefix{ "<unnamed material state>" };
+	std::string description{ "" };
+
+	MaterialFlag flags{ MaterialFlag::NONE };
+
+	units::SpecificHeatCapacity specific_heat_capacity{ 0 };
+	units::Density density{ 0 };
+
+	TimeUnit flow_time{ TimeUnit::from_seconds(0.5) };
 
 	std::vector<ConsumableEffect> consumable_effects;
 	Currency value{ Currency::from_dollars(1.0) };
 
-	static std::shared_ptr<RawObjectChecker> get_checker();
+	static RawObjectChecker* get_checker();
 	static MaterialStateDefinition from_json(const json& j);
 
 public:
@@ -87,9 +93,12 @@ struct MaterialType
 	units::Temperature boiling_point{};
 	units::Temperature melting_point{};
 
+	units::MolarMass molar_mass{ units::molar_mass::grams_per_mole_t(18.02) };
+	double gas_density_factor;
+
 	std::unordered_map<MaterialStateType, MaterialStateDefinition> states{};
 
-	static std::shared_ptr<RawObjectChecker> get_checker();
+	static RawObjectChecker* get_checker();
 	static MaterialType from_json(const json& j);
 
 	constexpr bool operator==(const MaterialType& other) const
@@ -115,10 +124,15 @@ class Material : public Thing
 {
 protected:
 	RawMaster::Ref<MaterialType> m_mat_type;
+
 	TimeUnit m_current_step;
-	units::Temperature m_temperature;
+
 	MaterialStateType m_state;
 	MaterialAmount m_amount;
+
+	units::Temperature m_temperature;
+	units::ThermalMass m_thermal_mass;
+	units::Mass m_mass;
 
 public:
 	struct initializer
@@ -139,8 +153,7 @@ public:
 
 
 public:
-	const MaterialType* material_type() const { return m_mat_type.get(); }
-	RawMaster::Ref<MaterialType> get_material_type() const { return m_mat_type; }
+	RawMaster::Ref<MaterialType> type() const { return m_mat_type; }
 
 	const units::Temperature& boiling_point() const { return m_mat_type->boiling_point; }
 	const units::Temperature& condensation_point() const { return m_mat_type->boiling_point; }
@@ -154,6 +167,26 @@ public:
 	MaterialAmount& amount() { return m_amount; }
 	const MaterialAmount& amount() const { return m_amount; }
 
+	units::Mass& mass() { return m_mass; }
+	const units::Mass& mass() const { return m_mass; }
+
+	units::ThermalMass& thermal_mass() { return m_thermal_mass; }
+	const units::ThermalMass& thermal_mass() const { return m_thermal_mass; }
+
+	units::Density density() const
+	{
+		if (current_state() == MaterialStateType::GAS)
+		{
+			return units::density::kilograms_per_cubic_meter_t(
+				units::in<units::temperature::kelvin>(temperature()) / type()->gas_density_factor
+			);
+		}
+
+		return current_state_definition()->density;
+	}
+
+	const units::SpecificHeatCapacity& specific_heat_capacity() const { return current_state_definition()->specific_heat_capacity; }
+
 	TimeUnit& current_step() { return m_current_step; }
 	const TimeUnit& current_step() const { return m_current_step; }
 
@@ -163,13 +196,6 @@ public:
 	}
 
 	// Current State //
-
-	MaterialStateType& current_state()
-	{
-		update_state();
-		return m_state;
-	}
-
 	const MaterialStateType& current_state() const { return m_state; }
 
 	const MaterialStateDefinition* current_state_definition()
@@ -205,6 +231,8 @@ public:
 
 public:
 	void update_state();
+	void update_thermal_mass();
+	void update_mass(units::Volume total_container_volume, MaterialAmount max_material_amount = DEFAULT_MAX_MATERIAL_AMOUNT);
 };
 
 class Entity;

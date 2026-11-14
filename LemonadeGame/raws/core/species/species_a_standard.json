@@ -21,8 +21,8 @@
       { "type": "STAND", "name": "run", "speed": 1.7 },
       { "type": "STAND", "name": "sprint", "speed": 2.2 },
       "//crawling",
-      { "type": "CRAWL", "name": "slow crawl", "speed": 0.4 },
-      { "type": "CRAWL", "name": "crawl", "speed": 0.8, "is_default": true },
+      { "type": "CRAWL", "name": "slow crawl", "speed": 0.2 },
+      { "type": "CRAWL", "name": "crawl", "speed": 0.5, "is_default": true },
       { "type": "CRAWL", "name": "fast crawl", "speed": 1.1 }
     ],
     "common_genders": [

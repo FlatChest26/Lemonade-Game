@@ -27,7 +27,7 @@ public:
 
 	Tile(RawMaster::Ref<TileType> type = nullptr);
 
-	const TileType* get_type() const { return m_type.get(); }
+	RawMaster::Ref<TileType> type() const { return m_type; }
 
 	// -- Thing -- //
 
@@ -102,7 +102,7 @@ public:
 
 		for (const auto& connect_id : m_type->connects_with)
 		{
-			for (const auto& other_connect_id : other->get_type()->tags)
+			for (const auto& other_connect_id : other->type()->tags)
 			{
 				if (connect_id == other_connect_id)
 				{

@@ -1,15 +1,15 @@
 #include "consumable.h"
 
-std::shared_ptr<RawObjectChecker> ConsumableEffect::get_checker()
+RawObjectChecker* ConsumableEffect::get_checker()
 {
-	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
-	checker->set_type_name("consumable_effect");
+	static RawObjectChecker checker = RawObjectChecker();
+	checker.set_type_name("consumable_effect");
 
-	checker->add_property("modified_stat", RawValueType::RAW_String, true);
-	checker->add_property("amount", RawValueType::RAW_Number, true);
-	checker->add_property("taste", RawValueType::RAW_String, false);
+	checker.add_property("modified_stat", RawValueType::RAW_String, true);
+	checker.add_property("amount", RawValueType::RAW_Number, true);
+	checker.add_property("taste", RawValueType::RAW_String, false);
 
-	return checker;
+	return &checker;
 }
 
 ConsumableEffect ConsumableEffect::from_json(const json& j)

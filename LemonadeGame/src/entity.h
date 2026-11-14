@@ -119,7 +119,6 @@ struct RenderOverride
 	bool is_active = false;
 
 	std::function<bool(const Entity*)> active;
-
 };
 
 struct Grapple
@@ -245,23 +244,17 @@ public:
 	}
 
 	template<typename T>
-	const T* get_raw_ref() const { return std::get<RawMaster::Ref<T>>(m_raw_refs).get(); }
+	RawMaster::Ref<T> get_raw_ref() const { return std::get<RawMaster::Ref<T>>(m_raw_refs); }
 
 	template<typename T>
 	bool has_raw_ref() const { return std::get<RawMaster::Ref<T>>(m_raw_refs) != nullptr; }
 
 	template<typename T>
-	const T* set_raw_ref(const T* new_component)
+	RawMaster::Ref<T> set_raw_ref(RawMaster::Ref<T> new_component)
 	{
-		std::get<RawMaster::Ref<T>>(m_raw_refs).reset(new_component);
-		return std::get<RawMaster::Ref<T>>(m_raw_refs).get();
-	}
-
-	template<typename T>
-	const T* set_raw_ref(RawMaster::Ref<T> new_component)
-	{
+		auto old = std::get<RawMaster::Ref<T>>(m_raw_refs);
 		std::get<RawMaster::Ref<T>>(m_raw_refs) = new_component;
-		return std::get<RawMaster::Ref<T>>(m_raw_refs).get();
+		return old;
 	}
 
 public:
@@ -319,8 +312,8 @@ public:
 	// Sets this entity's `Inventory` component to the input. Automatically sets the owner of the inventory to this entity.
 	virtual void set_inventory(Inventory* inventory) { set_component<Inventory>(inventory)->set_owner(this); }
 	// Returns this entity's `Inventory` component, if it exists.
-	virtual Inventory* get_inventory() { return get_component<Inventory>(); }
-	virtual const Inventory* get_inventory() const { return get_component<Inventory>(); }
+	virtual Inventory* inventory() { return get_component<Inventory>(); }
+	virtual const Inventory* inventory() const { return get_component<Inventory>(); }
 	// Returns true if this entity has an `Inventory` component.
 	virtual bool has_inventory() const { return has_component<Inventory>(); }
 
@@ -334,8 +327,8 @@ public:
 	// Movable //
 
 	// Returns this entity's `Movable` component, if it exists.
-	virtual TileMovable* get_movable() { return get_component<TileMovable>(); }
-	virtual const TileMovable* get_movable() const { return get_component<TileMovable>(); }
+	virtual TileMovable* movable() { return get_component<TileMovable>(); }
+	virtual const TileMovable* movable() const { return get_component<TileMovable>(); }
 	// Returns true if this entity has a `Movable` component.
 	virtual bool has_movable() const { return has_component<TileMovable>(); }
 	// Sets this entity's `Movable` component to the input.
@@ -349,10 +342,8 @@ public:
 	// Returns true if this entity has a `Species` component.
 	virtual bool has_species() const { return has_raw_ref<Species>(); }
 	// Returns this entity's `Species` component, if it exists.
-	virtual const Species* get_species() const { return get_raw_ref<Species>(); }
+	virtual RawMaster::Ref<Species> species() const { return get_raw_ref<Species>(); }
 
-	// Sets this entity's `Species` component to the input.
-	virtual void set_species(const Species* species) { set_raw_ref<Species>(species); }
 	// Sets this entity's `Species` component to the input.
 	virtual void set_species(RawMaster::Ref<Species> species) { set_raw_ref<Species>(species); }
 	// Sets this entity's `Species` component to the input (this time using a species ID).
@@ -361,7 +352,7 @@ public:
 	// Item Definition //
 
 	// Returns this entity's `ItemDefinition` component, if it exists.
-	virtual const ItemDefinition* get_item_def() const { return get_raw_ref<ItemDefinition>(); }
+	virtual RawMaster::Ref<ItemDefinition> item_def() const { return get_raw_ref<ItemDefinition>(); }
 	// Sets this entity's `ItemDefinition` component to the input.
 	virtual void set_item_def(RawMaster::Ref<ItemDefinition> item_def) { set_raw_ref<ItemDefinition>(item_def); }
 	// Returns true if this entity has a `ItemDefinition` component.
@@ -370,7 +361,7 @@ public:
 	// Furniture Definition //
 
 	// Returns this entity's `ItemDefinition` component, if it exists.
-	virtual const FurnitureDefinition* get_furniture_def() const { return get_raw_ref<FurnitureDefinition>(); }
+	virtual RawMaster::Ref<FurnitureDefinition> furniture_def() const { return get_raw_ref<FurnitureDefinition>(); }
 	// Sets this entity's `ItemDefinition` component to the input.
 	virtual void set_furniture_def(RawMaster::Ref<FurnitureDefinition> furniture_def) { set_raw_ref<FurnitureDefinition>(furniture_def); }
 	// Returns true if this entity has a `FurnitureDefinition` component.
@@ -379,8 +370,8 @@ public:
 	// Anatomy //
 
 	// Returns this entity's `Anatomy` component, if it exists.
-	virtual Anatomy* get_anatomy() { return get_component<Anatomy>(); }
-	virtual const Anatomy* get_anatomy() const { return get_component<Anatomy>(); }
+	virtual Anatomy* anatomy() { return get_component<Anatomy>(); }
+	virtual const Anatomy* anatomy() const { return get_component<Anatomy>(); }
 	// Sets this entity's `Anatomy` component to the input.
 	virtual void set_anatomy(Anatomy* anatomy) { set_component<Anatomy>(anatomy)->set_owner(this); }
 	// Returns true if this entity has a `Anatomy` component.
@@ -392,8 +383,8 @@ public:
 	virtual bool has_gait() const { return has_component<Gait>(); }
 
 	// Returns this entity's `Gait` component, if it exists.
-	virtual Gait* get_gait() { return get_component<Gait>(); }
-	virtual const Gait* get_gait() const { return get_component<Gait>(); }
+	virtual Gait* gait() { return get_component<Gait>(); }
+	virtual const Gait* gait() const { return get_component<Gait>(); }
 	// Sets this entity's `Gait` component to the input.
 	virtual void set_gait(Gait* gait) { set_component<Gait>(gait); }
 
@@ -411,8 +402,8 @@ public:
 	// Returns true if this entity has a `Living` component.
 	virtual bool has_living() const { return has_component<Living>(); }
 	// Returns this entity's `Living` component, if it exists.
-	virtual Living* get_living() { return get_component<Living>(); }
-	virtual const Living* get_living() const { return get_component<Living>(); }
+	virtual Living* living() { return get_component<Living>(); }
+	virtual const Living* living() const { return get_component<Living>(); }
 	// Sets this entity's `Living` component to the input.
 	virtual void set_living(Living* living) { set_component<Living>(living)->set_owner(this); }
 
@@ -435,7 +426,7 @@ public:
 	// Returns true if this entity has a `CreatureSoul` component.
 	virtual bool has_soul() const { return has_component<CreatureSoul>(); }
 	// Returns this entity's `CreatureSoul` component, if it exists.
-	virtual CreatureSoul* get_soul() const { return get_component<CreatureSoul>(); }
+	virtual CreatureSoul* soul() const { return get_component<CreatureSoul>(); }
 
 	// Brain //
 
@@ -447,15 +438,15 @@ public:
 
 	virtual AIBrain* remove_brain() { return release_component<AIBrain>(); }
 
-	virtual AIBrain* get_brain() { return get_component<AIBrain>(); }
-	virtual const AIBrain* get_brain() const { return get_component<AIBrain>(); }
+	virtual AIBrain* ai_brain() { return get_component<AIBrain>(); }
+	virtual const AIBrain* ai_brain() const { return get_component<AIBrain>(); }
 
 	virtual bool has_brain() const { return has_component<AIBrain>(); }
 
 	// Person //
 
-	virtual Person* get_person() { return get_component<Person>(); }
-	virtual const Person* get_person() const { return get_component<Person>(); }
+	virtual Person* person() { return get_component<Person>(); }
+	virtual const Person* person() const { return get_component<Person>(); }
 	virtual bool is_person() const { return has_component<Person>(); }
 	virtual void set_person(Person* person) { set_component<Person>(person)->set_owner(this); }
 
@@ -489,9 +480,9 @@ public:
 	// Thing //
 
 	// For entities larger than 1x1x1, return the renderable at that coordinate, relative to the entity's position.
-	virtual Renderable get_renderable_at(Coord offset_x, Coord offset_y, Coord offset_z) const;
+	virtual Renderable renderable_at(Coord offset_x, Coord offset_y, Coord offset_z) const;
 	// For entities larger than 1x1x1, return the renderable at that coordinate, relative to the entity's position.
-	virtual Renderable get_renderable_at(const Position& offset) const { return get_renderable_at(offset.x, offset.y, offset.z); }
+	virtual Renderable renderable_at(const Position& offset) const { return renderable_at(offset.x, offset.y, offset.z); }
 
 	virtual Renderable renderable() const override;
 

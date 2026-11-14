@@ -1,55 +1,55 @@
 #include "species.h"
 #include "raw_master.h"
 
-std::shared_ptr<RawObjectChecker> Species::get_checker()
+RawObjectChecker* Species::get_checker()
 {
-	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
+	static RawObjectChecker checker = RawObjectChecker();
 
-	checker->set_type_name("species");
+	checker.set_type_name("species");
 
-	checker->add_property("copy_from", RawValueType::RAW_String, false);
+	checker.add_property("copy_from", RawValueType::RAW_String, false);
 
-	checker->add_property("ID", RawValueType::RAW_String, true);
-	checker->add_property("noun", RawValueType::RAW_Custom, true, Noun::get_checker());
-	checker->add_property("renderable", RawValueType::RAW_Custom, true, Renderable::get_checker());
+	checker.add_property("ID", RawValueType::RAW_String, true);
+	checker.add_property("noun", RawValueType::RAW_Custom, true, Noun::get_checker());
+	checker.add_property("renderable", RawValueType::RAW_Custom, true, Renderable::get_checker());
 
-	checker->add_property("adjective", RawValueType::RAW_String, false);
-	checker->add_property("gendered_nouns", RawValueType::RAW_Object, false);
-	checker->add_property("default_body_plan", RawValueType::RAW_String, false);
+	checker.add_property("adjective", RawValueType::RAW_String, false);
+	checker.add_property("gendered_nouns", RawValueType::RAW_Object, false);
+	checker.add_property("default_body_plan", RawValueType::RAW_String, false);
 
-	checker->add_property("body_mods", RawValueType::RAW_Array, false);
-	checker->add_property("add_body_mods", RawValueType::RAW_Array, false);
-	checker->add_property("remove_body_mods", RawValueType::RAW_Array, false);
+	checker.add_property("body_mods", RawValueType::RAW_Array, false);
+	checker.add_property("add_body_mods", RawValueType::RAW_Array, false);
+	checker.add_property("remove_body_mods", RawValueType::RAW_Array, false);
 
-	checker->add_property("description", RawValueType::RAW_String, false);
+	checker.add_property("description", RawValueType::RAW_String, false);
 
-	checker->add_property("lifespan_min", RawValueType::RAW_Custom, false);
-	checker->add_property("lifespan_max", RawValueType::RAW_Custom, false);
+	checker.add_property("lifespan_min", RawValueType::RAW_Custom, false);
+	checker.add_property("lifespan_max", RawValueType::RAW_Custom, false);
 
-	checker->add_property("lifespan", RawValueType::RAW_Object, false);
+	checker.add_property("lifespan", RawValueType::RAW_Object, false);
 
-	checker->add_property("child_age", RawValueType::RAW_Custom, false);
-	checker->add_property("adult_age", RawValueType::RAW_Custom, false);
-	checker->add_property("mature_age", RawValueType::RAW_Custom, false);
+	checker.add_property("child_age", RawValueType::RAW_Custom, false);
+	checker.add_property("adult_age", RawValueType::RAW_Custom, false);
+	checker.add_property("mature_age", RawValueType::RAW_Custom, false);
 
-	checker->add_property("life_stages", RawValueType::RAW_Object, false);
+	checker.add_property("life_stages", RawValueType::RAW_Object, false);
 
-	checker->add_property("frequency", RawValueType::RAW_Number, false);
+	checker.add_property("frequency", RawValueType::RAW_Number, false);
 
-	checker->add_property("flags", RawValueType::RAW_Array, false);
-	checker->add_property("remove_flags", RawValueType::RAW_Array, false);
-	checker->add_property("add_flags", RawValueType::RAW_Array, false);
+	checker.add_property("flags", RawValueType::RAW_Array, false);
+	checker.add_property("remove_flags", RawValueType::RAW_Array, false);
+	checker.add_property("add_flags", RawValueType::RAW_Array, false);
 
-	checker->add_property("common_genders", RawValueType::RAW_Array, false);
-	checker->add_property("add_common_genders", RawValueType::RAW_Array, false);
-	checker->add_property("remove_common_genders", RawValueType::RAW_Array, false);
+	checker.add_property("common_genders", RawValueType::RAW_Array, false);
+	checker.add_property("add_common_genders", RawValueType::RAW_Array, false);
+	checker.add_property("remove_common_genders", RawValueType::RAW_Array, false);
 
-	checker->add_property("gaits", RawValueType::RAW_Array, false);
-	checker->add_property("add_gaits", RawValueType::RAW_Array, false);
+	checker.add_property("gaits", RawValueType::RAW_Array, false);
+	checker.add_property("add_gaits", RawValueType::RAW_Array, false);
 
-	checker->add_property("common_body_mods", RawValueType::RAW_Array, false);
+	checker.add_property("common_body_mods", RawValueType::RAW_Array, false);
 
-	return checker;
+	return &checker;
 }
 
 Species Species::from_json(const json& j)
@@ -160,7 +160,7 @@ Species Species::from_json(const json& j)
 					continue;
 				}
 
-				s.body_mods.push_back(std::make_shared<BodyMod>(BodyMod::from_json(json_body_mod)));
+				s.body_mods.push_back(RawMaster::make_ref<BodyMod>(json_body_mod));
 			}
 			else
 			{
@@ -185,7 +185,7 @@ Species Species::from_json(const json& j)
 					continue;
 				}
 
-				s.body_mods.push_back(std::make_shared<BodyMod>(BodyMod::from_json(json_body_mod)));
+				s.body_mods.push_back(RawMaster::make_ref<BodyMod>(json_body_mod));
 			}
 			else
 			{
@@ -518,7 +518,7 @@ Species Species::from_json(const json& j)
 					continue;
 				}
 
-				s.common_body_mods.push_back(std::tuple(std::make_shared<BodyMod>(BodyMod::from_json(body_mod_json)), frequency));
+				s.common_body_mods.push_back(std::tuple(RawMaster::make_ref<BodyMod>(body_mod_json), frequency));
 			}
 			else
 			{

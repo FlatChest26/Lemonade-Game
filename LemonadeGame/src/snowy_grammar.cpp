@@ -224,17 +224,17 @@ namespace grammar
 	}
 }
 
-std::shared_ptr<RawObjectChecker> Noun::get_checker()
+RawObjectChecker* Noun::get_checker()
 {
-	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
+	static RawObjectChecker checker = RawObjectChecker();
 
-	checker->set_type_name("noun");
+	checker.set_type_name("noun");
 
-	checker->add_property("singular", RawValueType::RAW_String, true);
-	checker->add_property("plural", RawValueType::RAW_String, false);
-	checker->add_property("always_plural", RawValueType::RAW_Bool, false);
+	checker.add_property("singular", RawValueType::RAW_String, true);
+	checker.add_property("plural", RawValueType::RAW_String, false);
+	checker.add_property("always_plural", RawValueType::RAW_Bool, false);
 
-	return checker;
+	return &checker;
 }
 
 Noun Noun::from_json(const json& j)
@@ -380,22 +380,22 @@ Age Age::from_json(const json& j)
 	return a;
 }
 
-std::shared_ptr<RawObjectChecker> Pronouns::get_checker()
+RawObjectChecker* Pronouns::get_checker()
 {
-	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
+	static RawObjectChecker checker = RawObjectChecker();
 
-	checker->set_type_name("pronouns");
+	checker.set_type_name("pronouns");
 
-	checker->add_property("subjective", RawValueType::RAW_String, true);
-	checker->add_property("objective", RawValueType::RAW_String, true);
-	checker->add_property("determiner", RawValueType::RAW_String, true);
-	checker->add_property("independent_possessive", RawValueType::RAW_String, true);
-	checker->add_property("reflexive", RawValueType::RAW_String, true);
+	checker.add_property("subjective", RawValueType::RAW_String, true);
+	checker.add_property("objective", RawValueType::RAW_String, true);
+	checker.add_property("determiner", RawValueType::RAW_String, true);
+	checker.add_property("independent_possessive", RawValueType::RAW_String, true);
+	checker.add_property("reflexive", RawValueType::RAW_String, true);
 
-	checker->add_property("shortened", RawValueType::RAW_String, false);
-	checker->add_property("acts_plural", RawValueType::RAW_Bool, false);
+	checker.add_property("shortened", RawValueType::RAW_String, false);
+	checker.add_property("acts_plural", RawValueType::RAW_Bool, false);
 
-	return checker;
+	return &checker;
 }
 
 Pronouns Pronouns::from_json(const json& j)
@@ -439,26 +439,26 @@ Pronouns Pronouns::from_json(const json& j)
 	return p;
 }
 
-std::shared_ptr<RawObjectChecker> Gender::get_checker()
+RawObjectChecker* Gender::get_checker()
 {
-	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
+	static RawObjectChecker checker = RawObjectChecker();
 
-	checker->set_type_name("gender");
+	checker.set_type_name("gender");
 
-	checker->add_property("name", RawValueType::RAW_String, true);
-	checker->add_property("pronouns", RawValueType::RAW_Custom, true);
-	checker->add_property("gender_type", RawValueType::RAW_String, true);
+	checker.add_property("name", RawValueType::RAW_String, true);
+	checker.add_property("pronouns", RawValueType::RAW_Custom, true);
+	checker.add_property("gender_type", RawValueType::RAW_String, true);
 
-	checker->add_property("mature_noun", RawValueType::RAW_Custom, false, Noun::get_checker());
-	checker->add_property("immature_noun", RawValueType::RAW_Custom, false, Noun::get_checker());
+	checker.add_property("mature_noun", RawValueType::RAW_Custom, false, Noun::get_checker());
+	checker.add_property("immature_noun", RawValueType::RAW_Custom, false, Noun::get_checker());
 
-	checker->add_property("noun", RawValueType::RAW_Custom, false, Noun::get_checker());
-	checker->add_property("nouns", RawValueType::RAW_Object, false);
+	checker.add_property("noun", RawValueType::RAW_Custom, false, Noun::get_checker());
+	checker.add_property("nouns", RawValueType::RAW_Object, false);
 
-	checker->add_property("is_plural", RawValueType::RAW_Bool, false);
-	checker->add_property("uses_noun", RawValueType::RAW_Bool, false);
+	checker.add_property("is_plural", RawValueType::RAW_Bool, false);
+	checker.add_property("uses_noun", RawValueType::RAW_Bool, false);
 
-	return checker;
+	return &checker;
 }
 
 Gender Gender::from_json(const json& j)
@@ -535,16 +535,16 @@ Gender Gender::from_json(const json& j)
 	return g;
 }
 
-std::shared_ptr<RawObjectChecker> Verb::get_checker()
+RawObjectChecker* Verb::get_checker()
 {
-	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
+	static RawObjectChecker checker = RawObjectChecker();
 
-	checker->set_type_name("verb");
+	checker.set_type_name("verb");
 
-	checker->add_property("singular", RawValueType::RAW_String, true);
-	checker->add_property("plural", RawValueType::RAW_String, true);
+	checker.add_property("singular", RawValueType::RAW_String, true);
+	checker.add_property("plural", RawValueType::RAW_String, true);
 
-	return checker;
+	return &checker;
 }
 
 Verb Verb::from_json(const json& j)
@@ -564,16 +564,16 @@ Verb Verb::from_json(const json& j)
 	return v;
 }
 
-std::shared_ptr<RawObjectChecker> WordReplacement::get_checker()
+RawObjectChecker* WordReplacement::get_checker()
 {
-	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
+	static RawObjectChecker checker = RawObjectChecker();
 
-	checker->set_type_name("word_replacement");
+	checker.set_type_name("word_replacement");
 
-	checker->add_property("old", RawValueType::RAW_String, true);
-	checker->add_property("new", RawValueType::RAW_String, true);
+	checker.add_property("old", RawValueType::RAW_String, true);
+	checker.add_property("new", RawValueType::RAW_String, true);
 
-	return checker;
+	return &checker;
 }
 
 WordReplacement WordReplacement::from_json(const json& j)
@@ -593,16 +593,16 @@ WordReplacement WordReplacement::from_json(const json& j)
 	return wr;
 }
 
-std::shared_ptr<RawObjectChecker> NounReplacement::get_checker()
+RawObjectChecker* NounReplacement::get_checker()
 {
-	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
+	static RawObjectChecker checker = RawObjectChecker();
 
-	checker->set_type_name("word_replacement");
+	checker.set_type_name("word_replacement");
 
-	checker->add_property("singular", RawValueType::RAW_Custom, true, WordReplacement::get_checker());
-	checker->add_property("plural", RawValueType::RAW_Custom, true, WordReplacement::get_checker());
+	checker.add_property("singular", RawValueType::RAW_Custom, true, WordReplacement::get_checker());
+	checker.add_property("plural", RawValueType::RAW_Custom, true, WordReplacement::get_checker());
 
-	return checker;
+	return &checker;
 }
 
 NounReplacement NounReplacement::from_json(const json& j)

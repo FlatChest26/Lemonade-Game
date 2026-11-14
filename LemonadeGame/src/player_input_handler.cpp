@@ -85,7 +85,7 @@ bool InputHandler_Player::init()
 
 	m_look_menu = register_sidebar<SidebarMenu_Look>(sidebar_menus::LOOK);
 
-	m_look_menu->look_position = player->get_movable()->pos();
+	m_look_menu->look_position = player->movable()->pos();
 	m_look_menu->follow_player = true;
 	
 
@@ -160,13 +160,13 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 
 	if (player->has_living())
 	{
-		is_sleeping = player->get_living()->is_asleep();
-		is_alive = player->get_living()->is_alive();
+		is_sleeping = player->living()->is_asleep();
+		is_alive = player->living()->is_alive();
 	}
 
 	bool can_act = !is_sleeping && is_alive;
 
-	Position player_pos = player->get_movable()->pos();
+	Position player_pos = player->movable()->pos();
 
 	// Check if movement keys are pressed
 	Position move_dir = InputMap::get_input_direction(event);
@@ -394,7 +394,7 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 
 		if (!is_sleeping)
 		{
-			if (!player->get_living()->can_sleep())
+			if (!player->living()->can_sleep())
 			{
 				world_state->game_message(GameMessage("You're not tired enough to sleep."));
 				return InputResult();
@@ -404,7 +404,7 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 		}
 		else
 		{
-			if (!player->get_living()->can_wake_up())
+			if (!player->living()->can_wake_up())
 			{
 				world_state->game_message(GameMessage("You're too tired to wake up."));
 				return InputResult();
@@ -421,7 +421,7 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 			return InputResult();
 		}
 
-		auto& posture = player->get_anatomy()->posture();
+		auto& posture = player->anatomy()->posture();
 
 		PostureID next_posture;
 
@@ -449,7 +449,7 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 			return InputResult();
 		}
 
-		auto& posture = player->get_anatomy()->posture();
+		auto& posture = player->anatomy()->posture();
 
 		std::vector<PostureID> potential_postures;
 
@@ -504,7 +504,7 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 	
 	if (can_act && InputMap::is_action_pressed(Keybind::Grab, event))
 	{
-		auto inventory = player->get_inventory();
+		auto inventory = player->inventory();
 
 		if (!inventory)
 		{
@@ -519,7 +519,7 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 		}
 
 		auto items_at = world->get_entities_at(
-			player->get_movable()->pos(), 
+			player->movable()->pos(), 
 			EntityFilter{ 
 				.ignore_ids = { player->ID() },
 				.required_flags = EntityFlag::CAN_BE_HELD 
@@ -798,7 +798,7 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 	{
 		if (player->has_movable())
 		{
-			COUT(player->get_movable()->pos());
+			COUT(player->movable()->pos());
 		}
 		break;
 	}
@@ -808,7 +808,18 @@ InputResult InputHandler_Player::ev_key_down(SDL_Event event)
 		{
 			for (auto& entity : world->get_entities(EntityFilter{ .required_ids{ "SNOW" }}))
 			{
-				entity->get_brain()->push_state(new AIState_Kill({ .kill_target = player }));
+				entity->ai_brain()->push_state(new AIState_Horny({ .horny_target = player }));
+			}
+		}
+		break;
+	}
+	case SDLK_F7:
+	{
+		if (player->has_movable())
+		{
+			for (auto& entity : world->get_entities(EntityFilter{ .required_ids{ "SNOW" } }))
+			{
+				entity->ai_brain()->push_state(new AIState_Kill({ .kill_target = player }));
 			}
 		}
 		break;
@@ -823,7 +834,7 @@ void InputHandler_Player::step(const TimeUnit& delta_time)
 {
 	if (m_look_menu && does_player_exist() && m_look_menu->follow_player)
 	{
-		m_look_menu->look_position = get_player()->get_movable()->pos();
+		m_look_menu->look_position = get_player()->movable()->pos();
 	}
 }
 
@@ -902,8 +913,8 @@ InputResult InputHandler_Look::ev_key_down(SDL_Event event)
 
 	if (player->has_living())
 	{
-		is_sleeping = player->get_living()->is_asleep();
-		is_alive = player->get_living()->is_alive();
+		is_sleeping = player->living()->is_asleep();
+		is_alive = player->living()->is_alive();
 	}
 
 	// Check if movement keys are pressed
@@ -985,7 +996,7 @@ bool InputHandler_Inventory::init()
 	if (!InputHandler_Player::init())
 		return false;
 
-	auto inventory = get_player()->get_inventory();
+	auto inventory = get_player()->inventory();
 
 	if (!inventory)
 	{
@@ -1020,7 +1031,7 @@ InputResult InputHandler_Inventory::ev_key_down(SDL_Event event)
 
 	auto player = get_player();
 
-	auto inventory = player->get_inventory();
+	auto inventory = player->inventory();
 	auto world_state = get_world_state();
 
 	bool is_alive = false;
@@ -1028,8 +1039,8 @@ InputResult InputHandler_Inventory::ev_key_down(SDL_Event event)
 
 	if (player->has_living())
 	{
-		is_sleeping = player->get_living()->is_asleep();
-		is_alive = player->get_living()->is_alive();
+		is_sleeping = player->living()->is_asleep();
+		is_alive = player->living()->is_alive();
 	}
 
 	if (InputMap::is_action_pressed(Keybind::Inventory, event) || InputMap::is_action_pressed(Keybind::Quit, event))
@@ -1116,7 +1127,7 @@ InputResult InputHandler_Inventory::ev_key_down(SDL_Event event)
 			return InputResult();
 		}
 		
-		if (!selected_item->get_item_def()->is_consumable())
+		if (!selected_item->item_def()->is_consumable())
 		{
 			world_state->game_message(GameMessage("You can't consume that item.", color::get("light_red")));
 			return InputResult();
@@ -1172,10 +1183,7 @@ bool InputHandler_Interaction::init()
 		));
 	}
 
-	if (!m_interactions.empty())
-	{
-		m_selection_menu->selected_slot = 0;
-	}
+	m_selection_menu->selected_slot = m_selection_menu->selected_slot % m_interactions.size();
 
 	return true;
 }
@@ -1199,10 +1207,7 @@ void InputHandler_Interaction::step(const TimeUnit& delta_time)
 		));
 	}
 
-	if (!m_interactions.empty())
-	{
-		m_selection_menu->selected_slot = 0;
-	}
+	m_selection_menu->selected_slot = m_selection_menu->selected_slot % m_interactions.size();
 }
 
 InputResult InputHandler_Interaction::ev_key_down(SDL_Event event)
@@ -1277,7 +1282,7 @@ void InputHandler_Interaction::render(const RenderParams& params) const
 	if (!m_subject->has_movable())
 		return;
 
-	auto subject_pos = m_subject->get_movable()->pos();
+	auto subject_pos = m_subject->movable()->pos();
 
 	int draw_x{ subject_pos.x }, draw_y{ subject_pos.y }, draw_z{ subject_pos.z };
 

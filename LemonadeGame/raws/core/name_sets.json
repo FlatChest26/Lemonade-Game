@@ -1,7 +1,5 @@
 [
-  {
-    "//": "mostly copied from CDDA source code: https://github.com/CleverRaven/Cataclysm-DDA/blob/master/data/names/en.json"
-  },
+  "mostly copied from CDDA source code: https://github.com/CleverRaven/Cataclysm-DDA/blob/master/data/names/en.json",
   {
     "type": "name_set",
     "ID": "nickname",

@@ -29,7 +29,7 @@ enum class RawValueType
 class RawObjectChecker
 {
 protected:
-	std::unordered_map<std::string, std::tuple<RawValueType, bool, std::shared_ptr<RawObjectChecker>>> m_values;
+	std::unordered_map<std::string, std::tuple<RawValueType, bool, RawObjectChecker*>> m_values;
 	std::string m_type_name;
 
 public:
@@ -43,7 +43,7 @@ public:
 		m_type_name = type_name;
 	}
 
-	void add_property(std::string property_name, RawValueType value_type, bool is_required = false, std::shared_ptr<RawObjectChecker> checker = nullptr)
+	void add_property(std::string property_name, RawValueType value_type, bool is_required = false, RawObjectChecker* checker = nullptr)
 	{
 		if (m_values.find(property_name) != m_values.end())
 			return;
@@ -51,7 +51,7 @@ public:
 		m_values[property_name] = std::tuple(value_type, is_required, checker);
 	}
 
-	bool check_value_type(const json& j, RawValueType value_type, std::shared_ptr<RawObjectChecker> checker = nullptr, bool print_errors = true)
+	bool check_value_type(const json& j, RawValueType value_type, RawObjectChecker* checker = nullptr, bool print_errors = true)
 	{
 		if (checker)
 		{
@@ -97,7 +97,7 @@ public:
 
 		RawValueType value_type = std::get<0>(value_tuple);
 		bool mandatory = std::get<1>(value_tuple);
-		std::shared_ptr<RawObjectChecker> checker = std::get<2>(value_tuple);
+		RawObjectChecker* checker = std::get<2>(value_tuple);
 
 		if (!j.contains(value_name))
 		{
@@ -118,7 +118,7 @@ public:
 		{
 			RawValueType value_type = std::get<0>(value_tuple);
 			bool mandatory = std::get<1>(value_tuple);
-			std::shared_ptr<RawObjectChecker> checker = std::get<2>(value_tuple);
+			RawObjectChecker* checker = std::get<2>(value_tuple);
 
 			bool contains = j.contains(value_name);
 			bool value_checked = contains ? check_value_type(j.at(value_name), value_type, checker, print_errors) : false;

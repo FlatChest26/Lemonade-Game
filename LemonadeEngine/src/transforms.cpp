@@ -85,6 +85,46 @@ namespace transforms
 		return degrees;
 	}
 
+	double angle_in_degrees_to_dir(double angle)
+	{
+		Direction dir;
+
+		if (angle < 45.0)
+		{
+			dir |= NORTH;
+		}
+		else if (angle < 90.0)
+		{
+			dir |= NORTHEAST;
+		}
+		else if (angle < 135.0)
+		{
+			dir |= EAST;
+		}
+		else if (angle < 180.0)
+		{
+			dir |= SOUTHEAST;
+		}
+		else if (angle < 225.0)
+		{
+			dir |= SOUTH;
+		}
+		else if (angle < 270.0)
+		{
+			dir |= SOUTHWEST;
+		}
+		else if (angle < 315.0)
+		{
+			dir |= WEST;
+		}
+		else 
+		{
+			dir |= NORTHWEST;
+		}
+
+		return dir;
+	}
+
 
 	Position rotate_by_direction(const Position& point, Direction dir, const Position& origin)
 	{
@@ -125,6 +165,96 @@ namespace transforms
 
 	Position get_closest_adjacent(const Position& start, const Position& destination, Coord near_radius)
 	{
-		return ((start - destination).unit() * near_radius) + destination;
+		return ((start - destination).unit() * Position(near_radius)) + destination;
+	}
+
+	Direction rotate_direction_clockwise(Direction dir, int amount)
+	{
+		Direction new_dir = dir;
+		
+		//new_dir |= ~ABOVE;
+		//new_dir |= ~BELOW;
+
+		int count = amount;
+
+		while (count > 0)
+		{
+			switch (new_dir)
+			{
+			case NORTH:
+				new_dir = NORTHEAST;
+				break;
+			case NORTHEAST:
+				new_dir = EAST;
+				break;
+			case EAST:
+				new_dir = SOUTHEAST;
+				break;
+			case SOUTHEAST:
+				new_dir = SOUTH;
+				break;
+			case SOUTH:
+				new_dir = SOUTHWEST;
+				break;
+			case SOUTHWEST:
+				new_dir = WEST;
+				break;
+			case WEST:
+				new_dir = NORTHWEST;
+				break;
+			case NORTHWEST:
+				new_dir = NORTH;
+				break;
+			}
+
+			count--;
+		}
+
+		return new_dir;
+	}
+
+	Direction rotate_direction_counterclockwise(Direction dir, int amount)
+	{
+		Direction new_dir = dir;
+
+		//new_dir |= ~ABOVE;
+		//new_dir |= ~BELOW;
+
+		int count = amount;
+
+		while (count > 0)
+		{
+			switch (new_dir)
+			{
+			case NORTH:
+				new_dir = NORTHWEST;
+				break;
+			case NORTHWEST:
+				new_dir = WEST;
+				break;
+			case WEST:
+				new_dir = SOUTHWEST;
+				break;
+			case SOUTHWEST:
+				new_dir = SOUTH;
+				break;
+			case SOUTH:
+				new_dir = SOUTHEAST;
+				break;
+			case SOUTHEAST:
+				new_dir = EAST;
+				break;
+			case EAST:
+				new_dir = NORTHEAST;
+				break;
+			case NORTHEAST:
+				new_dir = NORTH;
+				break;
+			}
+
+			count--;
+		}
+
+		return new_dir;
 	}
 }

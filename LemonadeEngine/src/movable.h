@@ -127,7 +127,7 @@ public:
 
 	virtual Position get_center() const
 	{
-		return transforms::rotate_by_direction(Position(size()) / 2, direction());
+		return transforms::rotate_by_direction(Position(size()) / Position(2), direction());
 	}
 
 	virtual Position get_p1() const

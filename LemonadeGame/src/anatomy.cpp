@@ -410,5 +410,19 @@ void Anatomy::step(const TimeUnit& time_delta)
 		);
 
 		m_posture.set_current_posture(m_posture.get_fallen_over_id());
+		if (get_owner()->has_gait())
+		{
+			for (auto& gait : get_owner()->gait()->get_gaits())
+			{
+				if (!gait->is_default)
+					continue;
+
+				if (gait->posture_type == PostureType::CRAWL)
+				{
+					get_owner()->gait()->set_current_gait(gait->name);
+					break;
+				}
+			}
+		}
 	}
 }

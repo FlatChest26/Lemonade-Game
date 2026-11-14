@@ -77,7 +77,7 @@ void AIBrain::step(const TimeUnit& time_delta)
 {
 	auto entity = get_entity();
 
-	if (!entity || entity->get_brain() != this)
+	if (!entity || entity->ai_brain() != this)
 	{
 		CERR("entity's brain is not this brain!");
 		return;
@@ -88,7 +88,7 @@ void AIBrain::step(const TimeUnit& time_delta)
 		return;
 	}
 
-	if (entity->has_living() && entity->get_living()->is_dead())
+	if (entity->has_living() && entity->living()->is_dead())
 	{
 		return;
 	}

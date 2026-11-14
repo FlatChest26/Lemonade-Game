@@ -140,7 +140,7 @@ void WorldRenderer::render_entity(const RenderParams& params, const Entity* enti
 	if (params.use_fov && !entity->is_visible_to_player())
 		return;
 
-	if (params.camera && !params.camera->in_view(entity->get_movable()->get_transform()))
+	if (params.camera && !params.camera->in_view(entity->movable()->get_transform()))
 		return;
 
 	auto world = get_world();
@@ -173,14 +173,14 @@ void WorldRenderer::render_entity(const RenderParams& params, const Entity* enti
 	if (!active_overrides.empty() && active_overrides.front().hide_entity)
 		return;
 
-	auto unrotated_offsets = entity->get_movable()->get_offsets(false);
-	auto rotated_offsets = entity->get_movable()->get_offsets(true);
+	auto unrotated_offsets = entity->movable()->get_offsets(false);
+	auto rotated_offsets = entity->movable()->get_offsets(true);
 	
 	for (size_t idx = 0; idx < rotated_offsets.size(); idx++) // In the case of drawing an entity larger than 1x1x1
 	{
 		auto& offset = rotated_offsets[idx];
 
-		Position world_position = entity->get_movable()->pos() + offset;
+		Position world_position = entity->movable()->pos() + offset;
 
 		int draw_x = world_position.x + camera_offset.x + params.world_inner_frame_p1().x;
 		int draw_y = world_position.y + camera_offset.y + params.world_inner_frame_p1().y;
@@ -192,7 +192,7 @@ void WorldRenderer::render_entity(const RenderParams& params, const Entity* enti
 		if (params.camera && !params.camera->in_view(world_position))
 			continue;
 
-		Renderable draw_renderable = entity->get_renderable_at(unrotated_offsets[idx]);
+		Renderable draw_renderable = entity->renderable_at(unrotated_offsets[idx]);
 
 		if (depth < 0)
 		{
@@ -299,7 +299,7 @@ void WorldRenderer::render_tile_map(const RenderParams& params) const
 			{
 				auto tile_below = tile_map->get_tile(x, y, layer - 1);
 
-				if (!tile_below->is_air())
+				if (!tile_below->is_air() && tile_map->in_bounds(x, y, layer - 1))
 				{
 					draw_renderable = Renderable{ DISTANT_DOT, tile_below->fg(), tile_below->bg() };
 				}

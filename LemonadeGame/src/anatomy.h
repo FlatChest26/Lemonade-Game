@@ -51,7 +51,7 @@ struct BodyPartFilter
 		if (!ignore_categories.empty() && std::any_of(ignore_categories.begin(), ignore_categories.end(), category_check))
 			return false;
 
-		auto type_check = [&](RawMaster::Ref<BodyPartType> bp_type) { return bp.get_type()->ID == bp_type->ID; };
+		auto type_check = [&](RawMaster::Ref<BodyPartType> bp_type) { return bp.type()->ID == bp_type->ID; };
 
 		if (!required_types.empty() && !std::any_of(required_types.begin(), required_types.end(), type_check))
 			return false;
@@ -100,8 +100,6 @@ public:
 	Anatomy(Anatomy&& other);
 
 	void from_plan(RawMaster::Ref<BodyPlan> bd_plan);
-	void from_plan(const BodyPlan* bd_plan) { from_plan(RawMaster::Ref<BodyPlan>(bd_plan)); }
-
 	void from_mods(const std::vector<RawMaster::Ref<BodyMod>>& bd_mods);
 
 	void set_owner(Entity* owner);

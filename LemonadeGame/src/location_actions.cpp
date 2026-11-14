@@ -65,7 +65,7 @@ ActionResult TransformAction::perform()
 {
 	auto tile_map = get_tile_map();
 
-	auto transformed_tile = RawMaster::get<TileType>(get_tile_at_dest()->get_type()->transforms_to);
+	auto transformed_tile = RawMaster::get<TileType>(get_tile_at_dest()->type()->transforms_to);
 	bool will_be_blocked = !(transformed_tile->flags & TileFlag::IS_WALKABLE);
 
 	std::vector<Position> tiles_to_transform;

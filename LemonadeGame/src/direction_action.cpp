@@ -141,9 +141,9 @@ ActionResult MovementAction::perform()
 
 	auto tile_map = actor->get_tile_map();
 
-	Coord start_x = actor->get_movable()->posx();
-	Coord start_y = actor->get_movable()->posy();
-	Coord start_z = actor->get_movable()->posz();
+	Coord start_x = actor->movable()->posx();
+	Coord start_y = actor->movable()->posy();
+	Coord start_z = actor->movable()->posz();
 
 	Coord final_x = start_x + m_dx;
 	Coord final_y = start_y + m_dy;
@@ -207,8 +207,8 @@ ActionResult MovementAction::perform()
 		}
 	}
 
-	actor->get_movable()->set_position(final_x, final_y, final_z);
-	actor->get_movable()->face_direction(final_x - start_x, final_y - start_y, 0);
+	actor->movable()->set_position(final_x, final_y, final_z);
+	actor->movable()->face_direction(final_x - start_x, final_y - start_y, 0);
 
 	return ActionResult(true);
 }

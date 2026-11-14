@@ -79,17 +79,17 @@ struct Renderable
 		return as_tuple();
 	}
 
-	static std::shared_ptr<RawObjectChecker> get_checker()
+	static RawObjectChecker* get_checker()
 	{
-		static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
+		static RawObjectChecker checker = RawObjectChecker();
 
-		checker->set_type_name("renderable");
+		checker.set_type_name("renderable");
 
-		checker->add_property("glyph", RawValueType::RAW_Char, true);
-		checker->add_property("fg", RawValueType::RAW_Custom, false);
-		checker->add_property("bg", RawValueType::RAW_Custom, false);
+		checker.add_property("glyph", RawValueType::RAW_Char, true);
+		checker.add_property("fg", RawValueType::RAW_Custom, false);
+		checker.add_property("bg", RawValueType::RAW_Custom, false);
 
-		return checker;
+		return &checker;
 	}
 
 	static Renderable from_json(const json& j)

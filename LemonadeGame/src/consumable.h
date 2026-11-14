@@ -14,7 +14,7 @@ struct ConsumableEffect
 	StatInt_t amount{ -5 };
 	std::string taste{ "like something unknown" };
 
-	static std::shared_ptr<RawObjectChecker> get_checker();
+	static RawObjectChecker* get_checker();
 	static ConsumableEffect from_json(const json& j);
 };
 

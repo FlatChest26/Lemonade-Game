@@ -32,7 +32,7 @@ void EntityBuilder::default_entity_render_overrides(Entity* entity, std::vector<
 			.override_bg = true,
 			.active = [](const Entity* entity)
 				{
-					return entity->get_living()->is_dead();
+					return entity->living()->is_dead();
 				}
 		});
 
@@ -46,7 +46,7 @@ void EntityBuilder::default_entity_render_overrides(Entity* entity, std::vector<
 			.frames_on = 50,
 			.active = [](const Entity* entity)
 				{
-					return entity->get_living()->is_asleep();
+					return entity->living()->is_asleep();
 				}
 		});
 
@@ -61,7 +61,7 @@ void EntityBuilder::default_entity_render_overrides(Entity* entity, std::vector<
 			.override_bg = true,
 			.active = [](const Entity* entity)
 				{
-					return entity->get_anatomy()->posture().get_current_posture()->type == PostureType::CRAWL;
+					return entity->anatomy()->posture().get_current_posture()->type == PostureType::CRAWL;
 				}
 			});
 
@@ -88,32 +88,32 @@ void EntityBuilder::default_entity_render_overrides(Entity* entity, std::vector<
 	);
 }
 
-Entity EntityBuilder::create_creature(EntityID ID, CreatureInitializer init)
+Entity* EntityBuilder::create_creature(EntityID ID, CreatureInitializer init)
 {
-	auto new_creature = Entity(ID);
+	auto new_creature = new Entity(ID);
 
 	// Soul
-	new_creature.add_soul(init.soul);
+	new_creature->add_soul(init.soul);
 
 	// Flags
-	new_creature.add_flag(EntityFlag::IS_CREATURE);
-	new_creature.add_flag(EntityFlag::FREE_TO_MOVE);
-	// new_creature.add_flag(EntityFlag::IS_BLOCKING);
-	new_creature.add_flag(EntityFlag::CAN_COLLIDE);
-	new_creature.add_flag(EntityFlag::CAN_FALL);
-	new_creature.add_flag(EntityFlag::HAS_FOV);
-	new_creature.add_flag(EntityFlag::CAN_HOLD_ITEMS);
-	new_creature.add_flag(EntityFlag::CAN_BE_HELD);
-	new_creature.add_flag(EntityFlag::ANIMATE);
-	new_creature.add_flag(EntityFlag::CAN_DO_ACTIONS);
-	new_creature.add_flag(EntityFlag::CAN_INTERACT_WITH_OTHERS);
-	new_creature.add_flag(EntityFlag::CAN_BE_GRAPPLED);
+	new_creature->add_flag(EntityFlag::IS_CREATURE);
+	new_creature->add_flag(EntityFlag::FREE_TO_MOVE);
+	// new_creature->add_flag(EntityFlag::IS_BLOCKING);
+	new_creature->add_flag(EntityFlag::CAN_COLLIDE);
+	new_creature->add_flag(EntityFlag::CAN_FALL);
+	new_creature->add_flag(EntityFlag::HAS_FOV);
+	new_creature->add_flag(EntityFlag::CAN_HOLD_ITEMS);
+	new_creature->add_flag(EntityFlag::CAN_BE_HELD);
+	new_creature->add_flag(EntityFlag::ANIMATE);
+	new_creature->add_flag(EntityFlag::CAN_DO_ACTIONS);
+	new_creature->add_flag(EntityFlag::CAN_INTERACT_WITH_OTHERS);
+	new_creature->add_flag(EntityFlag::CAN_BE_GRAPPLED);
 
 	// Species
 	if (init.species)
 	{
 		auto species = init.species;
-		new_creature.set_species(species);
+		new_creature->set_species(species);
 
 		// Body Plan
 		auto combined_body_mods = species->body_mods;
@@ -121,32 +121,32 @@ Entity EntityBuilder::create_creature(EntityID ID, CreatureInitializer init)
 		combined_body_mods.reserve(init.body_mods.size() + species->body_mods.size());
 		combined_body_mods.insert(combined_body_mods.end(), init.body_mods.begin(), init.body_mods.end());
 
-		new_creature.set_anatomy(new Anatomy(species->default_body_plan, combined_body_mods));
+		new_creature->set_anatomy(new Anatomy(species->default_body_plan, combined_body_mods));
 
 		// Gaits
-		new_creature.set_gait(new Gait(species->gaits));
+		new_creature->set_gait(new Gait(species->gaits));
 
 		// Living
-		new_creature.set_living(new Living(&new_creature, init.current_age, init.lifespan));
-		new_creature.get_living()->add_defaults();
+		new_creature->set_living(new Living(new_creature, init.current_age, init.lifespan));
+		new_creature->living()->add_defaults();
 
 		for (auto& [ID, init_amount] : init.initial_stats)
 		{
-			if (!new_creature.get_living()->has_stat(ID))
+			if (!new_creature->living()->has_stat(ID))
 			{
 				CERR("Invalid stat ID: " << ID);
 				continue;
 			}
 
-			new_creature.get_living()->get_stat(ID).set_value(init_amount);
+			new_creature->living()->get_stat(ID).set_value(init_amount);
 		}
 
 		// Person
 		if (species->is_part_of_society())
-			new_creature.set_person(new Person(&new_creature, init.starting_cash));
+			new_creature->set_person(new Person(new_creature, init.starting_cash));
 
 		// Inventory
-		new_creature.get_inventory()->set_max_slots(new_creature.default_inventory_slots());
+		new_creature->inventory()->set_max_slots(new_creature->default_inventory_slots());
 	}
 
 	if (!init.species)
@@ -154,56 +154,56 @@ Entity EntityBuilder::create_creature(EntityID ID, CreatureInitializer init)
 		CERR("Creature: " << ID << " has no species assigned!");
 	}
 
-	default_entity_render_overrides(&new_creature, new_creature.render_overrides);
+	default_entity_render_overrides(new_creature, new_creature->render_overrides);
 
 	return new_creature;
 }
 
-Entity EntityBuilder::create_item(EntityID ID, ItemInitializer init)
+Entity* EntityBuilder::create_item(EntityID ID, ItemInitializer init)
 {
-	auto new_item = Entity(ID);
+	auto new_item = new Entity(ID);
 
-	new_item.add_flag(EntityFlag::IS_ITEM);
-	new_item.add_flag(EntityFlag::FREE_TO_MOVE);
-	new_item.add_flag(EntityFlag::CAN_COLLIDE);
-	new_item.add_flag(EntityFlag::INANIMATE);
-	new_item.add_flag(EntityFlag::CAN_FALL);
-	new_item.add_flag(EntityFlag::CAN_BE_HELD);
+	new_item->add_flag(EntityFlag::IS_ITEM);
+	new_item->add_flag(EntityFlag::FREE_TO_MOVE);
+	new_item->add_flag(EntityFlag::CAN_COLLIDE);
+	new_item->add_flag(EntityFlag::INANIMATE);
+	new_item->add_flag(EntityFlag::CAN_FALL);
+	new_item->add_flag(EntityFlag::CAN_BE_HELD);
 
-	//new_item.add_flag(EntityFlag::CAN_HOLD_ITEMS);
+	//new_item->add_flag(EntityFlag::CAN_HOLD_ITEMS);
 
-	new_item.set_item_def(init.item_definition);
+	new_item->set_item_def(init.item_definition);
 
-	default_entity_render_overrides(&new_item, new_item.render_overrides);
+	default_entity_render_overrides(new_item, new_item->render_overrides);
 
 	return new_item;
 }
 
-Entity EntityBuilder::create_furniture(EntityID ID, FurnitureInitializer init)
+Entity* EntityBuilder::create_furniture(EntityID ID, FurnitureInitializer init)
 {
-	auto new_furniture = Entity(ID);
+	auto new_furniture = new Entity(ID);
 
-	new_furniture.add_flag(EntityFlag::IS_FURNITURE);
-	new_furniture.add_flag(EntityFlag::FIXED_IN_PLACE);
-	new_furniture.add_flag(EntityFlag::CAN_COLLIDE);
-	new_furniture.add_flag(EntityFlag::INANIMATE);
-	new_furniture.add_flag(EntityFlag::CAN_FALL);
+	new_furniture->add_flag(EntityFlag::IS_FURNITURE);
+	new_furniture->add_flag(EntityFlag::FIXED_IN_PLACE);
+	new_furniture->add_flag(EntityFlag::CAN_COLLIDE);
+	new_furniture->add_flag(EntityFlag::INANIMATE);
+	new_furniture->add_flag(EntityFlag::CAN_FALL);
 
-	//new_furniture.add_flag(EntityFlag::CAN_HOLD_ITEMS);
-	new_furniture.add_flag(EntityFlag::CAN_BE_HELD);
+	//new_furniture->add_flag(EntityFlag::CAN_HOLD_ITEMS);
+	new_furniture->add_flag(EntityFlag::CAN_BE_HELD);
 
 	if (init.furniture_definition->is_blocking())
-		new_furniture.add_flag(EntityFlag::IS_BLOCKING);
+		new_furniture->add_flag(EntityFlag::IS_BLOCKING);
 
 	if (init.furniture_definition->is_opaque())
-		new_furniture.add_flag(EntityFlag::IS_OPAQUE);
+		new_furniture->add_flag(EntityFlag::IS_OPAQUE);
 
-	new_furniture.set_furniture_def(init.furniture_definition);
-	new_furniture.set_item_def(init.furniture_definition->item_definition);
+	new_furniture->set_furniture_def(init.furniture_definition);
+	new_furniture->set_item_def(init.furniture_definition->item_definition);
 
-	new_furniture.set_movable(new TileMovable(TileTransform{ .size = init.furniture_definition->size }));
+	new_furniture->set_movable(new TileMovable(TileTransform{ .size = init.furniture_definition->size }));
 
-	default_entity_render_overrides(&new_furniture, new_furniture.render_overrides);
+	default_entity_render_overrides(new_furniture, new_furniture->render_overrides);
 
 	return new_furniture;
 }

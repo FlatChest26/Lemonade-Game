@@ -99,7 +99,7 @@ StateResult AIState_Wander::step(const TimeUnit& time_delta)
 		add_behavior(new Behavior_Wander(
 			{
 				.wander_radius = 5,
-				.center = get_entity()->get_movable()->pos(),
+				.center = get_entity()->movable()->pos(),
 				.min_wait = TimeUnit::from_seconds(30.0),
 				.max_wait = TimeUnit::from_seconds(45.0)
 			}
@@ -114,7 +114,7 @@ void AIState_WalkAlongSidewalk::reinit()
 {
 	if (auto entity = get_entity())
 	{
-		entity->get_gait()->set_current_gait("stroll");
+		entity->gait()->set_current_gait("stroll");
 	}
 }
 
@@ -125,7 +125,7 @@ StateResult AIState_WalkAlongSidewalk::step(const TimeUnit& time_delta)
 	if (!has_behavior())
 	{
 		auto entity = get_entity();
-		auto& entity_pos = entity->get_movable()->pos();
+		auto& entity_pos = entity->movable()->pos();
 
 		auto sidewalk_1 = get_ai_manager()->get_sidewalk_end();
 		auto sidewalk_2 = get_ai_manager()->get_sidewalk_end() + Position(1, 0, 0);
@@ -137,7 +137,7 @@ StateResult AIState_WalkAlongSidewalk::step(const TimeUnit& time_delta)
 		else
 		{
 			add_behavior(new Behavior_MoveTo({ .move_to_pos = m_preferred_sidewalk_end } ));
-			entity->get_gait()->set_current_gait("stroll");
+			entity->gait()->set_current_gait("stroll");
 		}
 	}
 
@@ -148,7 +148,7 @@ void AIState_Horny::reinit()
 {
 	if (auto entity = get_entity())
 	{
-		entity->get_gait()->set_current_gait("walk");
+		entity->gait()->set_current_gait("walk");
 	}
 }
 
@@ -156,8 +156,8 @@ StateResult AIState_Horny::step(const TimeUnit& time_delta)
 {
 	auto entity = get_entity();
 
-	auto& entity_pos = entity->get_movable()->pos();
-	auto& target_pos = m_horny_target->get_movable()->pos();
+	auto& entity_pos = entity->movable()->pos();
+	auto& target_pos = m_horny_target->movable()->pos();
 
 	run_behaviors(time_delta);
 
@@ -170,7 +170,7 @@ StateResult AIState_Horny::step(const TimeUnit& time_delta)
 		else
 		{
 			add_behavior(new Behavior_GetAdjacentToEntity({ .target = m_horny_target }));
-			entity->get_gait()->set_current_gait("walk");
+			entity->gait()->set_current_gait("walk");
 		}
 	}
 
@@ -181,7 +181,7 @@ void AIState_Kill::reinit()
 {
 	if (auto entity = get_entity())
 	{
-		entity->get_gait()->set_current_gait("run");
+		entity->gait()->set_current_gait("run");
 	}
 }
 
@@ -189,32 +189,32 @@ StateResult AIState_Kill::step(const TimeUnit& time_delta)
 {
 	auto entity = get_entity();
 
-	auto& entity_pos = entity->get_movable()->pos();
-	auto& target_pos = m_kill_target->get_movable()->pos();
+	auto& entity_pos = entity->movable()->pos();
+	auto& target_pos = m_kill_target->movable()->pos();
 
 	run_behaviors(time_delta);
 
 	if (!has_behavior())
 	{
-		if (m_kill_target->get_living()->is_dead())
+		if (m_kill_target->living()->is_dead())
 		{
 			return StateResult(StateResultType::POP);
 		}
 
 		if (m_weapon_target)
 		{
-			if (entity->get_inventory()->has_item(m_weapon_target))
+			if (entity->inventory()->has_item(m_weapon_target))
 			{
 				m_weapon_target = nullptr;
 			}
 			else
 			{
-				auto weapon_pos = m_weapon_target->get_movable()->pos();
+				auto weapon_pos = m_weapon_target->movable()->pos();
 
 				if (entity_pos != weapon_pos)
 				{
 					add_behavior(new Behavior_GetToEntity({ .target = m_weapon_target }));
-					entity->get_gait()->set_current_gait("run");
+					entity->gait()->set_current_gait("run");
 
 					return StateResult(StateResultType::NONE);
 				}
@@ -229,9 +229,9 @@ StateResult AIState_Kill::step(const TimeUnit& time_delta)
 
 		bool has_weapon = false;
 
-		for (auto& item : entity->get_inventory()->get_items())
+		for (auto& item : entity->inventory()->get_items())
 		{
-			if (item->get_item_def()->has_weapon_info())
+			if (item->item_def()->has_weapon_info())
 			{
 				has_weapon = true;
 				break;
@@ -242,7 +242,7 @@ StateResult AIState_Kill::step(const TimeUnit& time_delta)
 		{
 			for (auto& item : get_world()->get_entities(EntityFilter{ .required_flags = EntityFlag::IS_ITEM }))
 			{
-				if (entity->can_see(item) && item->has_item_def() && item->get_item_def()->has_weapon_info())
+				if (entity->can_see(item) && item->has_item_def() && item->item_def()->has_weapon_info())
 				{
 					m_weapon_target = item;
 					break;
@@ -260,7 +260,7 @@ StateResult AIState_Kill::step(const TimeUnit& time_delta)
 		if (!((entity_pos == target_pos) || transforms::is_adjacent(entity_pos, target_pos)))
 		{
 			add_behavior(new Behavior_GetAdjacentToEntity({ .target = m_kill_target }));
-			entity->get_gait()->set_current_gait("run");
+			entity->gait()->set_current_gait("run");
 
 			return StateResult(StateResultType::NONE);
 		}

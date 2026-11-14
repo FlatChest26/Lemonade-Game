@@ -65,13 +65,13 @@ Living::Living(Entity* owner, Age current_age, Age total_lifespan) :
 {
 	if (m_owner->has_anatomy())
 	{
-		m_required_important_parts = m_owner->get_anatomy()->count_body_parts(BodyPartFilter{ .required_flags = BodyPartFlag::IMPORTANT });
+		m_required_important_parts = m_owner->anatomy()->count_body_parts(BodyPartFilter{ .required_flags = BodyPartFlag::IMPORTANT });
 	}
 }
 
 bool Living::is_young() const
 {
-	if (auto species = m_owner->get_species())
+	if (auto species = m_owner->species())
 	{
 		return get_age() < species->mature_age;
 	}
@@ -81,7 +81,7 @@ bool Living::is_young() const
 
 bool Living::is_mature() const
 {
-	if (auto species = m_owner->get_species())
+	if (auto species = m_owner->species())
 	{
 		return get_age() >= species->mature_age;
 	}
@@ -91,7 +91,7 @@ bool Living::is_mature() const
 
 bool Living::is_baby() const
 {
-	if (auto species = get_owner()->get_species())
+	if (auto species = get_owner()->species())
 	{
 		return get_age() < species->child_age;
 	}
@@ -101,7 +101,7 @@ bool Living::is_baby() const
 
 bool Living::is_child() const
 {
-	if (auto species = get_owner()->get_species())
+	if (auto species = get_owner()->species())
 	{
 		return get_age() >= species->child_age && get_age() < species->adult_age;
 	}
@@ -111,7 +111,7 @@ bool Living::is_child() const
 
 bool Living::is_adult() const
 {
-	if (auto species = get_owner()->get_species())
+	if (auto species = get_owner()->species())
 	{
 		return get_age() >= species->adult_age;
 	}
@@ -413,11 +413,11 @@ double Living::get_sleep_quality() const
 
 	if (get_owner()->has_movable())
 	{
-		auto tile = get_owner()->get_tile_map()->get_tile(get_owner()->get_movable()->pos());
-		sleep_quality = tile->get_type()->sleep_quality;
+		auto tile = get_owner()->get_tile_map()->get_tile(get_owner()->movable()->pos());
+		sleep_quality = tile->type()->sleep_quality;
 
 		auto furniture_at = get_owner()->get_world()->get_entities_at(
-			get_owner()->get_movable()->pos(),
+			get_owner()->movable()->pos(),
 			EntityFilter{
 				.ignore_ids = { get_owner()->ID() },
 				.required_flags = { EntityFlag::IS_FURNITURE },
@@ -426,7 +426,7 @@ double Living::get_sleep_quality() const
 
 		if (!furniture_at.empty())
 		{
-			sleep_quality = furniture_at.front()->get_furniture_def()->sleep_quality;
+			sleep_quality = furniture_at.front()->furniture_def()->sleep_quality;
 		}
 	}
 
@@ -579,7 +579,7 @@ void Living::step(const TimeUnit& time_delta)
 	// Manage stats
 	if (m_required_important_parts > 0)
 	{
-		if (m_required_important_parts > m_owner->get_anatomy()->count_body_parts(BodyPartFilter{ .required_flags = BodyPartFlag::IMPORTANT }))
+		if (m_required_important_parts > m_owner->anatomy()->count_body_parts(BodyPartFilter{ .required_flags = BodyPartFlag::IMPORTANT }))
 		{
 			die();
 			return;

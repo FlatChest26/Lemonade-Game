@@ -40,7 +40,7 @@ struct PostureDef
 	bool is_default{ false };
 	bool fallen_over{ false };
 
-	static std::shared_ptr<RawObjectChecker> get_checker();
+	static RawObjectChecker* get_checker();
 	static PostureDef from_json(const json& j);
 };
 

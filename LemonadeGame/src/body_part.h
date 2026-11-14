@@ -102,7 +102,7 @@ public:
 
 	// -- Getters -- //
 
-	const BodyPartType* get_type() const { ASSERT(m_type, "Body part has no type"); return m_type.get(); }
+	RawMaster::Ref<BodyPartType> type() const { ASSERT(m_type, "Body part has no type"); return m_type; }
 
 	void set_owner(Entity* entity);
 	Entity* get_owner() const;

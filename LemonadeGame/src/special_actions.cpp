@@ -14,7 +14,7 @@ bool StartSleepAction::check_action() const
 		return false;
 	}
 
-	if (get_actor()->get_living()->is_asleep())
+	if (get_actor()->living()->is_asleep())
 	{
 		ACTION_CERR("Actor is already asleep! " << get_actor()->ID());
 		return false;
@@ -26,7 +26,7 @@ bool StartSleepAction::check_action() const
 ActionResult StartSleepAction::perform()
 {
 	auto actor = get_actor();
-	actor->get_living()->fall_asleep();
+	actor->living()->fall_asleep();
 
 	return ActionResult(true);
 }
@@ -42,7 +42,7 @@ bool EndSleepAction::check_action() const
 		return false;
 	}
 
-	if (get_actor()->get_living()->is_awake())
+	if (get_actor()->living()->is_awake())
 	{
 		ACTION_CERR("Actor is awake! " << get_actor()->ID());
 		return false;
@@ -54,7 +54,7 @@ bool EndSleepAction::check_action() const
 ActionResult EndSleepAction::perform()
 {
 	auto actor = get_actor();
-	actor->get_living()->wake_up();
+	actor->living()->wake_up();
 
 	return ActionResult(true);
 }
@@ -70,7 +70,7 @@ bool DeathAction::check_action() const
 		return false;
 	}
 
-	if (get_actor()->get_living()->is_dead())
+	if (get_actor()->living()->is_dead())
 	{
 		ACTION_CERR("Actor is already dead!");
 		return false;
@@ -82,7 +82,7 @@ bool DeathAction::check_action() const
 ActionResult DeathAction::perform()
 {
 	auto actor = get_actor();
-	actor->get_living()->die();
+	actor->living()->die();
 
 	return ActionResult(true);
 }
@@ -90,7 +90,7 @@ ActionResult DeathAction::perform()
 ActionResult StarveToDeathAction::perform()
 {
 	auto actor = get_actor();
-	actor->get_living()->starve_to_death();
+	actor->living()->starve_to_death();
 
 	return ActionResult(true);
 }
@@ -98,7 +98,7 @@ ActionResult StarveToDeathAction::perform()
 ActionResult DieOfDehydrationAction::perform()
 {
 	auto actor = get_actor();
-	actor->get_living()->die_of_dehydration();
+	actor->living()->die_of_dehydration();
 
 	return ActionResult(true);
 }
@@ -120,12 +120,12 @@ bool SwitchPostureAction::check_action() const
 ActionResult SwitchPostureAction::perform()
 {
 	auto actor = get_actor();
-	auto& posture = actor->get_anatomy()->posture();
+	auto& posture = actor->anatomy()->posture();
 	auto n1 = actor->display_noun();
 
 	auto new_posture = posture.get_posture(m_params.next_posture);
 
-	if (!actor->get_anatomy()->can_stand() && new_posture->type == PostureType::STAND)
+	if (!actor->anatomy()->can_stand() && new_posture->type == PostureType::STAND)
 	{
 		return ActionResult
 		{
@@ -167,7 +167,7 @@ ActionResult SwitchPostureAction::perform()
 	}
 	else if (!new_posture->on_bp.empty())
 	{
-		auto bp = actor->get_anatomy()->get_body_part(new_posture->on_bp);
+		auto bp = actor->anatomy()->get_body_part(new_posture->on_bp);
 
 		if (bp)
 		{
@@ -177,11 +177,11 @@ ActionResult SwitchPostureAction::perform()
 
 	if (actor->has_gait())
 	{
-		auto current_gait = actor->get_gait()->get_current_gait();
+		auto current_gait = actor->gait()->get_current_gait();
 
 		if (current_gait && current_gait->posture_type != new_posture->type)
 		{
-			actor->get_gait()->set_current_gait(actor->get_gait()->get_default_gait_name(new_posture->type));
+			actor->gait()->set_current_gait(actor->gait()->get_default_gait_name(new_posture->type));
 		}
 	}
 

@@ -131,7 +131,7 @@ public:
 public:
 	bool operator==(const Species& other) const { return other.ID == ID; }
 
-	static std::shared_ptr<RawObjectChecker> get_checker();
+	static RawObjectChecker* get_checker();
 	static Species from_json(const json& j);
 
 };

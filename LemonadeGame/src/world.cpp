@@ -172,7 +172,7 @@ EntityID World::get_next_entity_id(Entity* entity)
 
 			if (entity->has_species())
 			{
-				def_id = entity->get_species()->ID;
+				def_id = entity->species()->ID;
 			}
 		}
 		else if (entity->is_item())
@@ -181,7 +181,7 @@ EntityID World::get_next_entity_id(Entity* entity)
 
 			if (entity->has_item_def())
 			{
-				def_id = entity->get_item_def()->ID;
+				def_id = entity->item_def()->ID;
 			}
 		}
 		else if (entity->is_furniture())
@@ -190,7 +190,7 @@ EntityID World::get_next_entity_id(Entity* entity)
 
 			if (entity->has_furniture_def())
 			{
-				def_id = entity->get_furniture_def()->ID;
+				def_id = entity->furniture_def()->ID;
 			}
 		}
 
@@ -297,14 +297,14 @@ Entity* World::add_entity_at(Entity* entity, Coord x, Coord y, Coord z, Directio
 
 	if (new_entity->has_movable())
 	{
-		new_entity->get_movable()->pos() = Position(x, y, z);
+		new_entity->movable()->pos() = Position(x, y, z);
 	}
 	else
 	{
 		new_entity->set_movable(Position(x, y, z));
 	}
 
-	new_entity->get_movable()->direction() = dir;
+	new_entity->movable()->direction() = dir;
 
 	return new_entity;
 }
@@ -547,7 +547,7 @@ void World::prepare_remove_entity(Entity* entity)
 {
 	if (entity->has_inventory())
 	{
-		entity->get_inventory()->clear_items(true);
+		entity->inventory()->clear_items(true);
 	}
 
 	if (auto entity_holder = entity->get_entity_holder())

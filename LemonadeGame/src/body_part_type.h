@@ -115,7 +115,7 @@ struct BodyPartType
 
 	StatInt_t max_health{ 10 };
 
-	static std::shared_ptr<RawObjectChecker> get_checker();
+	static RawObjectChecker* get_checker();
 	static BodyPartType from_json(const json& j);
 };
 

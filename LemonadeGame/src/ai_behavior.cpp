@@ -26,7 +26,7 @@ bool Behavior_MoveTo::perform(AIState* state, const TimeUnit& delta)
 		return true;
 	}
 
-	auto entity_pos = entity->get_movable()->pos();
+	auto entity_pos = entity->movable()->pos();
 
 	if (entity_pos == m_move_to_pos)
 	{
@@ -87,7 +87,7 @@ bool Behavior_MoveTo::perform(AIState* state, const TimeUnit& delta)
 		)
 	{
 		m_path.clear();
-		m_current_pos = entity->get_movable()->pos();
+		m_current_pos = entity->movable()->pos();
 
 		m_path = Pathfinding::compute_path(tile_map, m_current_pos, m_move_to_pos, entity);
 	}
@@ -157,7 +157,7 @@ bool Behavior_Wander::perform(AIState* state, const TimeUnit& delta)
 
 		while (!tile_map->in_bounds(wander_location))
 		{
-			auto center = entity->get_movable()->pos();
+			auto center = entity->movable()->pos();
 
 			if (tile_map->in_bounds(m_center))
 			{
@@ -204,8 +204,8 @@ bool Behavior_GetToEntity::perform(AIState* state, const TimeUnit& delta)
 		return true;
 	}
 
-	auto entity_pos = entity->get_movable()->pos();
-	auto target_pos = m_target->get_movable()->pos();
+	auto entity_pos = entity->movable()->pos();
+	auto target_pos = m_target->movable()->pos();
 
 	if (entity_pos == target_pos)
 	{
@@ -249,7 +249,7 @@ bool Behavior_GetToEntity::perform(AIState* state, const TimeUnit& delta)
 		.move_to_pos = get_move_to(),
 		.callback = [=](Behavior_MoveTo* behavior)
 			{
-				if (m_target->get_movable()->pos() != target_pos)
+				if (m_target->movable()->pos() != target_pos)
 				{
 					behavior->set_move_to(get_move_to());
 					return true;
@@ -277,8 +277,8 @@ bool Behavior_GetAdjacentToEntity::perform(AIState* state, const TimeUnit& delta
 		return true;
 	}
 
-	auto entity_pos = entity->get_movable()->pos();
-	auto target_pos = m_target->get_movable()->pos();
+	auto entity_pos = entity->movable()->pos();
+	auto target_pos = m_target->movable()->pos();
 
 	if (transforms::is_adjacent(entity_pos, target_pos))
 	{
@@ -323,7 +323,7 @@ bool Behavior_GetAdjacentToEntity::perform(AIState* state, const TimeUnit& delta
 		.move_to_pos = get_move_to(),
 		.callback = [=](Behavior_MoveTo* behavior)
 			{
-				if (m_target->get_movable()->pos() != target_pos)
+				if (m_target->movable()->pos() != target_pos)
 				{
 					behavior->set_move_to(get_move_to());
 					return true;

@@ -32,7 +32,7 @@ struct Noun
 
 	constexpr bool empty() const { return singular[0] == '\0' && plural[0] == '\0'; }
 
-	static std::shared_ptr<RawObjectChecker> get_checker();
+	static RawObjectChecker* get_checker();
 	static Noun from_json(const json& j);
 };
 
@@ -137,7 +137,7 @@ struct Verb
 	std::string singular;
 	std::string plural;
 
-	static std::shared_ptr<RawObjectChecker> get_checker();
+	static RawObjectChecker* get_checker();
 	static Verb from_json(const json& j);
 };
 
@@ -148,7 +148,7 @@ struct WordReplacement
 
 	bool empty() const { return old_str.empty() && new_str.empty(); }
 
-	static std::shared_ptr<RawObjectChecker> get_checker();
+	static RawObjectChecker* get_checker();
 	static WordReplacement from_json(const json& j);
 };
 
@@ -157,7 +157,7 @@ struct NounReplacement
 	WordReplacement singular;
 	WordReplacement plural;
 
-	static std::shared_ptr<RawObjectChecker> get_checker();
+	static RawObjectChecker* get_checker();
 	static NounReplacement from_json(const json& j);
 };
 
@@ -284,7 +284,7 @@ struct Pronouns
 	constexpr operator const char* () const { return shortened.c_str(); }
 	constexpr operator std::string() const { return shortened; }
 
-	static std::shared_ptr<RawObjectChecker> get_checker();
+	static RawObjectChecker* get_checker();
 	static Pronouns from_json(const json& j);
 };
 
@@ -329,7 +329,7 @@ struct Gender
 	bool is_masculine() const { return gender_type & GenderType::MASCULINE; }
 	bool is_feminine() const { return gender_type & GenderType::FEMININE; }
 
-	static std::shared_ptr<RawObjectChecker> get_checker();
+	static RawObjectChecker* get_checker();
 	static Gender from_json(const json& j);
 };
 

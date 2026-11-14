@@ -84,7 +84,7 @@ struct EntityFilter
 			{
 				if (!entity.has_movable())
 					return false;
-				return entity.get_movable()->contains_point(pos);
+				return entity.movable()->contains_point(pos);
 			}
 		))
 		{
@@ -162,7 +162,7 @@ struct EntityFilter
 				{
 					if (!entity.has_movable())
 						return false;
-					return entity.get_movable()->contains_point(pos);
+					return entity.movable()->contains_point(pos);
 				}
 			))
 		{

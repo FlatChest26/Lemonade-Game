@@ -25,7 +25,7 @@ public:
 	virtual bool check_action() const override;
 
 	Position delta_pos() const { return Position(m_dx, m_dy, m_dz); }
-	Position destination() const { return m_actor->get_movable()->pos() + delta_pos(); }
+	Position destination() const { return m_actor->movable()->pos() + delta_pos(); }
 
 	Coord destx() const { return destination().x; }
 	Coord desty() const { return destination().y; }

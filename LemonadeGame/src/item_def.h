@@ -66,7 +66,7 @@ struct ItemDefinition
 
 	WeaponInfo weapon_info;
 
-	static std::shared_ptr<RawObjectChecker> get_checker();
+	static RawObjectChecker* get_checker();
 	static ItemDefinition from_json(const json& j);
 
 public:

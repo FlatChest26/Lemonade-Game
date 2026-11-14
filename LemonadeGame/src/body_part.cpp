@@ -28,9 +28,9 @@ Entity* BodyPart::get_owner() const
 
 Anatomy* BodyPart::get_anatomy() const
 {
-	if (m_owner && m_owner->get_anatomy())
+	if (m_owner && m_owner->anatomy())
 	{
-		return m_owner->get_anatomy();
+		return m_owner->anatomy();
 	}
 	return nullptr;
 }
@@ -63,7 +63,7 @@ void BodyPart::take_damage(const Damage& damage)
 	{
 		if (get_owner()->has_movable() && snowy::rng::flip_coin())
 		{
-			Position pos = get_owner()->get_movable()->pos();
+			Position pos = get_owner()->movable()->pos();
 
 			auto splatter_positions = transforms::get_surrounding_locations(pos, false, false, true);
 			std::shuffle(splatter_positions.begin(), splatter_positions.end(), snowy::rng::generator);

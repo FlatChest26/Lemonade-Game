@@ -1,7 +1,5 @@
 [
-  {
-    "//": "Pretty much all of these are just copied from the DF Wiki: https://dwarffortresswiki.org/index.php/Color"
-  },
+  "Pretty much all of these are just copied from the DF Wiki: https://dwarffortresswiki.org/index.php/Color",
   {
     "type": "color",
     "ID": "amber",

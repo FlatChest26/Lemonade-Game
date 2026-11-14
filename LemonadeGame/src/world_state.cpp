@@ -163,25 +163,26 @@ void WorldGameState::new_game()
 
 	TileMapping tile_mapping
 	{
-		{ ' ',{ "TILE_AIR" } },
-		{ ',',{ "TILE_GRASS" } },
-		{ 'u',{ "TILE_GRAVEL" } },
-		{ '.',{ "TILE_PLAIN_FLOOR" } },
-		{ '#',{ "TILE_PLAIN_WALL" } },
-		{ '+',{ "TILE_DOOR" } },
-		{ '[',{ "TILE_WINDOW" } },
-		{ 'o',{ "TILE_GLASS" } },
-		{ '<',{ "TILE_UPWARD_STAIRCASE" } },
-		{ '>',{ "TILE_DOWNWARD_STAIRCASE" } },
-		{ 'X',{ "TILE_UP_AND_DOWN_STAIRCASE" } },
-		{ '=',{ "TILE_GARAGE_DOOR" } },
-		{ '^',{ "TILE_FENCE" } },
-		{ '/',{ "TILE_GLASS_DOOR" } },
-		{ 'V',{ "TILE_SLANTED_ROOF" } },
-		{ '_',{ "TILE_SIDEWALK" } },
-		{ 's',{ "TILE_ROAD" } },
-		{ 'B',{ "TILE_PLAIN_FLOOR", "BED" } },
-		{ 'L',{ "TILE_GRASS", "LEMONADE_STAND" } },
+		{ ' ', MappingType{ .tile = "TILE_AIR" } },
+		{ ',', MappingType{ .tile = "TILE_GRASS" } },
+		{ 'u', MappingType{ .tile = "TILE_GRAVEL" } },
+		{ '.', MappingType{ .tile = "TILE_PLAIN_FLOOR" } },
+		{ '#', MappingType{ .tile = "TILE_PLAIN_WALL" } },
+		{ '+', MappingType{ .tile = "TILE_DOOR" } },
+		{ '[', MappingType{ .tile = "TILE_WINDOW" } },
+		{ 'o', MappingType{ .tile = "TILE_GLASS" } },
+		{ '<', MappingType{ .tile = "TILE_UPWARD_STAIRCASE" } },
+		{ '>', MappingType{ .tile = "TILE_DOWNWARD_STAIRCASE" } },
+		{ 'X', MappingType{ .tile = "TILE_UP_AND_DOWN_STAIRCASE" } },
+		{ '=', MappingType{ .tile = "TILE_GARAGE_DOOR" } },
+		{ '^', MappingType{ .tile = "TILE_FENCE" } },
+		{ '/', MappingType{ .tile = "TILE_GLASS_DOOR" } },
+		{ 'V', MappingType{ .tile = "TILE_SLANTED_ROOF" } },
+		{ '_', MappingType{ .tile = "TILE_SIDEWALK" } },
+		{ 's', MappingType{ .tile = "TILE_ROAD" } },
+		{ 'B', MappingType{ .tile = "TILE_PLAIN_FLOOR", .furniture = "BED" } },
+		{ 'L', MappingType{ .tile = "TILE_GRASS",  .furniture = "LEMONADE_STAND" } },
+		{ 'b', MappingType{ .tile = "TILE_PLAIN_FLOOR", .material = "blood", .material_amount = 7}},
 
 	};
 
@@ -212,11 +213,12 @@ void WorldGameState::new_game()
 				"  u u     _____             ",
 				"  uu uu uu_____             ",
 				"   uuu uuu_____             ",
-				"          _____             ",
-				"          __________________",
-				"          __________________",
-				"          __________________",
-				"          __________________",
+				"    [[[[[[_____             ",
+				"[[[[[.....__________________",
+				"[bb[[.[[[[__________________",
+				"[b[[[.[   __________________",
+				"[bbb..[   __________________",
+				"[[[[[[[                     ",
 			},
 			{
 				"VVVVVVVVVVVVV#[[#",
@@ -503,7 +505,7 @@ void WorldGameState::step(const TimeUnit& time_delta)
 	if (does_player_exist() && tile_map)
 	{
 		auto player = get_player();
-		auto player_pos = player->get_movable()->pos();
+		auto player_pos = player->movable()->pos();
 
 		if (m_previous_player_pos != player_pos)
 		{
@@ -546,7 +548,7 @@ void WorldGameState::update_camera()
 	}
 	else if (does_player_exist())
 	{
-		focus = get_player()->get_movable()->pos();
+		focus = get_player()->movable()->pos();
 	}
 
 	if (GameSettings::FIXED_CAMERA)

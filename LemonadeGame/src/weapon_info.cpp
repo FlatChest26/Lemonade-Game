@@ -1,26 +1,26 @@
 #include "weapon_info.h"
 
-std::shared_ptr<RawObjectChecker> Attack::get_checker()
+RawObjectChecker* Attack::get_checker()
 {
-	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
+	static RawObjectChecker checker = RawObjectChecker();
 
-	checker->set_type_name("attack");
+	checker.set_type_name("attack");
 
-	checker->add_property("name", RawValueType::RAW_String, true);
-	checker->add_property("range", RawValueType::RAW_String, true);
+	checker.add_property("name", RawValueType::RAW_String, true);
+	checker.add_property("range", RawValueType::RAW_String, true);
 
-	checker->add_property("damage_dice", RawValueType::RAW_String, true);
+	checker.add_property("damage_dice", RawValueType::RAW_String, true);
 
-	checker->add_property("damage_type", RawValueType::RAW_String, true);
+	checker.add_property("damage_type", RawValueType::RAW_String, true);
 
-	checker->add_property("prepare", RawValueType::RAW_Custom, true);
-	checker->add_property("recover", RawValueType::RAW_Custom, true);
+	checker.add_property("prepare", RawValueType::RAW_Custom, true);
+	checker.add_property("recover", RawValueType::RAW_Custom, true);
 
-	checker->add_property("frequency", RawValueType::RAW_String, false);
+	checker.add_property("frequency", RawValueType::RAW_String, false);
 
-	checker->add_property("attack_verb", RawValueType::RAW_Object, true, Verb::get_checker());
+	checker.add_property("attack_verb", RawValueType::RAW_Object, true, Verb::get_checker());
 
-	return checker;
+	return &checker;
 }
 
 Attack Attack::from_json(const json& j)
@@ -83,15 +83,15 @@ Attack Attack::from_json(const json& j)
 	return a;
 }
 
-std::shared_ptr<RawObjectChecker> WeaponInfo::get_checker()
+RawObjectChecker* WeaponInfo::get_checker()
 {
-	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
+	static RawObjectChecker checker = RawObjectChecker();
 
-	checker->set_type_name("weapon_info");
+	checker.set_type_name("weapon_info");
 
-	checker->add_property("attacks", RawValueType::RAW_Array, true);
+	checker.add_property("attacks", RawValueType::RAW_Array, true);
 
-	return checker;
+	return &checker;
 }
 
 WeaponInfo WeaponInfo::from_json(const json& j)

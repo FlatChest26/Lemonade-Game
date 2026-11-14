@@ -1,24 +1,24 @@
 #include "posture.h"
 
 
-std::shared_ptr<RawObjectChecker> PostureDef::get_checker()
+RawObjectChecker* PostureDef::get_checker()
 {
-	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
+	static RawObjectChecker checker = RawObjectChecker();
 
-	checker->set_type_name("posture");
+	checker.set_type_name("posture");
 
-	checker->add_property("ID", RawValueType::RAW_String, true);
-	checker->add_property("verb", RawValueType::RAW_Custom, true, Verb::get_checker());
-	checker->add_property("type", RawValueType::RAW_String, true);
-	checker->add_property("height", RawValueType::RAW_Number, true);
+	checker.add_property("ID", RawValueType::RAW_String, true);
+	checker.add_property("verb", RawValueType::RAW_Custom, true, Verb::get_checker());
+	checker.add_property("type", RawValueType::RAW_String, true);
+	checker.add_property("height", RawValueType::RAW_Number, true);
 
-	checker->add_property("is_default", RawValueType::RAW_Bool, false);
-	checker->add_property("directional_verb", RawValueType::RAW_Bool, false);
+	checker.add_property("is_default", RawValueType::RAW_Bool, false);
+	checker.add_property("directional_verb", RawValueType::RAW_Bool, false);
 
-	checker->add_property("on_bp", RawValueType::RAW_String, false);
-	checker->add_property("on_noun", RawValueType::RAW_Custom, false, Noun::get_checker());
+	checker.add_property("on_bp", RawValueType::RAW_String, false);
+	checker.add_property("on_noun", RawValueType::RAW_Custom, false, Noun::get_checker());
 
-	return checker;
+	return &checker;
 }
 
 PostureDef PostureDef::from_json(const json& j)

@@ -36,7 +36,6 @@ namespace RawMaster
 	using ItemDefsDB = snowy::SingletonDatabase<Ref<ItemDefinition>>;
 	using FurnitureDefsDB = snowy::SingletonDatabase<Ref<FurnitureDefinition>>;
 	using MaterialTypesDB = snowy::SingletonDatabase<Ref<MaterialType>>;
-
 	using PronounsDB = snowy::SingletonDatabase<Ref<Pronouns>>;
 	using GendersDB = snowy::SingletonDatabase<Ref<Gender>>;
 
@@ -63,72 +62,32 @@ namespace RawMaster
 			color::initialize_db();
 
 		NameSetsDB::init();
-
 		PronounsDB::init();
 		GendersDB::init();
 
-		SpeciesDB::init();
-		SpeciesDB::add({
-			{ "NULL_CREATURE", std::make_shared<Species>(species::NULL_CREATURE) }
+		MaterialTypesDB::init();
+		MaterialTypesDB::add({
+			{ material_types::NullMaterial.ID,  &material_types::NullMaterial }
 		});
-
-		BodyPartTypeDB::init();
-		//BodyPartTypeDB::add({
-		//	{ "BP_HEAD",			std::make_shared<BodyPartType>(body_part::Head) },
-		//	{ "BP_NECK",			std::make_shared<BodyPartType>(body_part::Neck) },
-		//	{ "BP_UPPERBODY",		std::make_shared<BodyPartType>(body_part::UpperBody) },
-		//	{ "BP_LOWERBODY",		std::make_shared<BodyPartType>(body_part::LowerBody) },
-		//	{ "BP_UPPER_ARM",		std::make_shared<BodyPartType>(body_part::UpperArm) },
-		//	{ "BP_LOWER_ARM",		std::make_shared<BodyPartType>(body_part::LowerArm) },
-		//	{ "BP_HAND",			std::make_shared<BodyPartType>(body_part::Hand) },
-		//	{ "BP_GROIN",			std::make_shared<BodyPartType>(body_part::Groin) },
-		//	{ "BP_UPPER_LEG",		std::make_shared<BodyPartType>(body_part::UpperLeg) },
-		//	{ "BP_LOWER_LEG",		std::make_shared<BodyPartType>(body_part::LowerLeg) },
-		//	{ "BP_FOOT",			std::make_shared<BodyPartType>(body_part::Foot) },
-		//	{ "BP_PENIS",			std::make_shared<BodyPartType>(body_part::Penis) },
-		//	{ "BP_VAGINA",			std::make_shared<BodyPartType>(body_part::Vagina) },
-		//	{ "BP_BREASTS",			std::make_shared<BodyPartType>(body_part::Breasts) },
-		//	{ "BP_TESTICLES",		std::make_shared<BodyPartType>(body_part::Testicles) },
-		//	{ "BP_BUTT",			std::make_shared<BodyPartType>(body_part::Butt) },
-		//	{ "BP_ANUS",			std::make_shared<BodyPartType>(body_part::Anus) },
-		//	{ "BP_EYES",			std::make_shared<BodyPartType>(body_part::Eyes) },
-		//	{ "BP_MOUTH",			std::make_shared<BodyPartType>(body_part::Mouth) },
-		//	{ "BP_EARS",			std::make_shared<BodyPartType>(body_part::Ears) },
-		//	{ "BP_NOSE",			std::make_shared<BodyPartType>(body_part::Nose) },
-		//	{ "BP_TONGUE",			std::make_shared<BodyPartType>(body_part::Tongue) },
-		//	{ "BP_TAIL",			std::make_shared<BodyPartType>(body_part::Tail) },
-		//	{ "BP_HORNS",			std::make_shared<BodyPartType>(body_part::Horns) },
-		//});
 
 		TileTypeDB::init();
 		TileTypeDB::add({
-			{ "TILE_VOID", std::make_shared<TileType>(tile_types::VoidTile) }
+			{ tile_types::VoidTile.ID, &tile_types::VoidTile }
 		});
 
+		BodyPartTypeDB::init();
+		
+		BodyGlossDB::init();
 		BodyPlanDB::init();
-		//BodyPlanDB::add({
-		//	{ "GenericBody", std::make_shared<BodyPlan>(body_plan::GenericBody) }
-		//});
-
 		BodyModDB::init();
-		//BodyModDB::add({
-		//	{ "DemonParts",		std::make_shared<BodyMod>(body_mod::DemonParts) },
-		//	{ "FemaleParts",	std::make_shared<BodyMod>(body_mod::FemaleParts) },
-		//	{ "MaleParts",		std::make_shared<BodyMod>(body_mod::MaleParts) },
-		//	{ "GirlCock",		std::make_shared<BodyMod>(body_mod::GirlCock) },
-		//	{ "BoyPussy",		std::make_shared<BodyMod>(body_mod::BoyPussy) },
-		//	{ "HeadDetails",	std::make_shared<BodyMod>(body_mod::HeadDetails) },
-		//});
 
 		ItemDefsDB::init();
 		FurnitureDefsDB::init();
 
-		MaterialTypesDB::init();
-		MaterialTypesDB::add({
-			{ "null",  std::make_shared<MaterialType>(material_types::NullMaterial) }
+		SpeciesDB::init();
+		SpeciesDB::add({
+			{ species::NULL_CREATURE.ID, &species::NULL_CREATURE }
 		});
-
-		BodyGlossDB::init();
 	}
 
 	static void load_colors(std::vector<json> json)
@@ -162,7 +121,7 @@ namespace RawMaster
 				continue;
 			}
 
-			Ref<T> new_type = std::make_shared<T>(T::from_json(json_obj));
+			Ref<T> new_type = make_ref<T>(json_obj);
 			TDB::add(json_obj.at("ID").get<std::string>(), new_type);
 
 			COUT("\tLoaded: " << json_obj.at("ID").get<std::string>());
@@ -173,6 +132,15 @@ namespace RawMaster
 	{
 		for (const auto& entry : fs::recursive_directory_iterator(raw_path))
 		{
+			if (entry.is_directory())
+				continue;
+
+			if (!entry.exists())
+				continue;
+
+			if (!entry.is_regular_file())
+				continue;
+
 			if (entry.path().filename().extension() != ".json")
 			{
 				CERR("Non .json file found: " << entry.path() << " in directory: " << raw_path);

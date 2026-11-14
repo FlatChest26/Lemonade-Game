@@ -23,7 +23,7 @@ struct GaitDef
 
 	bool is_default{ false };
 
-	static std::shared_ptr<RawObjectChecker> get_checker();
+	static RawObjectChecker* get_checker();
 	static GaitDef from_json(const json& j);
 };
 

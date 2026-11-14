@@ -51,13 +51,13 @@ bool SwapPlacesAction::check_action() const
 		return false;
 	}
 
-	if (world->is_blocked(get_subject()->get_movable()->pos(), get_subject(), (get_subject()->get_movable()->posz() - get_actor()->get_movable()->posz())))
+	if (world->is_blocked(get_subject()->movable()->pos(), get_subject(), (get_subject()->movable()->posz() - get_actor()->movable()->posz())))
 	{
 		ACTION_CERR("Location is blocked!");
 		return false;
 	}
 
-	if (world->is_blocked(get_actor()->get_movable()->pos(), get_actor(), (get_actor()->get_movable()->posz() - get_subject()->get_movable()->posz())))
+	if (world->is_blocked(get_actor()->movable()->pos(), get_actor(), (get_actor()->movable()->posz() - get_subject()->movable()->posz())))
 	{
 		ACTION_CERR("Location is blocked!");
 		return false;
@@ -68,10 +68,10 @@ bool SwapPlacesAction::check_action() const
 
 ActionResult SwapPlacesAction::perform()
 {
-	Position orig_pos = get_actor()->get_movable()->pos();
+	Position orig_pos = get_actor()->movable()->pos();
 
-	get_actor()->get_movable()->pos() = get_subject()->get_movable()->pos();
-	get_subject()->get_movable()->pos() = orig_pos;
+	get_actor()->movable()->pos() = get_subject()->movable()->pos();
+	get_subject()->movable()->pos() = orig_pos;
 
 	return ActionResult(true);
 }
@@ -173,7 +173,7 @@ bool ConsumeAction::check_action() const
 		return false;
 	}
 
-	if (!get_subject()->get_item_def()->is_consumable())
+	if (!get_subject()->item_def()->is_consumable())
 	{
 		ACTION_CERR("Target item is not consumable!");
 		return false;
@@ -189,9 +189,9 @@ ActionResult ConsumeAction::perform()
 
 	std::vector<std::string> taste_descriptions;
 
-	auto living = actor->get_living();
+	auto living = actor->living();
 
-	for (auto& effect : subject->get_item_def()->consumable_effects)
+	for (auto& effect : subject->item_def()->consumable_effects)
 	{
 		if (!living->take_consumable(effect))
 			continue;
@@ -285,7 +285,7 @@ bool GrappleAction::check_action() const
 		return false;
 	}
 
-	if (get_actor()->has_anatomy() && !get_actor()->get_anatomy()->has_body_parts(BodyPartFilter{ .required_flags = BodyPartFlag::GRASP }))
+	if (get_actor()->has_anatomy() && !get_actor()->anatomy()->has_body_parts(BodyPartFilter{ .required_flags = BodyPartFlag::GRASP }))
 	{
 		ACTION_CERR("Actor cannot grapple others! " << get_actor()->ID());
 		return false;
@@ -418,7 +418,7 @@ bool KissAction::check_action() const
 		return false;
 	}
 
-	if (!transforms::is_adjacent(get_actor()->get_movable()->pos(), get_subject()->get_movable()->pos()))
+	if (!transforms::is_adjacent(get_actor()->movable()->pos(), get_subject()->movable()->pos()))
 	{
 		ACTION_CERR("Actor and subject are not close enough!" << get_actor()->ID() << " " << get_subject()->ID());
 		return false;
@@ -432,14 +432,14 @@ ActionResult KissAction::perform()
 	auto actor = get_actor();
 	auto subject = get_subject();
 
-	if (actor->has_living() && actor->get_living()->has_stat(needs::AROUSAL))
+	if (actor->has_living() && actor->living()->has_stat(needs::AROUSAL))
 	{
-		actor->get_living()->get_stat(needs::AROUSAL).add_value(12);
+		actor->living()->get_stat(needs::AROUSAL).add_value(12);
 	}
 
-	if (subject->has_living() && subject->get_living()->has_stat(needs::AROUSAL))
+	if (subject->has_living() && subject->living()->has_stat(needs::AROUSAL))
 	{
-		subject->get_living()->get_stat(needs::AROUSAL).add_value(12);
+		subject->living()->get_stat(needs::AROUSAL).add_value(12);
 	}
 
 	auto n1 = actor->display_noun();

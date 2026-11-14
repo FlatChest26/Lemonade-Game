@@ -3,28 +3,28 @@
 #include "snowy_utilities.h"
 #include "raw_master.h"
 
-std::shared_ptr<RawObjectChecker> BodyPartType::get_checker()
+RawObjectChecker* BodyPartType::get_checker()
 {
-	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
+	static RawObjectChecker checker = RawObjectChecker();
 
-	checker->set_type_name("body_part_type");
+	checker.set_type_name("body_part_type");
 
-	checker->add_property("ID", RawValueType::RAW_String, true);
-	checker->add_property("noun", RawValueType::RAW_Custom, true, Noun::get_checker());
+	checker.add_property("ID", RawValueType::RAW_String, true);
+	checker.add_property("noun", RawValueType::RAW_Custom, true, Noun::get_checker());
 
-	checker->add_property("relative_size", RawValueType::RAW_Number, false);
-	checker->add_property("category", RawValueType::RAW_String, false);
+	checker.add_property("relative_size", RawValueType::RAW_Number, false);
+	checker.add_property("category", RawValueType::RAW_String, false);
 
-	checker->add_property("flags", RawValueType::RAW_Array, false);
-	checker->add_property("multiple", RawValueType::RAW_Number, false);
+	checker.add_property("flags", RawValueType::RAW_Array, false);
+	checker.add_property("multiple", RawValueType::RAW_Number, false);
 
-	checker->add_property("copy_from", RawValueType::RAW_String, false);
-	checker->add_property("add_flags", RawValueType::RAW_Array, false);
-	checker->add_property("remove_flags", RawValueType::RAW_Array, false);
+	checker.add_property("copy_from", RawValueType::RAW_String, false);
+	checker.add_property("add_flags", RawValueType::RAW_Array, false);
+	checker.add_property("remove_flags", RawValueType::RAW_Array, false);
 
-	checker->add_property("max_health", RawValueType::RAW_Number, false);
+	checker.add_property("max_health", RawValueType::RAW_Number, false);
 
-	return checker;
+	return &checker;
 }
 
 BodyPartType BodyPartType::from_json(const json& j)

@@ -6,12 +6,15 @@
 #include "snowy_database.h"
 #include "color.h"
 
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
 namespace RawMaster
 {
 	inline bool _raws_loading_allowed = false;
 
 	template<typename T>
-	using Ref = std::shared_ptr<const T>;
+	using Ref = const T*;
 
 	using RawID = snowy::StringID;
 
@@ -47,7 +50,7 @@ namespace RawMaster
 			return TDB::get(id);
 		}
 
-		TDB::add(id, std::make_shared<T>(object));
+		TDB::add(id, new T(object));
 		return TDB::get(id);
 	}
 
@@ -75,6 +78,24 @@ namespace RawMaster
 	inline std::vector<RawID> get_color_ids()
 	{
 		return color::ColorsDB::get_keys();
+	}
+
+	template <typename T, typename Arg>
+	concept HasFromJson = requires(Arg && arg)
+	{
+		{ T::from_json(std::forward<Arg>(arg)) } -> std::same_as<T>;
+	};
+
+	template<typename T>
+	inline Ref<T> make_ref(json obj)
+	{
+		if constexpr (HasFromJson<T, json>)
+		{
+			return new T(T::from_json(obj));
+		}
+
+		CERR("Input type has no `from_json` method!" << obj);
+		return nullptr;
 	}
 };
 

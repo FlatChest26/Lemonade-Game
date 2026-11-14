@@ -4,6 +4,7 @@
     "ID": "water",
     "boiling_point": { "celsius": 100.0 },
     "melting_point": { "celsius": 0.0 },
+    "molar_mass": { "grams_per_mole": 18.02 },
     "states": {
       "liquid": {
         "noun": { "singular": "water", "plural": "water" },
@@ -12,7 +13,20 @@
         "description": "A clear, refreshing liquid.",
         "value": { "cents": 50 },
         "flags": [ "consumable" ],
+        "flow_time": { "seconds": 0.5 },
+        "specific_heat_capacity": { "joules_per_kilogram_kelvin": 4184.0 },
+        "density": { "grams_per_milliliter": 1 },
         "consumable_effects": [ { "modified_stat": "thirst", "amount": -12.0 }, { "modified_stat": "mood", "amount": 2.0, "taste": "refreshing" } ]
+      },
+      "gas": {
+        "noun": { "singular": "steam", "plural": "steam" },
+        "prefix": "steam",
+        "color": "light_gray",
+        "value": { "cents": 30 },
+        "flow_time": { "seconds": 0.5 },
+        "specific_heat_capacity": { "joules_per_kilogram_kelvin": 2108.0 },
+        "density": { "kilograms_per_cubic_meter": 0.59 },
+        "description": "Water in its gaseous state."
       },
       "solid": {
         "noun": { "singular": "ice", "plural": "ice" },
@@ -21,14 +35,9 @@
         "value": { "cents": 60 },
         "description": "Frozen water.",
         "flags": [ "consumable", "is_blocked" ],
+        "specific_heat_capacity": { "joules_per_kilogram_kelvin": 2108.0 },
+        "density": { "kilograms_per_cubic_meter": 916.7 },
         "consumable_effects": [ { "modified_stat": "thirst", "amount": -8.0 }, { "modified_stat": "mood", "amount": -2.0, "taste": "crunchy" } ]
-      },
-      "gas": {
-        "noun": { "singular": "steam", "plural": "steam" },
-        "prefix": "steam",
-        "color": "light_gray",
-        "value": { "cents": 30 },
-        "description": "Water in its gaseous state."
       },
       "powder": {
         "noun": { "singular": "snow", "plural": "snow" },
@@ -36,6 +45,8 @@
         "color": "white",
         "value": { "cents": 80 },
         "description": "Frozen water in the form of snow.",
+        "specific_heat_capacity": { "joules_per_kilogram_kelvin": 2108.0 },
+        "density": { "kilograms_per_cubic_meter": 916.7 },
         "consumable_effects": [ { "modified_stat": "thirst", "amount": -8.0 }, { "modified_stat": "mood", "amount": 0.0, "taste": "powdery" } ]
       }
     }
@@ -45,6 +56,7 @@
     "ID": "lemonade",
     "boiling_point": { "celsius": 100.0 },
     "melting_point": { "celsius": 0.0 },
+    "molar_mass": { "grams_per_mole": 18.02 },
     "states": {
       "liquid": {
         "noun": { "singular": "lemonade", "plural": "lemonade" },
@@ -53,7 +65,20 @@
         "description": "A sweet, refreshing drink, made of sugar, water, and squeezed lemons.",
         "value": { "dollars": 1 },
         "flags": [ "consumable", "stains" ],
+        "flow_time": { "seconds": 0.5 },
+        "specific_heat_capacity": { "joules_per_kilogram_kelvin": 4184.0 },
+        "density": { "grams_per_milliliter": 1 },
         "consumable_effects": [ { "modified_stat": "thirst", "amount": -15.0 }, { "modified_stat": "mood", "amount": 9.0, "taste": "refreshing" } ]
+      },
+      "gas": {
+        "noun": { "singular": "boiling lemonade", "plural": "boiling lemonade" },
+        "prefix": "boiling lemonade",
+        "color": "light_yellow",
+        "value": { "cents": 30 },
+        "flow_time": { "seconds": 0.5 },
+        "specific_heat_capacity": { "joules_per_kilogram_kelvin": 2108.0 },
+        "density": { "kilograms_per_cubic_meter": 0.59 },
+        "description": "Lemonade in its gaseous state."
       },
       "solid": {
         "noun": { "singular": "frozen lemonade", "plural": "frozen lemonade" },
@@ -62,14 +87,9 @@
         "value": { "cents": 60 },
         "description": "Frozen lemonade.",
         "flags": [ "consumable", "is_blocked" ],
+        "specific_heat_capacity": { "joules_per_kilogram_kelvin": 2108.0 },
+        "density": { "kilograms_per_cubic_meter": 916.7 },
         "consumable_effects": [ { "modified_stat": "thirst", "amount": -15.0 }, { "modified_stat": "mood", "amount": -7.0, "taste": "crunchy" } ]
-      },
-      "gas": {
-        "noun": { "singular": "boiling lemonade", "plural": "boiling lemonade" },
-        "prefix": "boiling lemonade",
-        "color": "light_yellow",
-        "value": { "cents": 30 },
-        "description": "Lemonade in its gaseous state."
       }
     }
   },
@@ -78,6 +98,7 @@
     "ID": "blood",
     "boiling_point": { "celsius": 100.0 },
     "melting_point": { "celsius": 0.0 },
+    "molar_mass": { "grams_per_mole": 18.02 },
     "states": {
       "liquid": {
         "noun": { "singular": "blood", "plural": "blood" },
@@ -85,8 +106,21 @@
         "color": "dark_red",
         "description": "An iron-rich liquid.",
         "value": { "cents": 80 },
+        "flow_time": { "seconds": 1.0 },
         "flags": [ "consumable", "stains" ],
+        "specific_heat_capacity": { "joules_per_kilogram_kelvin": 4184.0 },
+        "density": { "grams_per_milliliter": 1 },
         "consumable_effects": [ { "modified_stat": "thirst", "amount": -4.0 }, { "modified_stat": "mood", "amount": -16.0, "taste": "metallic" } ]
+      },
+      "gas": {
+        "noun": { "singular": "boiling blood", "plural": "boiling blood" },
+        "prefix": "boiling blood",
+        "color": "light_red",
+        "value": { "cents": 30 },
+        "flow_time": { "seconds": 0.8 },
+        "specific_heat_capacity": { "joules_per_kilogram_kelvin": 2108.0 },
+        "density": { "kilograms_per_cubic_meter": 0.59 },
+        "description": "Blood in its gaseous state."
       },
       "solid": {
         "noun": { "singular": "frozen blood", "plural": "frozen blood" },
@@ -95,14 +129,9 @@
         "value": { "cents": 60 },
         "description": "Frozen blood.",
         "flags": [ "consumable", "is_blocked" ],
+        "specific_heat_capacity": { "joules_per_kilogram_kelvin": 2108.0 },
+        "density": { "kilograms_per_cubic_meter": 916.7 },
         "consumable_effects": [ { "modified_stat": "thirst", "amount": -8.0 }, { "modified_stat": "mood", "amount": -25.0, "taste": "crunchy" } ]
-      },
-      "gas": {
-        "noun": { "singular": "boiling blood", "plural": "boiling blood" },
-        "prefix": "boiling blood",
-        "color": "light_red",
-        "value": { "cents": 30 },
-        "description": "Blood in its gaseous state."
       }
     }
   }

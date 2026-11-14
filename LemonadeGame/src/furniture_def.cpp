@@ -1,15 +1,15 @@
 #include "furniture_def.h"
 
-std::shared_ptr<RawObjectChecker> FurnitureTile::get_checker()
+RawObjectChecker* FurnitureTile::get_checker()
 {
-	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
+	static RawObjectChecker checker = RawObjectChecker();
 
-	checker->set_type_name("furniture_tile");
+	checker.set_type_name("furniture_tile");
 
-	checker->add_property("position", RawValueType::RAW_Array, true);
-	checker->add_property("renderable", RawValueType::RAW_Custom, true, Renderable::get_checker());
+	checker.add_property("position", RawValueType::RAW_Array, true);
+	checker.add_property("renderable", RawValueType::RAW_Custom, true, Renderable::get_checker());
 
-	return checker;
+	return &checker;
 }
 
 FurnitureTile FurnitureTile::from_json(const json& j)
@@ -29,21 +29,21 @@ FurnitureTile FurnitureTile::from_json(const json& j)
 	return f;
 }
 
-std::shared_ptr<RawObjectChecker> FurnitureDefinition::get_checker()
+RawObjectChecker* FurnitureDefinition::get_checker()
 {
-	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
+	static RawObjectChecker checker = RawObjectChecker();
 
-	checker->set_type_name("furniture_definition");
+	checker.set_type_name("furniture_definition");
 
-	checker->add_property("ID", RawValueType::RAW_String, true);
-	checker->add_property("item_definition", RawValueType::RAW_String, true);
-	checker->add_property("size", RawValueType::RAW_Array, true);
-	checker->add_property("tiles", RawValueType::RAW_Array, true);
+	checker.add_property("ID", RawValueType::RAW_String, true);
+	checker.add_property("item_definition", RawValueType::RAW_String, true);
+	checker.add_property("size", RawValueType::RAW_Array, true);
+	checker.add_property("tiles", RawValueType::RAW_Array, true);
 
-	checker->add_property("flags", RawValueType::RAW_Array, false);
-	checker->add_property("sleep_quality", RawValueType::RAW_Number, false);
+	checker.add_property("flags", RawValueType::RAW_Array, false);
+	checker.add_property("sleep_quality", RawValueType::RAW_Number, false);
 
-	return checker;
+	return &checker;
 }
 
 FurnitureDefinition FurnitureDefinition::from_json(const json& j)
@@ -96,7 +96,7 @@ FurnitureDefinition FurnitureDefinition::from_json(const json& j)
 	return f;
 }
 
-Renderable FurnitureDefinition::get_renderable_at(Coord x, Coord y, Coord z) const
+Renderable FurnitureDefinition::renderable_at(Coord x, Coord y, Coord z) const
 {
 	for (auto& tile : tiles)
 	{

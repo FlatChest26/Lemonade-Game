@@ -1,22 +1,22 @@
 #include "body_plan.h"
 
-std::shared_ptr<RawObjectChecker> BodyPlan::get_checker()
+RawObjectChecker* BodyPlan::get_checker()
 {
-	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
-	checker->set_type_name("body_plan");
+	static RawObjectChecker checker = RawObjectChecker();
+	checker.set_type_name("body_plan");
 
-	checker->add_property("ID", RawValueType::RAW_String, true);
-	checker->add_property("body_parts", RawValueType::RAW_Array, true);
+	checker.add_property("ID", RawValueType::RAW_String, true);
+	checker.add_property("body_parts", RawValueType::RAW_Array, true);
 
-	checker->add_property("default_height", RawValueType::RAW_Number, false);
-	checker->add_property("default_weight", RawValueType::RAW_Number, false);
+	checker.add_property("default_height", RawValueType::RAW_Number, false);
+	checker.add_property("default_weight", RawValueType::RAW_Number, false);
 
-	checker->add_property("connections", RawValueType::RAW_Array, false);
-	checker->add_property("relations", RawValueType::RAW_Array, false);
+	checker.add_property("connections", RawValueType::RAW_Array, false);
+	checker.add_property("relations", RawValueType::RAW_Array, false);
 
-	checker->add_property("postures", RawValueType::RAW_Array, false);
+	checker.add_property("postures", RawValueType::RAW_Array, false);
 
-	return checker;
+	return &checker;
 }
 
 BodyPlan BodyPlan::from_json(const json& j)
@@ -102,35 +102,35 @@ BodyPlan BodyPlan::from_json(const json& j)
 	return bp;
 }
 
-std::shared_ptr<RawObjectChecker> BodyMod::get_checker()
+RawObjectChecker* BodyMod::get_checker()
 {
-	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
+	static RawObjectChecker checker = RawObjectChecker();
 
-	checker->set_type_name("body_mod");
+	checker.set_type_name("body_mod");
 
-	checker->add_property("ID", RawValueType::RAW_String, false);
+	checker.add_property("ID", RawValueType::RAW_String, false);
 
-	checker->add_property("modify_size", RawValueType::RAW_Number, false);
+	checker.add_property("modify_size", RawValueType::RAW_Number, false);
 
-	checker->add_property("set_height", RawValueType::RAW_Number, false);
-	checker->add_property("add_height", RawValueType::RAW_Number, false);
-	checker->add_property("modify_height", RawValueType::RAW_Number, false);
+	checker.add_property("set_height", RawValueType::RAW_Number, false);
+	checker.add_property("add_height", RawValueType::RAW_Number, false);
+	checker.add_property("modify_height", RawValueType::RAW_Number, false);
 
-	checker->add_property("set_weight", RawValueType::RAW_Number, false);
-	checker->add_property("add_weight", RawValueType::RAW_Number, false);
-	checker->add_property("modify_weight", RawValueType::RAW_Number, false);
+	checker.add_property("set_weight", RawValueType::RAW_Number, false);
+	checker.add_property("add_weight", RawValueType::RAW_Number, false);
+	checker.add_property("modify_weight", RawValueType::RAW_Number, false);
 
-	checker->add_property("add_parts", RawValueType::RAW_Array, false);
-	checker->add_property("remove_parts", RawValueType::RAW_Array, false);
-	checker->add_property("replace_parts", RawValueType::RAW_Object, false);
+	checker.add_property("add_parts", RawValueType::RAW_Array, false);
+	checker.add_property("remove_parts", RawValueType::RAW_Array, false);
+	checker.add_property("replace_parts", RawValueType::RAW_Object, false);
 
-	checker->add_property("add_connections", RawValueType::RAW_Array, false);
-	checker->add_property("add_relations", RawValueType::RAW_Array, false);
+	checker.add_property("add_connections", RawValueType::RAW_Array, false);
+	checker.add_property("add_relations", RawValueType::RAW_Array, false);
 
-	checker->add_property("add_body_gloss", RawValueType::RAW_Array, false);
-	checker->add_property("remove_body_gloss", RawValueType::RAW_Array, false);
+	checker.add_property("add_body_gloss", RawValueType::RAW_Array, false);
+	checker.add_property("remove_body_gloss", RawValueType::RAW_Array, false);
 
-	return checker;
+	return &checker;
 }
 
 BodyMod BodyMod::from_json(const json& j)
@@ -270,7 +270,7 @@ BodyMod BodyMod::from_json(const json& j)
 					continue;
 				}
 
-				b.add_body_gloss.push_back(std::make_shared<BodyGloss>(BodyGloss::from_json(json_body_gloss)));
+				b.add_body_gloss.push_back(RawMaster::make_ref<BodyGloss>(json_body_gloss));
 			}
 			else
 			{
@@ -296,23 +296,23 @@ BodyMod BodyMod::from_json(const json& j)
 	return b;
 }
 
-std::shared_ptr<RawObjectChecker> BodyPartPlan::get_checker()
+RawObjectChecker* BodyPartPlan::get_checker()
 {
-	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
+	static RawObjectChecker checker = RawObjectChecker();
 
-	checker->set_type_name("body_part_plan");
+	checker.set_type_name("body_part_plan");
 
-	checker->add_property("bp_type", RawValueType::RAW_String, true);
+	checker.add_property("bp_type", RawValueType::RAW_String, true);
 
-	checker->add_property("ID", RawValueType::RAW_String, false);
+	checker.add_property("ID", RawValueType::RAW_String, false);
 
-	checker->add_property("rel_size", RawValueType::RAW_Number, false);
-	checker->add_property("position", RawValueType::RAW_String, false);
-	checker->add_property("prefix", RawValueType::RAW_String, false);
+	checker.add_property("rel_size", RawValueType::RAW_Number, false);
+	checker.add_property("position", RawValueType::RAW_String, false);
+	checker.add_property("prefix", RawValueType::RAW_String, false);
 
-	checker->add_property("is_root", RawValueType::RAW_Bool, false);
+	checker.add_property("is_root", RawValueType::RAW_Bool, false);
 
-	return checker;
+	return &checker;
 }
 
 BodyPartPlan BodyPartPlan::from_json(const json& j)
@@ -377,17 +377,17 @@ BodyPartPlan BodyPartPlan::from_json(const json& j)
 	return bpp;
 }
 
-std::shared_ptr<RawObjectChecker> BodyConnectionPlan::get_checker()
+RawObjectChecker* BodyConnectionPlan::get_checker()
 {
-	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
+	static RawObjectChecker checker = RawObjectChecker();
 
-	checker->set_type_name("body_connection_plan");
+	checker.set_type_name("body_connection_plan");
 
-	checker->add_property("parent", RawValueType::RAW_String, true);
-	checker->add_property("child", RawValueType::RAW_String, true);
-	checker->add_property("relation", RawValueType::RAW_String, false);
+	checker.add_property("parent", RawValueType::RAW_String, true);
+	checker.add_property("child", RawValueType::RAW_String, true);
+	checker.add_property("relation", RawValueType::RAW_String, false);
 
-	return checker;
+	return &checker;
 }
 
 BodyConnectionPlan BodyConnectionPlan::from_json(const json& j)
@@ -421,16 +421,16 @@ BodyConnectionPlan BodyConnectionPlan::from_json(const json& j)
 	return bcp;
 }
 
-std::shared_ptr<RawObjectChecker> BodyGloss::get_checker()
+RawObjectChecker* BodyGloss::get_checker()
 {
-	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
+	static RawObjectChecker checker = RawObjectChecker();
 
-	checker->set_type_name("body_gloss");
+	checker.set_type_name("body_gloss");
 
-	checker->add_property("ID", RawValueType::RAW_String, true);
-	checker->add_property("replacements", RawValueType::RAW_Array, true);
+	checker.add_property("ID", RawValueType::RAW_String, true);
+	checker.add_property("replacements", RawValueType::RAW_Array, true);
 
-	return checker;
+	return &checker;
 }
 
 BodyGloss BodyGloss::from_json(const json& j)

@@ -1,21 +1,26 @@
 #include "material_def.h"
 #include "entity.h"
 
-std::shared_ptr<RawObjectChecker> MaterialStateDefinition::get_checker()
+RawObjectChecker* MaterialStateDefinition::get_checker()
 {
-	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
+	static RawObjectChecker checker = RawObjectChecker();
 
-	checker->set_type_name("material_state_definition");
+	checker.set_type_name("material_state_definition");
 
-	checker->add_property("noun", RawValueType::RAW_Custom, true, Noun::get_checker());
-	checker->add_property("color", RawValueType::RAW_Custom, true);
+	checker.add_property("noun", RawValueType::RAW_Custom, true, Noun::get_checker());
+	checker.add_property("color", RawValueType::RAW_Custom, true);
 
-	checker->add_property("description", RawValueType::RAW_String, false);
-	checker->add_property("flags", RawValueType::RAW_Array, false);
-	checker->add_property("consumable_effects", RawValueType::RAW_Array, false);
-	checker->add_property("value", RawValueType::RAW_Custom, false);
+	checker.add_property("specific_heat_capacity", RawValueType::RAW_Custom, true);
+	checker.add_property("density", RawValueType::RAW_Custom, true);
 
-	return checker;
+	checker.add_property("description", RawValueType::RAW_String, false);
+	checker.add_property("flags", RawValueType::RAW_Array, false);
+	checker.add_property("consumable_effects", RawValueType::RAW_Array, false);
+	checker.add_property("value", RawValueType::RAW_Custom, false);
+
+	checker.add_property("flow_time", RawValueType::RAW_Custom, false);
+
+	return &checker;
 }
 
 MaterialStateDefinition MaterialStateDefinition::from_json(const json& j)
@@ -32,9 +37,17 @@ MaterialStateDefinition MaterialStateDefinition::from_json(const json& j)
 	ms.noun = Noun::from_json(j.at("noun"));
 	ms.color = color::from_json(j.at("color"));
 
+	ms.specific_heat_capacity = units::specific_heat_capacity::from_json(j.at("specific_heat_capacity"));
+	ms.density = units::density::from_json(j.at("density"));
+
 	if (checker->is_valid_property("description", j))
 	{
 		ms.description = j.at("description").get<std::string>();
+	}
+
+	if (checker->is_valid_property("flow_time", j))
+	{
+		ms.flow_time = TimeUnit::from_json(j.at("flow_time"));
 	}
 
 	if (checker->is_valid_property("value", j))
@@ -83,20 +96,22 @@ MaterialStateDefinition MaterialStateDefinition::from_json(const json& j)
 	return ms;
 }
 
-std::shared_ptr<RawObjectChecker> MaterialType::get_checker()
+RawObjectChecker* MaterialType::get_checker()
 {
-	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
+	static RawObjectChecker checker = RawObjectChecker();
 
-	checker->set_type_name("material_type");
+	checker.set_type_name("material_type");
 
-	checker->add_property("ID", RawValueType::RAW_String, true);
+	checker.add_property("ID", RawValueType::RAW_String, true);
 
-	checker->add_property("boiling_point", RawValueType::RAW_Custom, true);
-	checker->add_property("melting_point", RawValueType::RAW_Custom, true);
+	checker.add_property("boiling_point", RawValueType::RAW_Custom, true);
+	checker.add_property("melting_point", RawValueType::RAW_Custom, true);
 
-	checker->add_property("states", RawValueType::RAW_Object, true);
+	checker.add_property("molar_mass", RawValueType::RAW_Custom, false);
 
-	return checker;
+	checker.add_property("states", RawValueType::RAW_Object, true);
+
+	return &checker;
 }
 
 MaterialType MaterialType::from_json(const json& j)
@@ -115,6 +130,11 @@ MaterialType MaterialType::from_json(const json& j)
 	mt.boiling_point = units::temperature::from_json(j.at("boiling_point"));
 	mt.melting_point = units::temperature::from_json(j.at("melting_point"));
 
+	if (checker->is_valid_property("molar_mass", j))
+	{
+		mt.molar_mass = units::molar_mass::from_json(j.at("molar_mass"));
+	}
+
 	for (auto& [state_name, state_json] : j.at("states").get<std::unordered_map<std::string, json>>())
 	{
 		if (!AllMaterialStateTypes.contains(state_name))
@@ -129,6 +149,8 @@ MaterialType MaterialType::from_json(const json& j)
 		auto state_type = AllMaterialStateTypes[state_name];
 		mt.states[state_type] = MaterialStateDefinition::from_json(state_json);
 	}
+
+	mt.gas_density_factor = (101325.0f * units::in<units::molar_mass::kilograms_per_mole>(mt.molar_mass)) / 8.314f;
 
 	return mt;
 }
@@ -269,4 +291,24 @@ void Material::update_state()
 	{
 		m_state = MaterialStateType::SOLID;
 	}
+}
+
+void Material::update_mass(units::Volume total_container_volume, MaterialAmount max_material_amount)
+{
+	if (!m_mat_type || m_mat_type->states.empty())
+		return;
+
+	m_mass = units::mass::kilogram_t(
+		units::in<units::density::kilograms_per_cubic_meter>(density()) *
+		units::in<units::volume::cubic_meter>(total_container_volume) *
+		(max_material_amount / amount())
+	);
+}
+
+void Material::update_thermal_mass()
+{
+	if (!m_mat_type || m_mat_type->states.empty())
+		return;
+
+	m_thermal_mass = m_mass * specific_heat_capacity();
 }

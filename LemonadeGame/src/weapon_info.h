@@ -73,7 +73,7 @@ struct Attack
 
 	Verb attack_verb;
 
-	static std::shared_ptr<RawObjectChecker> get_checker();
+	static RawObjectChecker* get_checker();
 	static Attack from_json(const json& j);
 };
 
@@ -81,7 +81,7 @@ struct WeaponInfo
 {
 	std::vector<Attack> attacks;
 
-	static std::shared_ptr<RawObjectChecker> get_checker();
+	static RawObjectChecker* get_checker();
 	static WeaponInfo from_json(const json& j);
 };
 

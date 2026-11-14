@@ -1,19 +1,19 @@
 #include "gait.h"
 
-std::shared_ptr<RawObjectChecker> GaitDef::get_checker()
+RawObjectChecker* GaitDef::get_checker()
 {
-	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
+	static RawObjectChecker checker = RawObjectChecker();
 
-	checker->set_type_name("gait");
+	checker.set_type_name("gait");
 
-	checker->add_property("type", RawValueType::RAW_String, true);
+	checker.add_property("type", RawValueType::RAW_String, true);
 
-	checker->add_property("name", RawValueType::RAW_String, true);
-	checker->add_property("speed", RawValueType::RAW_Number, true);
+	checker.add_property("name", RawValueType::RAW_String, true);
+	checker.add_property("speed", RawValueType::RAW_Number, true);
 
-	checker->add_property("is_default", RawValueType::RAW_Bool, false);
+	checker.add_property("is_default", RawValueType::RAW_Bool, false);
 
-	return checker;
+	return &checker;
 }
 
 GaitDef GaitDef::from_json(const json& j)

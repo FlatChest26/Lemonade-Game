@@ -48,7 +48,7 @@ public:
 	{
 	}
 
-	constexpr Vec2D(const IntType& u) :
+	explicit constexpr Vec2D(const IntType& u) :
 		x(u), y(u)
 	{
 	}
@@ -144,7 +144,7 @@ public:
 		return *this;
 	}
 
-	template<typename T, typename U>
+	template<typename T, TransformsNumeric U>
 	constexpr Vec2D<T>& operator=(const U& other)
 	{
 		x = static_cast<T>(other);
@@ -161,7 +161,7 @@ public:
 		return  { x + other.x, y + other.y };
 	}
 
-	template<typename T, typename U>
+	template<typename T, TransformsNumeric U>
 	constexpr Vec2D<T> operator+(const U& other) const
 	{
 		return  { x + static_cast<T>(other), y + static_cast<T>(other) };
@@ -176,7 +176,7 @@ public:
 		return *this;
 	}
 
-	template<typename T, typename U>
+	template<typename T, TransformsNumeric U>
 	constexpr Vec2D<T>& operator+=(const U& other)
 	{
 		x += static_cast<T>(other);
@@ -193,7 +193,7 @@ public:
 		return  { x - other.x, y - other.y };
 	}
 
-	template<typename T, typename U>
+	template<typename T, TransformsNumeric U>
 	constexpr Vec2D<T> operator-(const U& other) const
 	{
 		return  { x - static_cast<T>(other), y - static_cast<T>(other) };
@@ -208,7 +208,7 @@ public:
 		return *this;
 	}
 
-	template<typename T, typename U>
+	template<typename T, TransformsNumeric U>
 	constexpr Vec2D<T>& operator-=(const U& other)
 	{
 		x -= static_cast<T>(other);
@@ -225,7 +225,7 @@ public:
 		return  { x * other.x, y * other.y };
 	}
 
-	template<typename T, typename U>
+	template<typename T, TransformsNumeric U>
 	constexpr Vec2D<T> operator*(const U& other) const
 	{
 		return  { x * static_cast<T>(other), y * static_cast<T>(other) };
@@ -240,7 +240,7 @@ public:
 		return *this;
 	}
 
-	template<typename T, typename U>
+	template<typename T, TransformsNumeric U>
 	constexpr Vec2D<T>& operator*=(const U& other)
 	{
 		x *= static_cast<T>(other);
@@ -257,7 +257,7 @@ public:
 		return  { x / other.x, y / other.y };
 	}
 
-	template<typename T, typename U>
+	template<typename T, TransformsNumeric U>
 	constexpr Vec2D<T> operator/(const U& other) const
 	{
 		return  { x / static_cast<T>(other), y / static_cast<T>(other) };
@@ -272,7 +272,7 @@ public:
 		return *this;
 	}
 
-	template<typename T, typename U>
+	template<typename T, TransformsNumeric U>
 	constexpr Vec2D<T>& operator/=(const U& other)
 	{
 		x /= static_cast<T>(other);
@@ -292,7 +292,7 @@ public:
 		};
 	}
 
-	template<typename T, typename U>
+	template<typename T, TransformsNumeric U>
 	constexpr Vec2D<T> operator%(const U& other) const
 	{
 		return Vec2D<T>{
@@ -311,7 +311,7 @@ public:
 		return *this;
 	}
 
-	template<typename T, typename U>
+	template<typename T, TransformsNumeric U>
 	constexpr Vec2D<T>& operator%=(const U& other)
 	{
 		x %= static_cast<T>(other);
@@ -401,7 +401,7 @@ public:
 	{
 	}
 
-	constexpr Vec3D(const IntType& u) :
+	explicit constexpr Vec3D(const IntType& u) :
 		x(u), y(u), z(u)
 	{
 	}
@@ -519,7 +519,7 @@ public:
 		return *this;
 	}
 
-	template<typename T, typename U>
+	template<typename T, TransformsNumeric U>
 	constexpr Vec3D<T>& operator=(const U& other)
 	{
 		x = static_cast<T>(other);
@@ -537,7 +537,7 @@ public:
 		return  { x + other.x, y + other.y, z + other.z };
 	}
 
-	template<typename T, typename U>
+	template<typename T, TransformsNumeric U>
 	constexpr Vec3D<T> operator+(const U& other) const
 	{
 		return  { x + static_cast<T>(other), y + static_cast<T>(other), z + static_cast<T>(other) };
@@ -552,7 +552,7 @@ public:
 		return *this;
 	}
 
-	template<typename T, typename U>
+	template<typename T, TransformsNumeric U>
 	constexpr Vec3D<T>& operator+=(const U& other)
 	{
 		x += static_cast<T>(other);
@@ -570,7 +570,7 @@ public:
 		return  { x - other.x, y - other.y, z - other.z };
 	}
 
-	template<typename T, typename U>
+	template<typename T, TransformsNumeric U>
 	constexpr Vec3D<T> operator-(const U& other) const
 	{
 		return  { x - static_cast<T>(other), y - static_cast<T>(other), z - static_cast<T>(other) };
@@ -585,7 +585,7 @@ public:
 		return *this;
 	}
 
-	template<typename T, typename U>
+	template<typename T, TransformsNumeric U>
 	constexpr Vec3D<T>& operator-=(const U& other)
 	{
 		x -= static_cast<T>(other);
@@ -603,7 +603,7 @@ public:
 		return  { x * other.x, y * other.y, z * other.z };
 	}
 
-	template<typename T, typename U>
+	template<typename T, TransformsNumeric U>
 	constexpr Vec3D<T> operator*(const U& other) const
 	{
 		return  { x * static_cast<T>(other), y * static_cast<T>(other), z * static_cast<T>(other) };
@@ -618,7 +618,7 @@ public:
 		return *this;
 	}
 
-	template<typename T, typename U>
+	template<typename T, TransformsNumeric U>
 	constexpr Vec3D<T>& operator*=(const U& other)
 	{
 		x *= static_cast<T>(other);
@@ -636,7 +636,7 @@ public:
 		return  { x / other.x, y / other.y, z / other.z };
 	}
 
-	template<typename T, typename U>
+	template<typename T, TransformsNumeric U>
 	constexpr Vec3D<T> operator/(const U& other) const
 	{
 		return  { x / static_cast<T>(other), y / static_cast<T>(other), z / static_cast<T>(other) };
@@ -651,7 +651,7 @@ public:
 		return *this;
 	}
 
-	template<typename T, typename U>
+	template<typename T, TransformsNumeric U>
 	constexpr Vec3D<T>& operator/=(const U& other)
 	{
 		x /= static_cast<T>(other);
@@ -673,7 +673,7 @@ public:
 		};
 	}
 
-	template<typename T, typename U>
+	template<typename T, TransformsNumeric U>
 	constexpr Vec3D<T> operator%(const U& other) const
 	{
 		return Vec3D<T>{
@@ -694,7 +694,7 @@ public:
 		return *this;
 	}
 
-	template<typename T, typename U>
+	template<typename T, TransformsNumeric U>
 	constexpr Vec3D<T>& operator%=(const U& other)
 	{
 		x %= static_cast<T>(other);
@@ -882,12 +882,12 @@ namespace std
 	inline string to_string(const Direction& dir)
 	{
 		return
-			string(dir & Direction::NORTH ? "north " : "") +
-			string(dir & Direction::SOUTH ? "south " : "") +
-			string(dir & Direction::WEST ? "west " : "") +
-			string(dir & Direction::EAST ? "east " : "") +
-			string(dir & Direction::ABOVE ? "above" : "") +
-			string(dir & Direction::BELOW ? "below" : "");
+			string(dir & Direction::NORTH ? "north" : "") +
+			string(dir & Direction::SOUTH ? "south" : "") +
+			string(dir & Direction::WEST ? "west" : "") +
+			string(dir & Direction::EAST ? "east" : "") +
+			string(dir & Direction::ABOVE ? " above" : "") +
+			string(dir & Direction::BELOW ? " below" : "");
 	}
 
 	inline ostream& operator<<(ostream& os, Direction dir)
@@ -982,8 +982,8 @@ namespace transforms
 		if (pos.x > 0) dir |= EAST;
 		if (pos.x < 0) dir |= WEST;
 
-		if (pos.y > 0) dir |= NORTH;
-		if (pos.y < 0) dir |= SOUTH;
+		if (pos.y > 0) dir |= SOUTH;
+		if (pos.y < 0) dir |= NORTH;
 
 		if (pos.z > 0) dir |= ABOVE;
 		if (pos.z < 0) dir |= BELOW;
@@ -1003,6 +1003,7 @@ namespace transforms
 
 	extern Direction opposite_direction(Direction dir);
 	extern double dir_to_angle_in_degrees(Direction dir);
+	extern double angle_in_degrees_to_dir(double angle);
 	extern Position rotate_by_direction(const Position& point, Direction dir, const Position& origin = Position(0, 0, 0));
 
 	extern bool is_adjacent(const Position& p1, const Position& p2, Coord min_dist = 1);
@@ -1092,6 +1093,9 @@ namespace transforms
 	}
 
 	extern Position get_closest_adjacent(const Position& start, const Position& destination, Coord near_radius = 1);
+
+	extern Direction rotate_direction_clockwise(Direction dir, int amount = 1);
+	extern Direction rotate_direction_counterclockwise(Direction dir, int amount = 1);
 }
 
 

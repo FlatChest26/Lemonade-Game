@@ -20,12 +20,21 @@ inline constexpr Length DEFAULT_MAP_WIDTH = 48;
 inline constexpr Length DEFAULT_MAP_HEIGHT = 32;
 inline constexpr Length DEFAULT_MAP_DEPTH = 4;
 
+inline constexpr units::Length DEFAULT_TILE_WIDTH = units::length::meter_t(2);
+inline constexpr units::Length DEFAULT_TILE_LENGTH = units::length::meter_t(2);
+inline constexpr units::Length DEFAULT_TILE_HEIGHT = units::length::meter_t(3);
+
+inline constexpr units::Volume DEFAULT_TILE_VOLUME = (DEFAULT_TILE_WIDTH * DEFAULT_TILE_LENGTH * DEFAULT_TILE_HEIGHT);
+
 class TileMap
 {
 protected:
 	World* m_world{ nullptr };
+
 	std::vector<Tile> m_tiles{};
+
 	std::vector<Material> m_materials{};
+	std::vector<Direction> m_flow_direction{};
 
 	Length m_width{ DEFAULT_MAP_WIDTH };
 	Length m_height{ DEFAULT_MAP_HEIGHT };
@@ -81,6 +90,12 @@ public:
 	// Returns a constant pointer to the `Material` at the given position.
 	const Material& get_material(const Position& position) const { return get_material(position.x, position.y, position.z); }
 
+	Direction get_flow(Coord x, Coord y, Coord z) const;
+	Direction get_flow(const Position& pos) const { return get_flow(pos.x, pos.y, pos.z); }
+
+	bool has_flow(Coord x, Coord y, Coord z) const { return get_flow(x, y, z) != NO_DIRECTION; }
+	bool has_flow(const Position& pos) const { return has_flow(pos.x, pos.y, pos.z); }
+
 	// Returns true if the given coordinates are in bounds.
 	constexpr bool in_bounds(Coord x, Coord y, Coord z) const;
 	// Returns true if the given position is in bounds.
@@ -122,6 +137,9 @@ public:
 	{
 		add_material(pos.x, pos.y, pos.z, type, amount, temperature, update);
 	}
+
+	void set_flow(Coord x, Coord y, Coord z, Direction flow_direction);
+	void set_flow(const Position& pos, Direction flow_direction) { set_flow(pos.x, pos.y, pos.z, flow_direction); }
 
 	// Updates the tile at the given coordinates.
 	void update_tile_at(Coord x, Coord y, Coord z);
@@ -168,9 +186,11 @@ public:
 	bool is_dirty(Coord x, Coord y, Coord z) const { return is_dirty(Position(x, y, z)); }
 
 public:
-
 	void step(const TimeUnit& time_delta);
 
+
+protected:
+	bool update_material_at(const TimeUnit& time_delta, const Position& pos);
 
 };
 

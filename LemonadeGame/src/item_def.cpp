@@ -1,29 +1,29 @@
 #include "item_def.h"
 
-std::shared_ptr<RawObjectChecker> ItemDefinition::get_checker()
+RawObjectChecker* ItemDefinition::get_checker()
 {
-	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
+	static RawObjectChecker checker = RawObjectChecker();
 
-	checker->set_type_name("item_definition");
+	checker.set_type_name("item_definition");
 
-	checker->add_property("ID", RawValueType::RAW_String, true);
-	checker->add_property("noun", RawValueType::RAW_Custom, true, Noun::get_checker());
-	checker->add_property("renderable", RawValueType::RAW_Custom, true, Renderable::get_checker());
+	checker.add_property("ID", RawValueType::RAW_String, true);
+	checker.add_property("noun", RawValueType::RAW_Custom, true, Noun::get_checker());
+	checker.add_property("renderable", RawValueType::RAW_Custom, true, Renderable::get_checker());
 
-	checker->add_property("description", RawValueType::RAW_String, false);
-	checker->add_property("price", RawValueType::RAW_Custom, false);
+	checker.add_property("description", RawValueType::RAW_String, false);
+	checker.add_property("price", RawValueType::RAW_Custom, false);
 
-	checker->add_property("flags", RawValueType::RAW_Array, false);
+	checker.add_property("flags", RawValueType::RAW_Array, false);
 
-	checker->add_property("category", RawValueType::RAW_String, false);
+	checker.add_property("category", RawValueType::RAW_String, false);
 
-	checker->add_property("consumable_effects", RawValueType::RAW_Array, false);
+	checker.add_property("consumable_effects", RawValueType::RAW_Array, false);
 
-	checker->add_property("carry_slots", RawValueType::RAW_Int, false);
+	checker.add_property("carry_slots", RawValueType::RAW_Int, false);
 
-	checker->add_property("weapon_info", RawValueType::RAW_Custom, false, WeaponInfo::get_checker());
+	checker.add_property("weapon_info", RawValueType::RAW_Custom, false, WeaponInfo::get_checker());
 
-	return checker;
+	return &checker;
 }
 
 ItemDefinition ItemDefinition::from_json(const json& j)

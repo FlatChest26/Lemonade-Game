@@ -1,5 +1,6 @@
 #include "sidebar.h"
 #include "world_state.h"
+#include "game_settings.h"
 
 Sidebar::Sidebar(WorldGameState* world_state) :
 	m_world_state(world_state)
@@ -141,7 +142,7 @@ int SidebarMenu_PersonInfo::render(const RenderParams& params, const SidebarPara
 		};
 
 	print_text(fmt::format("{}", entity->full_name()), entity->fg());
-	print_text(fmt::format("${:.2f}", entity->get_person()->cash().total_dollars()), color::get("yellow"));
+	print_text(fmt::format("${:.2f}", entity->person()->cash().total_dollars()), color::get("yellow"));
 
 	panel_height = std::max(panel_height, (draw_y - panel_y) + 1);
 
@@ -177,6 +178,8 @@ int SidebarMenu_Look::render(const RenderParams& params, const SidebarParams& sb
 	auto& material = tile_map->get_material(look_position);
 	auto entities_at = world->get_entities_at(look_position);
 
+	print_text(fmt::format("Looking at: ({}, {}, {})", look_position.x, look_position.y, look_position.z), fg);
+
 	// Write info at look focus
 
 	for (const auto& entity : entities_at)
@@ -186,11 +189,17 @@ int SidebarMenu_Look::render(const RenderParams& params, const SidebarParams& sb
 
 	if (material.amount() > 0 && (!params.use_fov || tile->is_visible()))
 	{
-		//print_text(material.display_name() + fmt::format(" ({}/{})", material.amount(), DEFAULT_MAX_MATERIAL_AMOUNT), material.fg());
-		print_text(material.display_name(), material.fg());
+		if (GameSettings::SHOW_MATERIAL_AMOUNTS)
+		{
+			print_text(material.display_name() + fmt::format(" ({}/{})", material.amount(), DEFAULT_MAX_MATERIAL_AMOUNT), material.fg());
+		}
+		else
+		{
+			print_text(material.display_name(), material.fg());
+		}
 	}
 
-	if (tile->get_type())
+	if (tile->type())
 	{
 		if (!params.use_fov || tile->is_visible())
 		{
@@ -248,9 +257,9 @@ int SidebarMenu_Needs::render(const RenderParams& params, const SidebarParams& s
 			draw_y += output::console_printf_rgb_rect_ex(draw_x, draw_y, panel_width - 1, 0, new_fg, bg, DEFAULT_BKGND_FLAG, TCOD_LEFT, text);
 		};
 
-	for (const auto& need_id : entity->get_living()->get_needs())
+	for (const auto& need_id : entity->living()->get_needs())
 	{
-		const auto& need = entity->get_living()->get_stat(need_id);
+		const auto& need = entity->living()->get_stat(need_id);
 		print_text(fmt::format("{}", grammar::capitalize(need.name()), need.get_value()), fg);
 		print_text(fmt::format(" You are {}.", need.description()), need.description_color());
 	}
@@ -278,7 +287,7 @@ int SidebarMenu_Inventory::render(const RenderParams& params, const SidebarParam
 
 	if (is_pinned() || !is_collapsed())
 	{
-		auto inventory = entity->get_inventory();
+		auto inventory = entity->inventory();
 
 		panel_height = (int)inventory->get_max_slots();
 

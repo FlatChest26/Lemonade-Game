@@ -29,7 +29,7 @@ struct BodyPartPlan
 	std::string prefix{ "" };
 	bool is_root = false;
 
-	static std::shared_ptr<RawObjectChecker> get_checker();
+	static RawObjectChecker* get_checker();
 	static BodyPartPlan from_json(const json& j);
 };
 
@@ -39,7 +39,7 @@ struct BodyConnectionPlan
 	ThingID child;
 	BodyPartRelativePosition relative_position{ BodyPartRelativePosition::AROUND };
 
-	static std::shared_ptr<RawObjectChecker> get_checker();
+	static RawObjectChecker* get_checker();
 	static BodyConnectionPlan from_json(const json& j);
 };
 
@@ -56,7 +56,7 @@ struct BodyPlan
 
 	PostureMap postures{ postures::DEFAULT_POSTURES };
 
-	static std::shared_ptr<RawObjectChecker> get_checker();
+	static RawObjectChecker* get_checker();
 	static BodyPlan from_json(const json& j);
 };
 
@@ -137,7 +137,7 @@ struct BodyGloss
 		return ID != other.ID;
 	}
 
-	static std::shared_ptr<RawObjectChecker> get_checker();
+	static RawObjectChecker* get_checker();
 	static BodyGloss from_json(const json& j);
 };
 
@@ -166,7 +166,7 @@ struct BodyMod
 	std::vector<RawMaster::Ref<BodyGloss>> add_body_gloss;
 	std::vector<RawMaster::RawID> remove_body_gloss;
 
-	static std::shared_ptr<RawObjectChecker> get_checker();
+	static RawObjectChecker* get_checker();
 	static BodyMod from_json(const json& j);
 };
 

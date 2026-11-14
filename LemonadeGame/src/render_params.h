@@ -41,12 +41,12 @@ struct RenderParams
 
 	UIPosition world_inner_frame_p1() const
 	{
-		return world_render_frame.pos + world_render_frame.padding;
+		return world_render_frame.pos + UIPosition(world_render_frame.padding);
 	}
 
 	UIPosition world_inner_frame_p2() const
 	{
-		return (world_render_frame.pos + static_cast<UIPosition>(world_render_frame.size)) - world_render_frame.padding;
+		return (world_render_frame.pos + static_cast<UIPosition>(world_render_frame.size)) - UIPosition(world_render_frame.padding);
 	}
 
 	UIPosition world_outer_frame_p1() const
@@ -61,7 +61,7 @@ struct RenderParams
 
 	UISize world_inner_frame_size() const
 	{
-		return world_render_frame.size - (world_render_frame.padding * 2);
+		return world_render_frame.size - UIPosition(world_render_frame.padding * 2);
 	}
 
 	UISize world_outer_frame_size() const

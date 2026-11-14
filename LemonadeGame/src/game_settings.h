@@ -13,6 +13,7 @@ namespace GameSettings
 	inline bool USE_SECOND_PERSON_PRONOUNS = true;
 	inline double WORLD_RELATIVE_SPEED = 30.0f;
 	inline bool MOUSE_MODE = false;
+	inline bool SHOW_MATERIAL_AMOUNTS = true;
 };
 
 #endif // !LEMONADE_GAME_SRC_GAME_SETTINGS_H

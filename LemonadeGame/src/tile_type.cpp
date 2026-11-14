@@ -6,36 +6,36 @@
 #include "snowy_utilities.h"
 #include <string>
 
-std::shared_ptr<RawObjectChecker> TileType::get_checker()
+RawObjectChecker* TileType::get_checker()
 {
-	static std::shared_ptr<RawObjectChecker> checker = std::make_shared<RawObjectChecker>();
+	static RawObjectChecker checker = RawObjectChecker();
 
-	checker->set_type_name("tile_type");
+	checker.set_type_name("tile_type");
 
-	checker->add_property("ID", RawValueType::RAW_String, true);
-	checker->add_property("noun", RawValueType::RAW_Custom, true, Noun::get_checker());
+	checker.add_property("ID", RawValueType::RAW_String, true);
+	checker.add_property("noun", RawValueType::RAW_Custom, true, Noun::get_checker());
 
-	checker->add_property("renderable", RawValueType::RAW_Custom, false, Renderable::get_checker());
+	checker.add_property("renderable", RawValueType::RAW_Custom, false, Renderable::get_checker());
 
-	checker->add_property("random_glyph", RawValueType::RAW_Array, false);
-	checker->add_property("random_fg", RawValueType::RAW_Array, false);
-	checker->add_property("random_bg", RawValueType::RAW_Array, false);
+	checker.add_property("random_glyph", RawValueType::RAW_Array, false);
+	checker.add_property("random_fg", RawValueType::RAW_Array, false);
+	checker.add_property("random_bg", RawValueType::RAW_Array, false);
 
-	checker->add_property("random_texture", RawValueType::RAW_Array, false);
-	checker->add_property("wall_texture", RawValueType::RAW_Array, false);
+	checker.add_property("random_texture", RawValueType::RAW_Array, false);
+	checker.add_property("wall_texture", RawValueType::RAW_Array, false);
 
-	checker->add_property("description", RawValueType::RAW_String, false);
+	checker.add_property("description", RawValueType::RAW_String, false);
 
-	checker->add_property("tags", RawValueType::RAW_Array, false);
-	checker->add_property("flags", RawValueType::RAW_Array, false);
-	checker->add_property("connects_to", RawValueType::RAW_Array, false);
+	checker.add_property("tags", RawValueType::RAW_Array, false);
+	checker.add_property("flags", RawValueType::RAW_Array, false);
+	checker.add_property("connects_to", RawValueType::RAW_Array, false);
 
-	checker->add_property("transforms_to", RawValueType::RAW_String, false);
-	checker->add_property("move_cost", RawValueType::RAW_Number, false);
+	checker.add_property("transforms_to", RawValueType::RAW_String, false);
+	checker.add_property("move_cost", RawValueType::RAW_Number, false);
 
-	checker->add_property("sleep_quality", RawValueType::RAW_Number, false);
+	checker.add_property("sleep_quality", RawValueType::RAW_Number, false);
 
-	return checker;
+	return &checker;
 }
 
 TileType TileType::from_json(const json& j)

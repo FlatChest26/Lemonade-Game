@@ -16,17 +16,17 @@ void Entity::copy_components_from_entity(const Entity& other)
 {
 	if (other.has_soul())
 	{
-		add_soul(new CreatureSoul(*other.get_soul()));
+		add_soul(new CreatureSoul(*other.soul()));
 	}
 
 	if (other.has_movable())
 	{
-		set_movable(new TileMovable(*other.get_movable()));
+		set_movable(new TileMovable(*other.movable()));
 	}
 
 	if (other.has_anatomy())
 	{
-		set_anatomy(new Anatomy(*other.get_anatomy()));
+		set_anatomy(new Anatomy(*other.anatomy()));
 	}
 
 	if (other.has_inventory())
@@ -37,10 +37,10 @@ void Entity::copy_components_from_entity(const Entity& other)
 		}
 		else
 		{
-			get_inventory()->clear_items(true);
+			inventory()->clear_items(true);
 		}
 
-		for (const auto& item : other.get_inventory()->get_items())
+		for (const auto& item : other.inventory()->get_items())
 		{
 			add_to_inventory(item);
 		}
@@ -48,22 +48,22 @@ void Entity::copy_components_from_entity(const Entity& other)
 
 	if (other.has_gait())
 	{
-		set_gait(new Gait(*other.get_gait()));
+		set_gait(new Gait(*other.gait()));
 	}
 
 	if (other.has_living())
 	{
-		set_living(new Living(*other.get_living()));
+		set_living(new Living(*other.living()));
 	}
 
 	if (other.is_person())
 	{
-		set_person(new Person(*other.get_person()));
+		set_person(new Person(*other.person()));
 	}
 
 	if (other.has_brain())
 	{
-		set_brain(new AIBrain(*other.get_brain()));
+		set_brain(new AIBrain(*other.ai_brain()));
 	}
 }
 
@@ -114,14 +114,14 @@ void Entity::fix_ownership()
 {
 	if (has_anatomy())
 	{
-		get_anatomy()->set_owner(this);
+		anatomy()->set_owner(this);
 	}
 
 	if (has_inventory())
 	{
-		get_inventory()->set_owner(this);
+		inventory()->set_owner(this);
 
-		for (auto& item : get_inventory()->get_items())
+		for (auto& item : inventory()->get_items())
 		{
 			item->set_location(this);
 		}
@@ -129,17 +129,17 @@ void Entity::fix_ownership()
 
 	if (has_living())
 	{
-		get_living()->set_owner(this);
+		living()->set_owner(this);
 	}
 
 	if (is_person())
 	{
-		get_person()->set_owner(this);
+		person()->set_owner(this);
 	}
 
 	if (has_brain())
 	{
-		get_brain()->set_entity(this);
+		ai_brain()->set_entity(this);
 	}
 
 	for (auto& action : m_action_queue)
@@ -196,9 +196,9 @@ Entity::Entity(Entity&& other)
 
 double Entity::move_speed() const
 {
-	if (auto gait = get_gait())
+	if (has_gait())
 	{
-		return gait->get_current_speed();
+		return gait()->get_current_speed();
 	}
 	else if (is_player())
 	{
@@ -221,7 +221,7 @@ int Entity::view_range() const
 {
 	if (has_field_of_view())
 	{
-		if (has_anatomy() && !get_anatomy()->has_body_parts({ .required_flags = BodyPartFlag::SIGHT }))
+		if (has_anatomy() && !anatomy()->has_body_parts({ .required_flags = BodyPartFlag::SIGHT }))
 		{
 			return 1;
 		}
@@ -236,7 +236,7 @@ size_t Entity::default_inventory_slots() const
 {
 	if (has_anatomy())
 	{
-		return get_anatomy()->count_body_parts({ .required_flags = BodyPartFlag::GRASP });
+		return anatomy()->count_body_parts({ .required_flags = BodyPartFlag::GRASP });
 	}
 
 	return 1;
@@ -246,7 +246,7 @@ size_t Entity::carry_slots() const
 {
 	if (has_item_def())
 	{
-		return get_item_def()->carry_slots;
+		return item_def()->carry_slots;
 	}
 
 	if (is_creature())
@@ -266,7 +266,7 @@ Inventory* Entity::get_holder_inventory() const
 {
 	if (auto holder = get_entity_holder())
 	{
-		return holder->get_inventory();
+		return holder->inventory();
 	}
 
 	return nullptr;
@@ -346,8 +346,8 @@ bool Entity::set_location(World* world, bool change_holder)
 	{
 		if (auto holder = get_entity_holder())
 		{
-			auto inventory = holder->get_inventory();
-			if (inventory && holder->get_inventory()->has_item(this))
+			auto inventory = holder->inventory();
+			if (inventory && holder->inventory()->has_item(this))
 			{
 				inventory->remove_item(this);
 			}
@@ -370,8 +370,8 @@ bool Entity::set_location(Entity* entity, bool change_holder)
 	{
 		if (auto holder = get_entity_holder())
 		{
-			auto inventory = holder->get_inventory();
-			if (inventory && holder->get_inventory()->has_item(this))
+			auto inventory = holder->inventory();
+			if (inventory && holder->inventory()->has_item(this))
 			{
 				inventory->remove_item(this);
 			}
@@ -403,17 +403,17 @@ std::string Entity::description() const
 
 	if (has_soul())
 	{
-		desc += get_soul()->description;
+		desc += soul()->description;
 	}
 
 	if (has_item_def())
 	{
-		desc += " " + get_item_def()->description;
+		desc += " " + item_def()->description;
 	}
 
 	if (has_species())
 	{
-		desc += " " + get_species()->description;
+		desc += " " + species()->description;
 	}
 
 	return grammar::trim(desc);
@@ -438,9 +438,9 @@ GrammarNoun Entity::display_noun() const
 		display_noun = GrammarNoun::from_string(nickname(), true);
 	}
 
-	else if (has_soul() && get_soul()->gender->uses_noun)
+	else if (has_soul() && soul()->gender->uses_noun)
 	{
-		auto& gender = get_soul()->gender;
+		auto& gender = soul()->gender;
 
 		Noun gender_noun = gender->mature_noun;
 
@@ -448,11 +448,11 @@ GrammarNoun Entity::display_noun() const
 
 		if (has_living())
 		{
-			if (get_living()->is_young())
+			if (living()->is_young())
 			{
-				if (has_species() && get_species()->gendered_nouns.has_immature_gendered_noun(gender->gender_type))
+				if (has_species() && species()->gendered_nouns.has_immature_gendered_noun(gender->gender_type))
 				{
-					gender_noun = get_species()->gendered_nouns.get_immature_gendered_noun(gender->gender_type);
+					gender_noun = species()->gendered_nouns.get_immature_gendered_noun(gender->gender_type);
 					species_mention = true;
 				}
 				else
@@ -462,9 +462,9 @@ GrammarNoun Entity::display_noun() const
 			}
 			else
 			{
-				if (has_species() && get_species()->gendered_nouns.has_mature_gendered_noun(gender->gender_type))
+				if (has_species() && species()->gendered_nouns.has_mature_gendered_noun(gender->gender_type))
 				{
-					gender_noun = get_species()->gendered_nouns.get_mature_gendered_noun(gender->gender_type);
+					gender_noun = species()->gendered_nouns.get_mature_gendered_noun(gender->gender_type);
 					species_mention = true;
 				}
 				else
@@ -485,7 +485,7 @@ GrammarNoun Entity::display_noun() const
 		}
 	}
 
-	if (has_living() && get_living()->is_dead())
+	if (has_living() && living()->is_dead())
 	{
 		display_noun = grammar::poss(display_noun) + " corpse";
 	}
@@ -568,11 +568,11 @@ void Entity::set_flag_to(EntityFlag flag, bool set_to)
 	}
 }
 
-Renderable Entity::get_renderable_at(Coord offset_x, Coord offset_y, Coord offset_z) const
+Renderable Entity::renderable_at(Coord offset_x, Coord offset_y, Coord offset_z) const
 {
 	if (has_furniture_def())
 	{
-		return get_furniture_def()->get_renderable_at(offset_x, offset_y, offset_z);
+		return furniture_def()->renderable_at(offset_x, offset_y, offset_z);
 	}
 
 	return renderable();
@@ -589,24 +589,24 @@ Renderable Entity::renderable() const
 
 	if (has_soul())
 	{
-		renderable = get_soul()->renderable();
+		renderable = soul()->renderable();
 	}
 
 	if (has_item_def())
 	{
-		renderable = get_item_def()->renderable;
+		renderable = item_def()->renderable;
 	}
 
 	if (has_species())
 	{
-		renderable = get_species()->renderable;
+		renderable = species()->renderable;
 	}
 
 	if (is_named() && is_name_known())
 	{
 		renderable.glyph = nickname()[0];
 
-		if (has_living() && !get_living()->is_adult())
+		if (has_living() && !living()->is_adult())
 		{
 			renderable.glyph = tolower(nickname()[0]);
 		}
@@ -618,7 +618,7 @@ Renderable Entity::renderable() const
 
 	if (has_soul())
 	{
-		renderable.fg = get_soul()->color;
+		renderable.fg = soul()->color;
 	}
 
 	return renderable;
@@ -628,17 +628,17 @@ Noun Entity::noun() const
 {
 	if (has_species())
 	{
-		return get_species()->noun;
+		return species()->noun;
 	}
 
 	if (has_item_def())
 	{
-		return get_item_def()->noun;
+		return item_def()->noun;
 	}
 
 	if (has_soul())
 	{
-		return get_soul()->noun();
+		return soul()->noun();
 	}
 
 	return Noun();
@@ -648,7 +648,7 @@ Name Entity::name() const
 {
 	if (has_soul())
 	{
-		return get_soul()->name;
+		return soul()->name;
 	}
 
 	return Name();
@@ -663,7 +663,7 @@ RawMaster::Ref<Pronouns> Entity::pronouns() const
 
 	if (has_soul())
 	{
-		return get_soul()->gender->pronouns;
+		return soul()->gender->pronouns;
 	}
 
 	return is_animate() ? RawMaster::get<Pronouns>("it/its") : RawMaster::get<Pronouns>("they/them");
@@ -703,21 +703,21 @@ bool Entity::is_on_floor() const
 		return true;
 	}
 
-	auto tile = world->get_tile(get_movable()->pos());
+	auto tile = world->get_tile(movable()->pos());
 
 	if (tile->has_floor() || tile->can_descend())
 	{
 		return true;
 	}
 
-	auto tile_below = world->get_tile(get_movable()->pos() + Position(0, 0, -1));
+	auto tile_below = world->get_tile(movable()->pos() + Position(0, 0, -1));
 
 	if (tile_below->has_ceiling())
 	{
 		return true;
 	}
 
-	return world->is_blocked(get_movable()->posx(), get_movable()->posy(), get_movable()->posz() - 1, this, -1);
+	return world->is_blocked(movable()->posx(), movable()->posy(), movable()->posz() - 1, this, -1);
 }
 
 bool Entity::is_being_held() const
@@ -731,7 +731,7 @@ bool Entity::can_interact_with(Entity* subject) const
 {
 	if (has_inventory())
 	{
-		if (get_inventory()->has_item(subject))
+		if (inventory()->has_item(subject))
 		{
 			return true;
 		}
@@ -746,17 +746,17 @@ bool Entity::can_interact_with(Entity* subject) const
 			}
 			else
 			{
-				is_adjacent = transforms::is_adjacent(get_movable()->pos(), subject->get_movable()->pos());
+				is_adjacent = transforms::is_adjacent(movable()->pos(), subject->movable()->pos());
 			}
 		}
 
-		if (!get_inventory()->has_item(subject) && get_inventory()->can_carry(subject) && is_adjacent)
+		if (!inventory()->has_item(subject) && inventory()->can_carry(subject) && is_adjacent)
 		{
 			return true;
 		}
 	}
 
-	if (subject->has_item_def() && subject->get_item_def()->is_consumable())
+	if (subject->has_item_def() && subject->item_def()->is_consumable())
 	{
 		return true;
 	}
@@ -770,7 +770,7 @@ std::vector<InteractionOption> Entity::get_interactions_with(Entity* subject)
 
 	if (has_inventory())
 	{
-		if (get_inventory()->has_item(subject))
+		if (inventory()->has_item(subject))
 		{
 			potential_actions.push_back({
 				.name = "drop",
@@ -789,11 +789,11 @@ std::vector<InteractionOption> Entity::get_interactions_with(Entity* subject)
 			}
 			else
 			{
-				is_adjacent = transforms::is_adjacent(get_movable()->pos(), subject->get_movable()->pos());
+				is_adjacent = transforms::is_adjacent(movable()->pos(), subject->movable()->pos());
 			}
 		}
 
-		if (!get_inventory()->has_item(subject) && get_inventory()->can_carry(subject) && is_adjacent)
+		if (!inventory()->has_item(subject) && inventory()->can_carry(subject) && is_adjacent)
 		{
 			potential_actions.push_back({
 				.name = "grab",
@@ -803,7 +803,7 @@ std::vector<InteractionOption> Entity::get_interactions_with(Entity* subject)
 		}
 	}
 
-	if (subject->has_item_def() && subject->get_item_def()->is_consumable())
+	if (subject->has_item_def() && subject->item_def()->is_consumable())
 	{
 		potential_actions.push_back({
 			.name = "consume",
@@ -823,10 +823,10 @@ Inventory* Entity::setup_inventory()
 	}
 	else
 	{
-		get_inventory()->set_max_slots(default_inventory_slots());
+		inventory()->set_max_slots(default_inventory_slots());
 	}
 
-	return get_inventory();
+	return inventory();
 }
 
 bool Entity::add_to_inventory(Entity* item)
@@ -855,7 +855,7 @@ bool Entity::add_to_inventory(Entity* item)
 		return false;
 	}
 
-	if (!get_inventory()->add_item(item))
+	if (!inventory()->add_item(item))
 	{
 		CERR("Item cannot be held! " << item->ID());
 		return false;
@@ -878,7 +878,7 @@ void Entity::remove_from_inventory(Entity* item, bool update_inventory)
 
 	if (update_inventory)
 	{
-		get_inventory()->remove_item(item);
+		inventory()->remove_item(item);
 	}
 
 	item->set_location(get_world(), false);
@@ -1045,14 +1045,14 @@ bool Entity::can_see(Coord x, Coord y, Coord z) const
 	}
 	else if (has_movable())
 	{
-		if ((get_movable()->pos() - Position(x, y, z)).length_squared() > (view_range() * view_range()))
+		if ((movable()->pos() - Position(x, y, z)).length_squared() > (view_range() * view_range()))
 		{
 			return false;
 		}
 
 		auto result = los::raycast3D(
 			get_world(),
-			get_movable()->pos(),
+			movable()->pos(),
 			Position(x, y, z),
 			los::RaycastParams
 			{
@@ -1074,7 +1074,7 @@ bool Entity::can_see(const Entity* entity) const
 	if (entity->is_hidden())
 		return false;
 
-	for (const auto& [px, py, pz] : entity->get_movable()->get_points())
+	for (const auto& [px, py, pz] : entity->movable()->get_points())
 	{
 		if (can_see(px, py, pz))
 			return true;
@@ -1143,7 +1143,7 @@ bool Entity::should_flash() const
 	if (auto world = get_world())
 	{
 		auto entities_in_tile = world->get_entities_at(
-			get_movable()->pos(), 
+			movable()->pos(), 
 			EntityFilter
 			{
 				.ignore_flags = EntityFlag::IS_HIDDEN,
@@ -1227,27 +1227,27 @@ void Entity::step(const TimeUnit& time_delta)
 
 			if (*get_component<FallTimer>() >= TimeUnit::from_seconds(1.0))
 			{
-				get_movable()->move(0, 0, -1);
+				movable()->move(0, 0, -1);
 				*get_component<FallTimer>() -= TimeUnit::from_seconds(1.0); // Reset the fall timer
 			}
 		}
 
 		if (is_being_held() && get_entity_holder()->has_movable())
 		{
-			get_movable()->pos() = get_entity_holder()->get_movable()->pos() - get_movable()->get_center();
-			get_movable()->direction() = get_entity_holder()->get_movable()->direction();
+			movable()->pos() = get_entity_holder()->movable()->pos() - movable()->get_center();
+			movable()->direction() = get_entity_holder()->movable()->direction();
 		}
 
 		if (is_being_grappled() && get_grapple_owner()->has_movable())
 		{
 			auto grapple_owner = get_grapple_owner();
-			get_movable()->pos() = escape_wall(transforms::get_closest_adjacent(get_movable()->pos(), grapple_owner->get_movable()->pos()));
+			movable()->pos() = escape_wall(transforms::get_closest_adjacent(movable()->pos(), grapple_owner->movable()->pos()));
 		}
 
 		// Try to escape wall
 		if (!is_being_held() && can_collide() && free_to_move())
 		{
-			get_movable()->pos() = escape_wall(get_movable()->pos());
+			movable()->pos() = escape_wall(movable()->pos());
 		}
 	}
 
@@ -1259,20 +1259,20 @@ void Entity::step(const TimeUnit& time_delta)
 
 	if (has_anatomy())
 	{
-		get_anatomy()->step(time_delta);
+		anatomy()->step(time_delta);
 	}
 	
 	if (has_living())
 	{
-		get_living()->step(time_delta);
+		living()->step(time_delta);
 	}
 
 	if (has_brain())
 	{
-		get_brain()->step(time_delta);
+		ai_brain()->step(time_delta);
 	}
 
-	if (has_brain() && has_living() && get_living()->is_dead())
+	if (has_brain() && has_living() && living()->is_dead())
 	{
 		remove_brain();
 	}

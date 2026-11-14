@@ -39,7 +39,7 @@ struct FurnitureTile
 	Position position;
 	Renderable renderable;
 
-	static std::shared_ptr<RawObjectChecker> get_checker();
+	static RawObjectChecker* get_checker();
 	static FurnitureTile from_json(const json& j);
 };
 
@@ -56,9 +56,9 @@ struct FurnitureDefinition
 
 	FurnitureFlag flags;
 
-	Renderable get_renderable_at(Coord x, Coord y, Coord z) const;
+	Renderable renderable_at(Coord x, Coord y, Coord z) const;
 
-	static std::shared_ptr<RawObjectChecker> get_checker();
+	static RawObjectChecker* get_checker();
 	static FurnitureDefinition from_json(const json& j);
 
 public:

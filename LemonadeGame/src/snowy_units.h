@@ -10,10 +10,6 @@ using json = nlohmann::json;
 
 namespace units
 {
-	using Temperature = temperature::kelvin_t;
-	using Length = length::centimeter_t;
-	using Mass = mass::gram_t;
-
 	template<typename T, typename U>
 	inline constexpr double in(U units)
 	{
@@ -25,6 +21,8 @@ namespace units
 	{
 		return units.convert<T>();
 	}
+
+	using Mass = mass::gram_t;
 
 	namespace mass
 	{
@@ -72,6 +70,8 @@ namespace units
 			return m;
 		}
 	}
+
+	using Length = length::centimeter_t;
 
 	namespace length
 	{
@@ -125,7 +125,7 @@ namespace units
 		}
 	}
 
-
+	using Temperature = temperature::kelvin_t;
 	namespace temperature
 	{
 		inline Temperature from_json(const json& j)
@@ -157,6 +157,112 @@ namespace units
 			return t;
 		}
 	}
+
+	UNIT_ADD(
+		specific_heat_capacity, joules_per_kilogram_kelvin, joules_per_kilogram_kelvin, j_per_kg_k,
+		compound_unit<energy::joules, inverse<mass::kilograms>, inverse<temperature::kelvin>>
+	)
+
+	using SpecificHeatCapacity = specific_heat_capacity::joules_per_kilogram_kelvin_t;
+
+	namespace specific_heat_capacity
+	{
+		inline SpecificHeatCapacity from_json(const json& j)
+		{
+			SpecificHeatCapacity s = SpecificHeatCapacity(0);
+
+			if (j.is_number())
+			{
+				s += SpecificHeatCapacity(j.get<double>());
+			}
+			else if (j.is_object())
+			{
+				if (j.contains("joules_per_kilogram_kelvin"))
+				{
+					s += specific_heat_capacity::joules_per_kilogram_kelvin_t(j.at("joules_per_kilogram_kelvin").get<double>());
+				}
+			}
+
+			return s;
+		}
+	}
+
+	using Density = density::kilograms_per_cubic_meter_t;
+
+	namespace density
+	{
+		inline Density from_json(const json& j)
+		{
+			Density d = Density(0);
+
+			if (j.is_number())
+			{
+				d += Density(j.get<double>());
+			}
+			else if (j.is_object())
+			{
+				if (j.contains("kilograms_per_cubic_meter"))
+				{
+					d += density::kilograms_per_cubic_meter_t(j.at("kilograms_per_cubic_meter").get<double>());
+				}
+
+				if (j.contains("grams_per_milliliter"))
+				{
+					d += density::grams_per_milliliter_t(j.at("grams_per_milliliter").get<double>());
+				}
+			}
+
+			return d;
+		}
+	}
+
+	UNIT_ADD(
+		molar_mass, grams_per_mole, grams_per_mole, g_per_mol,
+		compound_unit<mass::grams, inverse<substance::moles>>
+	)
+
+	UNIT_ADD(
+		molar_mass, kilograms_per_mole, kilograms_per_mole, kg_per_mol,
+		compound_unit<mass::kilograms, inverse<substance::moles>>
+	)
+
+	using MolarMass = molar_mass::grams_per_mole_t;
+
+	namespace molar_mass
+	{
+		inline MolarMass from_json(const json& j)
+		{
+			MolarMass m = MolarMass(0);
+
+			if (j.is_number())
+			{
+				m += MolarMass(j.get<double>());
+			}
+			else if (j.is_object())
+			{
+				if (j.contains("grams_per_mole"))
+				{
+					m += molar_mass::grams_per_mole_t(j.at("grams_per_mole").get<double>());
+				}
+
+				if (j.contains("kilograms_per_mole"))
+				{
+					m += molar_mass::kilograms_per_mole_t(j.at("kilograms_per_mole").get<double>());
+				}
+			}
+
+			return m;
+		}
+	}
+
+	UNIT_ADD(
+		thermal_mass, joules_per_kelvin, joules_per_kelvin, j_per_K,
+		compound_unit<energy::joules, inverse<temperature::kelvin>>
+	)
+
+	using ThermalMass = thermal_mass::joules_per_kelvin_t;
+
+	using Volume = volume::cubic_millimeter_t;
 }
 
 #endif // !LEMONADE_GAME_SRC_SNOWY_UNITS_H

@@ -17,7 +17,7 @@ bool AutoAttackAction::check_action() const
 		return false;
 	}
 
-	if (!get_subject()->has_living() || get_subject()->get_living()->is_dead())
+	if (!get_subject()->has_living() || get_subject()->living()->is_dead())
 	{
 		ACTION_CERR("Subject is dead!");
 		return false;
@@ -34,9 +34,9 @@ ActionResult AutoAttackAction::perform()
 
 	snowy::rng::WeightedVector<Entity*> weapons;
 
-	for (auto& item : get_actor()->get_inventory()->get_items())
+	for (auto& item : get_actor()->inventory()->get_items())
 	{
-		if (item->get_item_def()->has_weapon_info())
+		if (item->item_def()->has_weapon_info())
 		{
 			weapons.push_back(std::tuple(1.0, item));
 		}
@@ -56,7 +56,7 @@ ActionResult AutoAttackAction::perform()
 
 	snowy::rng::WeightedVector<const Attack*> attacks;
 
-	for (auto& attack : chosen_weapon->get_item_def()->weapon_info.attacks)
+	for (auto& attack : chosen_weapon->item_def()->weapon_info.attacks)
 	{
 		attacks.push_back(std::tuple(
 			attack.frequency == AttackFrequency::MAIN ? 10.0 : 1.0,
@@ -78,7 +78,7 @@ ActionResult AutoAttackAction::perform()
 
 	snowy::rng::WeightedVector<BodyPartID> body_parts;
 
-	auto anatomy = get_subject()->get_anatomy();
+	auto anatomy = get_subject()->anatomy();
 
 	for (const auto& bp_ID : anatomy->get_body_part_ids())
 	{
@@ -127,13 +127,13 @@ bool AttackAction::check_action() const
 		return false;
 	}
 
-	if (!get_subject()->get_anatomy()->has_body_part(m_attack_params.target_part))
+	if (!get_subject()->anatomy()->has_body_part(m_attack_params.target_part))
 	{
 		ACTION_CERR("Subject does not have the target part!");
 		return false;
 	}
 
-	if (m_attack_params.weapon && !get_actor()->get_inventory()->has_item(m_attack_params.weapon))
+	if (m_attack_params.weapon && !get_actor()->inventory()->has_item(m_attack_params.weapon))
 	{
 		ACTION_CERR("Actor does not have the weapon!");
 		return false;
@@ -149,7 +149,7 @@ TimeUnit AttackAction::get_action_length() const
 
 BodyPart* AttackAction::get_target_part() const
 {
-	return get_subject()->get_anatomy()->get_body_part(m_attack_params.target_part);
+	return get_subject()->anatomy()->get_body_part(m_attack_params.target_part);
 }
 
 ActionResult AttackAction::perform()
@@ -167,14 +167,14 @@ ActionResult AttackAction::perform()
 
 	if (attack_info->range == AttackRange::MELEE)
 	{
-		if (!(actor->get_movable()->pos() == subject->get_movable()->pos() || transforms::is_adjacent(actor->get_movable()->pos(), subject->get_movable()->pos())))
+		if (!(actor->movable()->pos() == subject->movable()->pos() || transforms::is_adjacent(actor->movable()->pos(), subject->movable()->pos())))
 		{
 			is_miss = true;
 		}
 		else
 		{
-			auto actor_agility = actor->get_living()->get_stat(attributes::AGILITY);
-			auto subject_agility = subject->get_living()->get_stat(attributes::AGILITY);
+			auto actor_agility = actor->living()->get_stat(attributes::AGILITY);
+			auto subject_agility = subject->living()->get_stat(attributes::AGILITY);
 
 			auto actor_roll = roll(1_d20, snowy::rng::generator) + (actor_agility.get_value() / 2);
 			auto subject_roll = roll(1_d20, snowy::rng::generator) + (subject_agility.get_value() / 2);

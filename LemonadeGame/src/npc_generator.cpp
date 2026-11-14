@@ -94,7 +94,7 @@ namespace npc_generator
 	}
 }
 
-Entity NPCGenerator::generate_npc()
+Entity* NPCGenerator::generate_npc()
 {
 	// Random color
 	color_t random_color = snowy::rng::get_weighted_random(npc_generator::ValidColors, snowy::rng::generator);
@@ -120,7 +120,7 @@ Entity NPCGenerator::generate_npc()
 	}
 	else
 	{
-		random_gender = std::make_shared<Gender>();
+		random_gender = new Gender();
 	}
 
 	// Generate name
@@ -194,12 +194,12 @@ Entity NPCGenerator::generate_npc()
 	m_npc_count++;
 
 	/*
-	COUT("Spawned in NPC: " << npc->ID());
-	COUT("\tName: " << npc->full_name());
-	COUT("\tGender: " << npc->get_soul()->gender_noun());
-	COUT("\tSpecies: " << npc->get_species()->noun);
-	COUT("\tAge: " << npc->get_living()->get_age());
-	COUT("\tLifespan: " << npc->get_living()->get_lifespan());
+		COUT("Spawned in NPC: " << npc->ID());
+		COUT("\tName: " << npc->full_name());
+		COUT("\tGender: " << npc->soul()->gender_noun());
+		COUT("\tSpecies: " << npc->species()->noun);
+		COUT("\tAge: " << npc->living()->get_age());
+		COUT("\tLifespan: " << npc->living()->get_lifespan());
 	*/
 
 	return npc;
