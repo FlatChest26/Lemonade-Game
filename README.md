@@ -1,6 +1,6 @@
 # Lemonade Game
 
-An NSFW ASCII life-sim roguelike where you sell lemonade for the lovely people of your neighborhood in order to pay rent, amongst other hijinks! 
+An ASCII life-sim roguelike where you sell lemonade for the lovely people of your neighborhood in order to pay rent, amongst other hijinks! 
 
 Inspired by games like Dwarf Fortress, Catacylsm: Dark Days Ahead, The Sims, and Degrees of Lewdity!
 
