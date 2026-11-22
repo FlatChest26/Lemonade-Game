@@ -1,18 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Config">
-      <UniqueIdentifier>{964f3287-55af-464d-b618-df04d9f4d3ac}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Raw Files">
-      <UniqueIdentifier>{60fc8671-427b-4f6b-9903-9173e98f5dd4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Raw Files\core">
-      <UniqueIdentifier>{639c3cea-da02-43ae-918e-7bcad71b8412}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Raw Files\mods">
-      <UniqueIdentifier>{595b515e-8e45-45f2-9493-35167bcc1d39}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Code">
       <UniqueIdentifier>{2ead198c-cb96-407d-a59d-ee044ea23c5e}</UniqueIdentifier>
     </Filter>
@@ -173,18 +161,6 @@
     <ClInclude Include="src\entity_builder.h">
       <Filter>Code\Header Files\Entity</Filter>
     </ClInclude>
-    <ClInclude Include="src\species.h">
-      <Filter>Code\Header Files\Entity\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="src\body_plan.h">
-      <Filter>Code\Header Files\Entity\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="src\body_part_type.h">
-      <Filter>Code\Header Files\Entity\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="src\body_part_components.h">
-      <Filter>Code\Header Files\Entity\Components</Filter>
-    </ClInclude>
     <ClInclude Include="src\name_set.h">
       <Filter>Code\Header Files\Data</Filter>
     </ClInclude>
@@ -215,9 +191,6 @@
     <ClInclude Include="src\keybinds.h">
       <Filter>Code\Header Files\Input</Filter>
     </ClInclude>
-    <ClInclude Include="src\item_def.h">
-      <Filter>Code\Header Files\Entity\Components</Filter>
-    </ClInclude>
     <ClInclude Include="src\game_log.h">
       <Filter>Code\Header Files\World</Filter>
     </ClInclude>
@@ -245,9 +218,6 @@
     <ClInclude Include="src\input_result.h">
       <Filter>Code\Header Files\Input</Filter>
     </ClInclude>
-    <ClInclude Include="src\furniture_def.h">
-      <Filter>Code\Header Files\Entity\Components</Filter>
-    </ClInclude>
     <ClInclude Include="src\special_actions.h">
       <Filter>Code\Header Files\Actions</Filter>
     </ClInclude>
@@ -266,20 +236,41 @@
     <ClInclude Include="src\action_option.h">
       <Filter>Code\Header Files\Actions</Filter>
     </ClInclude>
-    <ClInclude Include="src\material_def.h">
-      <Filter>Code\Header Files\Entity\Components</Filter>
-    </ClInclude>
     <ClInclude Include="src\ai_state.h">
       <Filter>Code\Header Files\AI</Filter>
     </ClInclude>
     <ClInclude Include="src\combat_actions.h">
       <Filter>Code\Header Files\Actions</Filter>
     </ClInclude>
-    <ClInclude Include="src\weapon_info.h">
-      <Filter>Code\Header Files\Entity\Components</Filter>
-    </ClInclude>
     <ClInclude Include="src\posture.h">
       <Filter>Code\Header Files\Entity\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\need_states.h">
+      <Filter>Code\Header Files\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="src\species.h">
+      <Filter>Code\Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="src\body_part_components.h">
+      <Filter>Code\Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="src\body_plan.h">
+      <Filter>Code\Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="src\body_part_type.h">
+      <Filter>Code\Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="src\furniture_def.h">
+      <Filter>Code\Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="src\item_def.h">
+      <Filter>Code\Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="src\material_def.h">
+      <Filter>Code\Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="src\weapon_info.h">
+      <Filter>Code\Header Files\Data</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -352,12 +343,6 @@
     <ClCompile Include="src\entity_builder.cpp">
       <Filter>Code\Source Files\Entity</Filter>
     </ClCompile>
-    <ClCompile Include="src\body_part_type.cpp">
-      <Filter>Code\Source Files\Entity\Components</Filter>
-    </ClCompile>
-    <ClCompile Include="src\species.cpp">
-      <Filter>Code\Source Files\Entity\Components</Filter>
-    </ClCompile>
     <ClCompile Include="src\name_set.cpp">
       <Filter>Code\Source Files\Data</Filter>
     </ClCompile>
@@ -379,14 +364,8 @@
     <ClCompile Include="src\body_part.cpp">
       <Filter>Code\Source Files\Entity\Components</Filter>
     </ClCompile>
-    <ClCompile Include="src\body_plan.cpp">
-      <Filter>Code\Source Files\Entity\Components</Filter>
-    </ClCompile>
     <ClCompile Include="src\keybinds.cpp">
       <Filter>Code\Source Files\Input</Filter>
-    </ClCompile>
-    <ClCompile Include="src\item_def.cpp">
-      <Filter>Code\Source Files\Entity\Components</Filter>
     </ClCompile>
     <ClCompile Include="src\game_log.cpp">
       <Filter>Code\Source Files\World</Filter>
@@ -398,9 +377,6 @@
       <Filter>Code\Source Files\AI</Filter>
     </ClCompile>
     <ClCompile Include="src\person.cpp">
-      <Filter>Code\Source Files\Entity\Components</Filter>
-    </ClCompile>
-    <ClCompile Include="src\furniture_def.cpp">
       <Filter>Code\Source Files\Entity\Components</Filter>
     </ClCompile>
     <ClCompile Include="src\special_actions.cpp">
@@ -415,9 +391,6 @@
     <ClCompile Include="src\consumable.cpp">
       <Filter>Code\Source Files\Entity\Components</Filter>
     </ClCompile>
-    <ClCompile Include="src\material_def.cpp">
-      <Filter>Code\Source Files\Entity\Components</Filter>
-    </ClCompile>
     <ClCompile Include="src\ai_state.cpp">
       <Filter>Code\Source Files\AI</Filter>
     </ClCompile>
@@ -427,16 +400,35 @@
     <ClCompile Include="src\combat_actions.cpp">
       <Filter>Code\Source Files\Actions</Filter>
     </ClCompile>
-    <ClCompile Include="src\weapon_info.cpp">
-      <Filter>Code\Source Files\Entity\Components</Filter>
-    </ClCompile>
     <ClCompile Include="src\posture.cpp">
       <Filter>Code\Source Files\Entity\Components</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="data\config\settings.cfg">
-      <Filter>Config</Filter>
-    </None>
+    <ClCompile Include="src\entity_filter.cpp">
+      <Filter>Code\Source Files\Entity</Filter>
+    </ClCompile>
+    <ClCompile Include="src\need_states.cpp">
+      <Filter>Code\Source Files\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\species.cpp">
+      <Filter>Code\Source Files\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\item_def.cpp">
+      <Filter>Code\Source Files\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\material_def.cpp">
+      <Filter>Code\Source Files\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\furniture_def.cpp">
+      <Filter>Code\Source Files\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\weapon_info.cpp">
+      <Filter>Code\Source Files\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\body_part_type.cpp">
+      <Filter>Code\Source Files\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="src\body_plan.cpp">
+      <Filter>Code\Source Files\Data</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -42,20 +42,29 @@ class TransformAction : public ActionWithLocation
 {
 protected:
 	bool m_open{ true };
+	std::vector<Position> m_tiles_to_transform;
+	bool m_is_invalid{ false };
 
 public:
 	TransformAction(Entity* actor, Coord loc_x, Coord loc_y, Coord loc_z, bool open) :
 		ActionWithLocation(actor, loc_x, loc_y, loc_z), m_open(open)
 	{
+		gather_transform_tiles();
 	}
+
 	TransformAction(Entity* actor, const Position& location, bool open) :
 		ActionWithLocation(actor, location), m_open(open)
 	{
+		gather_transform_tiles();
 	}
 
 	virtual bool check_action() const override;
 	virtual ActionResult perform();
+
 	static std::string action_name() { return "transform action"; }
+
+protected:
+	void gather_transform_tiles();
 };
 
 class OpenAction : public TransformAction

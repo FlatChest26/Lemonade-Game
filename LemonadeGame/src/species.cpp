@@ -1,5 +1,6 @@
 #include "species.h"
 #include "raw_master.h"
+#include "material_def.h"
 
 RawObjectChecker* Species::get_checker()
 {
@@ -10,6 +11,7 @@ RawObjectChecker* Species::get_checker()
 	checker.add_property("copy_from", RawValueType::RAW_String, false);
 
 	checker.add_property("ID", RawValueType::RAW_String, true);
+
 	checker.add_property("noun", RawValueType::RAW_Custom, true, Noun::get_checker());
 	checker.add_property("renderable", RawValueType::RAW_Custom, true, Renderable::get_checker());
 
@@ -49,6 +51,9 @@ RawObjectChecker* Species::get_checker()
 
 	checker.add_property("common_body_mods", RawValueType::RAW_Array, false);
 
+	checker.add_property("blood_material_id", RawValueType::RAW_String, false);
+	checker.add_property("attacks", RawValueType::RAW_Array, false);
+
 	return &checker;
 }
 
@@ -77,7 +82,6 @@ Species Species::from_json(const json& j)
 		}
 	}
 
-	s.ID = j.at("ID").get<std::string>();
 	s.noun = Noun::from_json(j.at("noun"));
 	s.renderable = Renderable::from_json(j.at("renderable"));
 
@@ -524,6 +528,34 @@ Species Species::from_json(const json& j)
 			{
 				CERR("Unrecognized body mod: " << body_mod_json);
 			}
+		}
+	}
+
+	if (checker->is_valid_property("blood_material_id", j))
+	{
+		auto material_id = j.at("blood_material_id").get<std::string>();
+		
+		if (!RawMaster::has<MaterialType>(material_id))
+		{
+			CERR("Unrecognized material id: " << material_id << " in `blood_material_id` field of species.");
+		}
+		else
+		{
+			s.blood_material_id = material_id;
+		}
+	}
+
+	if (checker->is_valid_property("attacks", j))
+	{
+		for (auto attack_json : j.at("attacks"))
+		{
+			if (!Attack::get_checker()->check_json(attack_json))
+			{
+				CERR("Invalid attack json! " << attack_json);
+				continue;
+			}
+
+			s.attacks.push_back(Attack::from_json(attack_json));
 		}
 	}
 

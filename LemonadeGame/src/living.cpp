@@ -60,6 +60,72 @@ color_t Stat::description_color() const
 	return color::get("gray");
 }
 
+bool Attraction::holds_attraction_for(const Entity* entity) const
+{
+	switch (feature_type)
+	{
+	case AttractionFeatureType::GENDER_TYPE:
+		if (!entity->has_soul())
+		{
+			return false;
+		}
+
+		return entity->soul()->gender->gender_type & std::get<GenderType>(attracted_feature);
+	case AttractionFeatureType::BODY_PART_CATEGORY:
+		if (!entity->has_anatomy())
+		{
+			return false;
+		}
+
+		return entity->anatomy()->has_body_parts(BodyPartFilter{ .required_categories = { std::get<BodyPartCategory>(attracted_feature) } });
+	case AttractionFeatureType::NEED:
+		if (!entity->has_living())
+		{
+			return false;
+		}
+
+		return entity->living()->has_need(std::get<StatID>(attracted_feature));
+	case AttractionFeatureType::TRAIT:
+		if (!entity->has_living())
+		{
+			return false;
+		}
+
+		return entity->living()->has_trait(std::get<StatID>(attracted_feature));
+	case AttractionFeatureType::SKILL:
+		if (!entity->has_living())
+		{
+			return false;
+		}
+		return entity->living()->has_skill(std::get<StatID>(attracted_feature));
+	case AttractionFeatureType::ATTRIBUTE:
+		if (!entity->has_living())
+		{
+			return false;
+		}
+
+		return entity->living()->has_attribute(std::get<StatID>(attracted_feature));
+	}
+
+	return false;
+}
+
+double Attraction::get_attraction_amount(const Entity* entity) const
+{
+	if (!holds_attraction_for(entity))
+		return 0.0;
+
+	double attraction_amount = base_amount;
+
+	if (modifier_callback)
+	{
+		attraction_amount *= modifier_callback(this, entity);
+	}
+
+	return attraction_amount;
+}
+
+
 Living::Living(Entity* owner, Age current_age, Age total_lifespan) :
 	m_owner(owner), m_current_age(current_age), m_total_lifespan(total_lifespan)
 {
@@ -141,7 +207,7 @@ void Living::add_defaults()
 					{ "sex-crazed",		80, 101, color::get("red") },
 				},
 			},
-			.change_rate = StatRate{ .amount = -1, .tick = TimeUnit::from_minutes(20.0) },
+			.change_rate = StatRate{ .amount = 1, .tick = TimeUnit::from_minutes(20.0) },
 			.starting_value = 0
 		}
 	);
@@ -407,6 +473,18 @@ void Living::remove_timer(const TimerID& ID)
 	m_timers.pop_back();
 }
 
+double Living::get_attractiveness(const Entity* other) const
+{
+	double attractiveness_rating = 0.0;
+
+	for (auto& attraction : m_attractions)
+	{
+		attractiveness_rating += attraction.get_attraction_amount(other);
+	}
+
+	return attractiveness_rating;
+}
+
 double Living::get_sleep_quality() const
 {
 	double sleep_quality = 1.0;
@@ -530,6 +608,12 @@ bool Living::take_consumable(const ConsumableEffect& effect)
 
 void Living::die()
 {
+	set_alive(false);
+	m_owner->reset_actions();
+}
+
+void Living::generic_death()
+{
 	auto n1 = m_owner->display_noun();
 	m_owner->game_message(
 		GameMessage(
@@ -538,7 +622,7 @@ void Living::die()
 		)
 	);
 	
-	set_alive(false);
+	die();
 }
 
 void Living::starve_to_death()
@@ -551,7 +635,7 @@ void Living::starve_to_death()
 		)
 	);
 
-	set_alive(false);
+	die();
 }
 
 void Living::die_of_dehydration()
@@ -564,7 +648,7 @@ void Living::die_of_dehydration()
 		)
 	);
 
-	set_alive(false);
+	die();
 }
 
 

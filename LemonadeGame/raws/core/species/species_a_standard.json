@@ -12,6 +12,7 @@
     "lifespan": { "min": 80, "max": 120 },
     "life_stages": { "child": 12, "adult": 18, "mature": 26 },
     "flags": [ "mundane", "part_of_society" ],
+    "blood_material_id": "blood",
     "gaits": [
       "//standing",
       { "type": "STAND", "name": "creep", "speed": 0.4 },
@@ -36,6 +37,28 @@
       { "body_mod": "MaleParts", "frequency": 100.0 },
       { "body_mod": "GirlCock", "frequency": 50.0 },
       { "body_mod": "BoyPussy", "frequency": 50.0 }
+    ],
+    "attacks": [
+      {
+        "range": "melee",
+        "name": "punch",
+        "damage_dice": "1d2",
+        "damage_type": "blunt",
+        "prepare": 1,
+        "recover": 1,
+        "frequency": "main",
+        "attack_verb": { "singular": "punches", "plural": "punch" }
+      },
+      {
+        "range": "melee",
+        "name": "kick",
+        "damage_dice": "1d4",
+        "damage_type": "blunt",
+        "prepare": 2,
+        "recover": 2,
+        "frequency": "secondary",
+        "attack_verb": { "singular": "kicks", "plural": "kick" }
+      }
     ]
   },
   {

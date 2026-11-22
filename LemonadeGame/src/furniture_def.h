@@ -36,7 +36,6 @@ inline std::map<std::string, FurnitureFlag> AllFurnitureFlags
 
 struct FurnitureTile
 {
-	Position position;
 	Renderable renderable;
 
 	static RawObjectChecker* get_checker();
@@ -48,7 +47,7 @@ struct FurnitureDefinition
 	std::string ID;
 
 	Size size;
-	std::vector<FurnitureTile> tiles;
+	std::unordered_map<Position, FurnitureTile> tiles;
 
 	RawMaster::Ref<ItemDefinition> item_definition;
 
@@ -56,6 +55,7 @@ struct FurnitureDefinition
 
 	FurnitureFlag flags;
 
+	bool has_renderable_at(Coord x, Coord y, Coord z) const;
 	Renderable renderable_at(Coord x, Coord y, Coord z) const;
 
 	static RawObjectChecker* get_checker();

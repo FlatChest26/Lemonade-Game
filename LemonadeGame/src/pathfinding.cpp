@@ -168,13 +168,6 @@ namespace Pathfinding
 		{
 			path.push_back(checking_node->pos);
 
-			auto tile_at = tile_map->get_tile(checking_node->pos);
-
-			if (tile_at->is_blocked() && tile_at->can_open())
-			{
-				path.push_back(checking_node->pos);
-			}
-
 			if (show_debug)
 			{
 				DebugInfo::set_debug_tile(checking_node->pos, DebugInfo::DebugTile{ .renderable = { .bg = color::get("yellow") }, .change_bg = true });

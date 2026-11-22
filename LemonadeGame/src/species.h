@@ -2,10 +2,10 @@
 
 #include "snowy_grammar.h"
 #include "renderable.h"
-#include "snowy_database.h"
 #include "body_plan.h"
 #include "gait.h"
 #include "living.h"
+#include "weapon_info.h"
 
 #include "raw_master.h"
 #include "raw_object_checker.h"
@@ -83,7 +83,6 @@ struct GenderedNouns
 
 using SpeciesID = std::string;
 
-
 struct Species
 {
 	SpeciesID ID;
@@ -111,6 +110,9 @@ struct Species
 	double frequency{ 1.0f }; // How often this species is randomly generated
 
 	SpeciesFlag flags{ SpeciesFlag::NONE };
+
+	RawMaster::RawID blood_material_id{ "blood" };
+	std::vector<Attack> attacks;
 
 	std::unordered_map<GenderType, double> common_genders;
 	std::vector<std::tuple<RawMaster::Ref<BodyMod>, double>> common_body_mods;

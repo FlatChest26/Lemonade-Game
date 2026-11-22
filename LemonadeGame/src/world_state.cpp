@@ -80,31 +80,25 @@ void WorldGameState::new_game()
 
 	m_world->add_entity_at(
 		EntityBuilder::create_item(
-			"DILDO_1", { .item_definition = RawMaster::get<ItemDefinition>("DILDO") }
+			"DILDO_1", { .item_definition = RawMaster::get<ItemDefinition>("dildo") }
 		),
 		lemonade_stand_pos + Position(-1, 2, 0)
 	);
 
 	m_world->add_entity_at(
 		EntityBuilder::create_item(
-			"LEMONADE_GLASS_1", { .item_definition = RawMaster::get<ItemDefinition>("LEMONADE_GLASS") }
+			"LEMONADE_GLASS_1", { .item_definition = RawMaster::get<ItemDefinition>("lemonade_glass") }
 		),
 		lemonade_stand_pos + Position(-1, 0, 0)
 	);
 
 	m_world->add_entity_at(
 		EntityBuilder::create_item(
-			"KNIFE_1", { .item_definition = RawMaster::get<ItemDefinition>("KNIFE") }
+			"KNIFE_1", { .item_definition = RawMaster::get<ItemDefinition>("knife") }
 		),
 		lemonade_stand_pos + Position(-2, 1, 0)
 	);
 
-	m_world->add_entity_at(
-		EntityBuilder::create_item(
-			"KNIFE_2", { .item_definition = RawMaster::get<ItemDefinition>("KNIFE") }
-		),
-		lemonade_stand_pos + Position(-2, 2, 0)
-	);
 
 	m_world->add_entity_at(
 		EntityBuilder::create_furniture(
@@ -130,7 +124,7 @@ void WorldGameState::new_game()
 				.body_mods = { RawMaster::get<BodyMod>("MaleParts") },
 				.starting_cash = Currency::from_dollars(250),
 				.initial_stats = {
-					{ needs::AROUSAL, 3 },
+					{ needs::AROUSAL, 80 },
 					{ needs::HUNGER, 73 },
 					{ needs::HYGIENE, 18 },
 					{ needs::FATIGUE, 12 },
@@ -138,10 +132,74 @@ void WorldGameState::new_game()
 				}
 			}
 		), 
-		lemonade_stand_pos + Position(4, 1, 0)
+		Position(22, 24, 0)
 	);
 
 	Snow->learn_name();
+	
+
+	auto living = Snow->living();
+
+	living->add_attraction(Attraction{
+			.allure_type = AllureType::LEWD | AllureType::BEAUTY,
+			.feature_type = AttractionFeatureType::GENDER_TYPE,
+			.attracted_feature = GenderType::FEMININE | GenderType::MASCULINE | GenderType::EPICENE,
+			.base_amount = 20.0
+	});
+
+	living->add_attraction(Attraction{
+		.allure_type = AllureType::KINKY,
+		.feature_type = AttractionFeatureType::BODY_PART_CATEGORY,
+		.attracted_feature = BodyPartCategory::PENIS,
+		.base_amount = 1.0,
+		.modifier_callback = [](const Attraction* attraction, const Entity* entity)
+			{	
+				double mod = 1.0;
+					
+				for (const auto& bp : entity->anatomy()->get_body_parts(BodyPartFilter{ .required_categories = { std::get<BodyPartCategory>(attraction->attracted_feature) }}))
+				{
+					mod = std::max(mod, bp->get_relative_size());
+				}
+
+				return mod;
+			}
+	});
+
+	living->add_attraction(Attraction{
+			.allure_type = AllureType::KINKY,
+			.feature_type = AttractionFeatureType::BODY_PART_CATEGORY,
+			.attracted_feature = BodyPartCategory::BUTT,
+			.base_amount = 2.0,
+			.modifier_callback = [](const Attraction* attraction, const Entity* entity)
+				{
+					double mod = 1.0;
+
+					for (const auto& bp : entity->anatomy()->get_body_parts(BodyPartFilter{ .required_categories = { std::get<BodyPartCategory>(attraction->attracted_feature) } }))
+					{
+						mod = std::max(mod, bp->get_relative_size());
+					}
+
+					return mod;
+				}
+	});
+
+	living->add_attraction(Attraction{
+			.allure_type = AllureType::KINKY,
+			.feature_type = AttractionFeatureType::BODY_PART_CATEGORY,
+			.attracted_feature = BodyPartCategory::BREASTS,
+			.base_amount = 1.0,
+			.modifier_callback = [](const Attraction* attraction, const Entity* entity)
+				{
+					double mod = 1.0;
+
+					for (const auto& bp : entity->anatomy()->get_body_parts(BodyPartFilter{ .required_categories = { std::get<BodyPartCategory>(attraction->attracted_feature) } }))
+					{
+						mod = std::max(mod, bp->get_relative_size());
+					}
+
+					return mod;
+				}
+		});
 
 	// Build Map
 	MapBuilder::set_floor(tile_map, RawMaster::get<TileType>("TILE_GRASS"), 0);
@@ -183,6 +241,7 @@ void WorldGameState::new_game()
 		{ 'B', MappingType{ .tile = "TILE_PLAIN_FLOOR", .furniture = "BED" } },
 		{ 'L', MappingType{ .tile = "TILE_GRASS",  .furniture = "LEMONADE_STAND" } },
 		{ 'b', MappingType{ .tile = "TILE_PLAIN_FLOOR", .material = "blood", .material_amount = 7}},
+		{ '%', MappingType{ .tile = "TILE_SIDEWALK", .item = "rotisserie_chicken" }},
 
 	};
 
@@ -210,15 +269,15 @@ void WorldGameState::new_game()
 				"^.......#.......#",
 				"^.......#.......#",
 				"^^..^^^^##=====##",
-				"  u u     _____             ",
-				"  uu uu uu_____             ",
-				"   uuu uuu_____             ",
-				"    [[[[[[_____             ",
-				"[[[[[.....__________________",
-				"[bb[[.[[[[__________________",
-				"[b[[[.[   __________________",
-				"[bbb..[   __________________",
-				"[[[[[[[                     ",
+				"  u u     _%%__             ",
+				"  uu uu uu_%%__             ",
+				"   uuu uuu_%%__             ",
+				"          _____             ",
+				"          __________________",
+				"          __________________",
+				"          __________________",
+				"          __________________",
+				"                            ",
 			},
 			{
 				"VVVVVVVVVVVVV#[[#",
@@ -339,7 +398,10 @@ void WorldGameState::update(double delta_time)
 	}
 	}
 
-	if ((m_tick_speed == TickSpeed::TURN_BASED || GameSettings::INSTANT_ACTIONS) && does_player_exist() && get_player()->has_current_action())
+	if (does_player_exist() && (!get_player()->can_move_on_own() || get_player()->has_action_cooldown()))
+		step_count = std::max(1, step_count);
+
+	if (step_count < 1 && (m_tick_speed == TickSpeed::TURN_BASED || GameSettings::INSTANT_ACTIONS) && does_player_exist() && get_player()->has_current_action())
 	{
 		auto current_action = get_player()->get_current_action();
 		step(current_action->remaining_action_length());
@@ -635,6 +697,11 @@ void WorldGameState::game_message(const GameMessage& msg)
 	if (!m_log)
 	{
 		CERR("No game log attatched to world state!");
+		return;
+	}
+
+	if (msg.has_origin() && does_player_exist() && !get_player()->can_see(msg.origin))
+	{
 		return;
 	}
 

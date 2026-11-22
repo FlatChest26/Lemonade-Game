@@ -1,6 +1,7 @@
 #include "direction_action.h"
 #include "location_actions.h"
 #include "interactions.h"
+#include "special_actions.h"
 
 #include "world.h"
 #include "entity.h"
@@ -84,14 +85,18 @@ ActionResult BumpAction::perform()
 		}
 	}
 
-	if (actor->is_being_grappled())
+	if (!actor->can_move_on_own())
 	{
 		return ActionResult(false);
 	}
 
 	if (actor->is_grappling_other())
 	{
-		actor->get_grapple_target()->start_action(QueuedAction(new MovementAction(actor->get_grapple_target(), m_dx, m_dy, m_dz)));
+		return ActionResult
+		{
+			.success = true,
+			.next = new ReleaseGrappleAction(actor)
+		};
 	}
 
 	return ActionResult

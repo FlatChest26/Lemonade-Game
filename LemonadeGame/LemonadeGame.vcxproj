@@ -192,6 +192,7 @@
     <ClInclude Include="src\interactions.h" />
     <ClInclude Include="src\line_of_sight.h" />
     <ClInclude Include="src\material_def.h" />
+    <ClInclude Include="src\need_states.h" />
     <ClInclude Include="src\posture.h" />
     <ClInclude Include="src\special_actions.h" />
     <ClInclude Include="src\name_set.h" />
@@ -233,6 +234,7 @@
     <ClCompile Include="src\direction_action.cpp" />
     <ClCompile Include="src\entity.cpp" />
     <ClCompile Include="src\entity_builder.cpp" />
+    <ClCompile Include="src\entity_filter.cpp" />
     <ClCompile Include="src\fov.cpp" />
     <ClCompile Include="src\furniture_def.cpp" />
     <ClCompile Include="src\gait.cpp" />
@@ -250,6 +252,7 @@
     <ClCompile Include="src\interactions.cpp" />
     <ClCompile Include="src\material_def.cpp" />
     <ClCompile Include="src\name_set.cpp" />
+    <ClCompile Include="src\need_states.cpp" />
     <ClCompile Include="src\npc_generator.cpp" />
     <ClCompile Include="src\pathfinding.cpp" />
     <ClCompile Include="src\person.cpp" />
@@ -268,9 +271,6 @@
     <ClCompile Include="src\weapon_info.cpp" />
     <ClCompile Include="src\world.cpp" />
     <ClCompile Include="src\world_state.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="data\config\settings.cfg" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\LemonadeEngine\LemonadeEngine.vcxproj">

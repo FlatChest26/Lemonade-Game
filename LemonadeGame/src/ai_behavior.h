@@ -17,7 +17,7 @@ class Action;
 class Behavior
 {
 public:
-	virtual bool perform(AIState* state, const TimeUnit& delta = TimeUnit::none()) = 0; // returns true when behavior is complete
+	virtual bool perform(AIState* state, const TimeUnit& delta) = 0; // returns true when behavior is complete
 };
 
 class Behavior_MoveTo : public Behavior
@@ -47,7 +47,8 @@ public:
 	}
 
 	void set_move_to(Position move_to) { m_move_to_pos = move_to; m_current_pos = Position(-1, -1, -1); }
-	virtual bool perform(AIState* state, const TimeUnit& delta = TimeUnit::none()) override;
+
+	virtual bool perform(AIState* state, const TimeUnit& delta) override;
 };
 
 struct Behavior_Wander : public Behavior
@@ -79,7 +80,7 @@ public:
 	{
 	}
 
-	virtual bool perform(AIState* state, const TimeUnit& delta = TimeUnit::none()) override;
+	virtual bool perform(AIState* state, const TimeUnit& delta) override;
 };
 
 struct Behavior_GetToEntity : public Behavior
@@ -99,7 +100,7 @@ public:
 	{
 	}
 
-	virtual bool perform(AIState* state, const TimeUnit& delta = TimeUnit::none()) override;
+	virtual bool perform(AIState* state, const TimeUnit& delta) override;
 };
 
 
@@ -120,7 +121,46 @@ public:
 	{
 	}
 
-	virtual bool perform(AIState* state, const TimeUnit& delta = TimeUnit::none()) override;
+	virtual bool perform(AIState* state, const TimeUnit& delta) override;
+};
+
+struct EntityFilter;
+
+struct Behavior_SearchForEntity : public Behavior
+{
+protected:
+	EntityFilter* m_filter;
+	Coord m_search_radius;
+
+	std::function<bool(Entity*)> m_is_valid_callback;
+	std::function<double(Entity*)> m_get_weight_callback;
+
+	std::function<void(Entity*)> m_on_found_callback;
+
+	int m_search_attempts{ 20 };
+
+public:
+	struct initializer
+	{
+		EntityFilter* filter;
+		Coord search_radius{ 10 };
+
+		std::function<bool(Entity*)> is_valid_callback;
+		std::function<double(Entity*)> get_weight_callback;
+
+		std::function<void(Entity*)> on_found_callback;
+	};
+	
+	Behavior_SearchForEntity(initializer init):
+		m_filter(init.filter), m_search_radius(init.search_radius),
+		m_is_valid_callback(init.is_valid_callback), 
+		m_get_weight_callback(init.get_weight_callback),
+		m_on_found_callback(init.on_found_callback)
+	{}
+
+	~Behavior_SearchForEntity();
+
+	virtual bool perform(AIState* state, const TimeUnit& delta) override;
 };
 
 #endif // !LEMONADE_GAME_SRC_AI_BEHAVIOR_H

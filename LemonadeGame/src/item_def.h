@@ -72,7 +72,7 @@ struct ItemDefinition
 public:
 	// -- Flags -- //
 	bool is_consumable() const { return flags & ItemFlags::IS_CONSUMABLE; }
-	bool has_weapon_info() const { return flags & ItemFlags::HAS_WEAPON_INFO; }
+	bool is_weapon() const { return flags & ItemFlags::HAS_WEAPON_INFO; }
 };
 
 #endif // !LEMONADE_GAME_SRC_ITEM_DEF_H

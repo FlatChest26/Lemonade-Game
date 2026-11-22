@@ -94,7 +94,6 @@ protected:
 
 	// Components //
 
-	Allure m_allure;
 	Health m_health;
 
 public:
@@ -113,8 +112,7 @@ public:
 	Health& health() { return m_health; }
 	const Health& health() const { return m_health; }
 
-	Allure& allure() { return m_allure; }
-	const Allure& allure() const { return m_allure; }
+	const InterestingNames& interesting_names() const { return m_type->interesting_names; }
 
 	void take_damage(const Damage& damage);
 
@@ -133,28 +131,6 @@ public:
 	BodyPartCategory category() const { return m_type->category; }
 
 	virtual std::string prefix() const override;
-
-	// -- Allure -- //
-
-	StatInt_t get_lewdness() const
-	{
-		return m_allure.lewdness * m_type->base_allure.lewdness;
-	}
-
-	StatInt_t get_suggestiveness() const
-	{
-		return m_allure.suggestiveness * m_type->base_allure.suggestiveness;
-	}
-
-	StatInt_t get_kinkiness() const
-	{
-		return m_allure.kinkiness * m_type->base_allure.kinkiness;
-	}
-
-	StatInt_t get_beauty() const
-	{
-		return m_allure.beauty * m_type->base_allure.beauty;
-	}
 
 public:
 	// -- Flag Checks -- //

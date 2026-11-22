@@ -8,6 +8,7 @@
 #include "snowy_rng.h"
 #include "world.h"
 #include "ai_state.h"
+#include "entity_filter.h"
 
 bool Behavior_MoveTo::perform(AIState* state, const TimeUnit& delta)
 {
@@ -92,23 +93,17 @@ bool Behavior_MoveTo::perform(AIState* state, const TimeUnit& delta)
 		m_path = Pathfinding::compute_path(tile_map, m_current_pos, m_move_to_pos, entity);
 	}
 
-	
 	bool close_behind = false;
 
-	if (tile_map->in_bounds(m_previous_pos))
+	if (tile_map->in_bounds(m_previous_pos) && m_current_pos != m_previous_pos)
 	{
-		auto tile = tile_map->get_tile(m_previous_pos);
-		if (tile->can_close())
+		if (tile_map->get_tile(m_previous_pos)->can_close())
 		{
-			close_behind = true;
+			close_behind = entity->start_action(new CloseAction(entity, m_previous_pos));
 		}
 	}
 	
-	if (close_behind)
-	{
-		entity->start_action(new CloseAction(entity, m_previous_pos));
-	}
-	else if (!m_path.empty())
+	if (!m_path.empty() && !close_behind)
 	{
 		m_current_pos = m_path.back();
 		m_path.pop_back();
@@ -263,6 +258,7 @@ bool Behavior_GetToEntity::perform(AIState* state, const TimeUnit& delta)
 	return false;
 }
 
+
 bool Behavior_GetAdjacentToEntity::perform(AIState* state, const TimeUnit& delta)
 {
 	auto entity = state->get_entity();
@@ -333,6 +329,80 @@ bool Behavior_GetAdjacentToEntity::perform(AIState* state, const TimeUnit& delta
 			}
 		})
 	);
+
+	return false;
+}
+
+Behavior_SearchForEntity::~Behavior_SearchForEntity()
+{
+	delete m_filter;
+}
+
+bool Behavior_SearchForEntity::perform(AIState* state, const TimeUnit& delta)
+{
+	if (m_search_attempts < 1)
+		return true;
+
+	snowy::rng::WeightedVector<Entity*> potential_targets;
+
+	for (auto& other_entity : state->get_world()->get_entities(*m_filter))
+	{
+		if (m_is_valid_callback && !m_is_valid_callback(other_entity))
+			continue;
+
+		double weight = 1.0;
+
+		if (m_get_weight_callback)
+		{
+			weight = m_get_weight_callback(other_entity);
+		}
+
+
+		if (weight < DBL_EPSILON)
+			continue;
+
+		potential_targets.push_back(std::tuple(weight, other_entity));
+	}
+
+	if (!potential_targets.empty())
+	{
+		Entity* selected_entity = snowy::rng::get_weighted_random(potential_targets, snowy::rng::generator);
+
+		m_on_found_callback(selected_entity);
+		return true;
+	}
+	else // Wander somewhere else to look
+	{
+		auto tile_map = state->get_tile_map();
+		auto entity = state->get_entity();
+
+		std::uniform_int_distribution<Coord> search_distribution(-m_search_radius, m_search_radius);
+		Position search_location{ -1, -1, -1 };
+
+		int checking_attempts = 10;
+
+		while (!tile_map->in_bounds(search_location))
+		{
+			auto center = entity->movable()->pos();
+
+			search_location = center + Position{
+				search_distribution(snowy::rng::generator),
+				search_distribution(snowy::rng::generator),
+				0
+			};
+
+			checking_attempts--;
+
+			if (checking_attempts < 1)
+			{
+				break;
+			}
+		}
+
+		state->add_behavior(new Behavior_MoveTo({ .move_to_pos = search_location }));
+		m_search_attempts--;
+	}
+
 
 	return false;
 }

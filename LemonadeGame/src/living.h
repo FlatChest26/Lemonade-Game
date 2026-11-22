@@ -7,6 +7,10 @@
 #include "time_units.h"
 #include "stat_values.h"
 #include "anatomy.h"
+#include "snowy_grammar.h"
+
+
+#include <variant>
 
 class Entity;
 struct ConsumableEffect;
@@ -68,6 +72,20 @@ public:
 	const StatInfo& info() const { return m_info; }
 
 	StatInt_t get_value() const;
+
+	StatInt_t get_max_value() const { return m_info.max_value; }
+	StatInt_t get_min_value() const { return m_info.min_value; }
+
+	double get_positive_percentage() const
+	{
+		return static_cast<double>(std::max(get_value(), 0)) / get_max_value();
+	}
+
+	double get_negative_percentage() const
+	{
+		return static_cast<double>(std::min(get_value(), 0)) / get_min_value();
+	}
+
 	void set_value(StatInt_t value);
 	void add_value(StatInt_t value);
 
@@ -116,6 +134,44 @@ struct StatTimer
 	}
 };
 
+enum class AllureType : uint8_t
+{
+	NONE = 0,
+
+	LEWD = 1 << 0,
+	SUGGESTIVE = 1 << 1,
+	KINKY = 1 << 2,
+	BEAUTY = 1 << 3,
+};
+
+IS_FLAG_ENUM(AllureType);
+
+enum class AttractionFeatureType : uint8_t
+{
+	GENDER_TYPE,
+	BODY_PART_CATEGORY,
+	NEED,
+	TRAIT,
+	SKILL,
+	ATTRIBUTE,
+};
+
+using AttractedFeature = std::variant<GenderType, StatID, BodyPartCategory>;
+
+struct Attraction
+{
+	AllureType allure_type;
+
+	AttractionFeatureType feature_type;
+	AttractedFeature attracted_feature;
+
+	double base_amount{ 1.0 };
+	std::function<double(const Attraction*, const Entity*)> modifier_callback;
+
+	bool holds_attraction_for(const Entity* entity) const;
+	double get_attraction_amount(const Entity* entity) const;
+};
+
 class Living
 {
 protected:
@@ -134,8 +190,10 @@ protected:
 	std::vector<StatTimer> m_timers;
 	std::unordered_map<TimerID, size_t> m_timers_by_id;
 
-	bool m_asleep = false;
-	bool m_alive = true;
+	std::vector<Attraction> m_attractions;
+
+	bool m_alive{ true };
+	bool m_awake{ true };
 
 	int m_required_important_parts{ 0 };
 
@@ -163,8 +221,10 @@ public:
 		return m_total_lifespan < static_cast<Age_t>(INFINITY);
 	}
 
-
 public:
+
+	// -- Stats -- //
+
 	void add_defaults();
 
 	struct StatInitializer
@@ -180,7 +240,7 @@ public:
 
 	bool has_stat(const StatID& ID) const
 	{
-		return m_stats.find(ID) != m_stats.end();
+		return m_stats.contains(ID);
 	}
 
 	Stat& get_stat(const StatID& ID)
@@ -203,10 +263,42 @@ public:
 		return m_stats.at(ID);
 	}
 
-	std::vector<StatID> get_needs() const { return m_needs; }
-	std::vector<StatID> get_traits() const { return m_traits; }
-	std::vector<StatID> get_attributes() const { return m_attributes; }
-	std::vector<StatID> get_skills() const { return m_skills; }
+	bool has_need(const StatID& ID) const
+	{
+		if (!has_stat(ID))
+			return false;
+
+		return get_stat(ID).info().type == StatType::Need;
+	}
+
+	bool has_skill(const StatID& ID) const
+	{
+		if (!has_stat(ID))
+			return false;
+
+		return get_stat(ID).info().type == StatType::Skill;
+	}
+
+	bool has_attribute(const StatID& ID) const
+	{
+		if (!has_stat(ID))
+			return false;
+
+		return get_stat(ID).info().type == StatType::Attribute;
+	}
+
+	bool has_trait(const StatID& ID) const
+	{
+		if (!has_stat(ID))
+			return false;
+
+		return get_stat(ID).info().type == StatType::Trait;
+	}
+
+	const std::vector<StatID>& get_needs() const { return m_needs; }
+	const std::vector<StatID>& get_traits() const { return m_traits; }
+	const std::vector<StatID>& get_attributes() const { return m_attributes; }
+	const std::vector<StatID>& get_skills() const { return m_skills; }
 
 public:
 	// -- Timers -- //
@@ -223,13 +315,30 @@ public:
 	const StatTimer& get_timer(TimerID ID) const { return m_timers.at(m_timers_by_id.at(ID)); }
 
 public:
+	// -- Attractions -- //
+
+	void add_attraction(const Attraction& attraction)
+	{
+		m_attractions.push_back(attraction);
+	}
+
+	double get_attractiveness(const Entity* other) const;
+
+
+public:
+
+	bool is_conscious() const { return is_alive() && is_awake(); }
+	bool is_unconscious() const { return !is_conscious(); }
 
 	// Sleep //
 
-	void set_asleep(bool asleep) { m_asleep = asleep; }
+	void set_asleep(bool asleep)
+	{
+		m_awake = !asleep;
+	}
 
-	bool is_asleep() const { return m_asleep; }
-	bool is_awake() const { return !m_asleep; }
+	bool is_awake() const { return m_awake; }
+	bool is_asleep() const { return !m_awake; }
 
 	double get_sleep_quality() const;
 
@@ -238,7 +347,10 @@ public:
 	bool is_alive() const { return m_alive; }
 	bool is_dead() const { return !m_alive; }
 
-	void set_alive(bool alive) { m_alive = alive; }
+	void set_alive(bool alive)
+	{
+		m_alive = alive;
+	}
 
 	bool can_sleep() const;
 	bool can_wake_up() const;
@@ -248,12 +360,14 @@ public:
 
 	// Utilities //
 
-	bool can_act() const { return is_alive() && is_awake(); }
+	bool can_act() const { return is_conscious(); }
 	bool take_consumable(const ConsumableEffect& effect);
+
 
 	// Actions //
 
 	void die();
+	void generic_death();
 	void starve_to_death();
 	void die_of_dehydration();
 

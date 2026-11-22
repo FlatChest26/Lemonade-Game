@@ -23,7 +23,6 @@ FurnitureTile FurnitureTile::from_json(const json& j)
 
 	FurnitureTile f;
 
-	f.position = Position(j.at("position").at(0).get<Coord>(), j.at("position").at(1).get<Coord>(), j.at("position").at(2).get<Coord>());
 	f.renderable = Renderable::from_json(j.at("renderable"));
 
 	return f;
@@ -66,7 +65,14 @@ FurnitureDefinition FurnitureDefinition::from_json(const json& j)
 		if (!FurnitureTile::get_checker()->check_json(tile_json))
 			continue;
 
-		f.tiles.push_back(FurnitureTile::from_json(tile_json));
+		Position pos
+		{ 
+			tile_json.at("position").at(0).get<Coord>(),
+			tile_json.at("position").at(1).get<Coord>(),
+			tile_json.at("position").at(2).get<Coord>()
+		};
+
+		f.tiles[pos] = FurnitureTile::from_json(tile_json);
 	}
 
 	if (checker->is_valid_property("flags", j))
@@ -96,13 +102,13 @@ FurnitureDefinition FurnitureDefinition::from_json(const json& j)
 	return f;
 }
 
+bool FurnitureDefinition::has_renderable_at(Coord x, Coord y, Coord z) const
+{
+	return tiles.contains(Position(x, y, z));
+}
+
 Renderable FurnitureDefinition::renderable_at(Coord x, Coord y, Coord z) const
 {
-	for (auto& tile : tiles)
-	{
-		if (tile.position == Position(x, y, z))
-			return tile.renderable;
-	}
-
-	return Renderable();
+	Position pos{ x, y, z };
+	return tiles.at(pos).renderable;
 }

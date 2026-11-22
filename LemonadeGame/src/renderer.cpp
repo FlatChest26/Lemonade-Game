@@ -96,7 +96,7 @@ void WorldRenderer::render(const RenderParams& params) const
 
 void WorldRenderer::render_entities(const RenderParams& params) const
 {
-	auto _render = [&](const std::vector<Entity*>& entities)
+	auto _render = [this, params](const std::vector<Entity*>& entities)
 		{
 			for (auto& entity : entities)
 			{
@@ -140,15 +140,19 @@ void WorldRenderer::render_entity(const RenderParams& params, const Entity* enti
 	if (params.use_fov && !entity->is_visible_to_player())
 		return;
 
-	if (params.camera && !params.camera->in_view(entity->movable()->get_transform()))
-		return;
-
-	auto world = get_world();
+	const World* world = get_world();
 
 	if (!world)
 	{
 		CERR("No world found in renderer.");
 		return;
+	}
+
+	const Entity* player = nullptr;
+
+	if (params.use_fov)
+	{
+		player = world->get_world_state()->get_player();
 	}
 
 	Position camera_offset = Position(0, 0, 0);
@@ -158,71 +162,94 @@ void WorldRenderer::render_entity(const RenderParams& params, const Entity* enti
 		camera_offset = params.camera->get_screen(0, 0, 0);
 	}
 
-	std::vector<RenderOverride> active_overrides;
+	const RenderOverride* active_override = nullptr;
 
-	for (const auto& override : entity->render_overrides)
+	for (const auto& r_override : entity->render_overrides)
 	{
-		if (!override.flash_on || !override.is_active)
+		if (r_override.flash_on && r_override.is_active)
 		{
-			continue;
+			active_override = &r_override;
+			break;
 		}
-
-		active_overrides.push_back(override);
 	}
 
-	if (!active_overrides.empty() && active_overrides.front().hide_entity)
+	if (active_override && active_override->hide_entity)
 		return;
 
-	auto unrotated_offsets = entity->movable()->get_offsets(false);
-	auto rotated_offsets = entity->movable()->get_offsets(true);
+	std::vector<Position> rotated_offsets = entity->movable()->get_offsets(true);
+	std::vector<Position> unrotated_offsets;
 	
+	if (entity->movable()->size() != Size(1, 1, 1))
+	{
+		unrotated_offsets = entity->movable()->get_offsets(false);
+	}
+
 	for (size_t idx = 0; idx < rotated_offsets.size(); idx++) // In the case of drawing an entity larger than 1x1x1
 	{
 		auto& offset = rotated_offsets[idx];
 
 		Position world_position = entity->movable()->pos() + offset;
 
+		if (params.camera && !params.camera->in_view(world_position))
+			continue;
+
+		if (params.use_fov && !player->can_see(world_position))
+			continue;
+
 		int draw_x = world_position.x + camera_offset.x + params.world_inner_frame_p1().x;
 		int draw_y = world_position.y + camera_offset.y + params.world_inner_frame_p1().y;
 		int depth = world_position.z + camera_offset.z;
 
-		if (!params.in_world_frame(draw_x, draw_y))
+		if (depth > 0)
 			continue;
-
-		if (params.camera && !params.camera->in_view(world_position))
-			continue;
-
-		Renderable draw_renderable = entity->renderable_at(unrotated_offsets[idx]);
 
 		if (depth < 0)
 		{
-			if (world->get_tile(world_position)->has_ceiling()) // Check if tile has a ceiling
+			if (world->get_tile(world_position)->has_opaque_ceiling()) // Check if tile has a ceiling
 				continue;
 
-			if (world->get_tile(world_position + Position(0, 0, 1))->has_floor()) // Check if above tile has floor
+			if (world->get_tile(world_position + Position(0, 0, 1))->has_opaque_floor()) // Check if above tile has floor
 				continue;
-
-			draw_renderable.glyph = DISTANT_DOT;
 		}
 
-		if(!active_overrides.empty())
+		if (!params.in_world_frame(draw_x, draw_y))
+			continue;
+
+		Renderable draw_renderable;
+
+		if (!unrotated_offsets.empty())
 		{
-			auto& override = active_overrides.front();
+			if (!entity->has_renderable_at(unrotated_offsets[idx]))
+				continue;
 
-			if (override.override_glyph)
+			draw_renderable = entity->renderable_at(unrotated_offsets[idx]);
+		}
+		else
+		{
+			draw_renderable = entity->renderable();
+		}
+
+		if (active_override)
+		{
+			if (active_override->override_glyph)
 			{
-				draw_renderable.glyph = override.renderable.glyph;
+				draw_renderable.glyph = active_override->renderable.glyph;
 			}
 
-			if (override.override_fg)
+			if (active_override->override_fg)
 			{
-				draw_renderable.fg = override.renderable.fg;
+				draw_renderable.fg = active_override->renderable.fg;
 			}
 
-			if (override.override_bg)
+			if (active_override->override_bg)
 			{
-				draw_renderable.bg = override.renderable.bg;
+				draw_renderable.bg = active_override->renderable.bg;
 			}
+		}
+
+		if (depth < 0)
+		{
+			draw_renderable.glyph = DISTANT_DOT;
 		}
 
 		output::put_rgb(draw_x,draw_y, draw_renderable, TCOD_BKGND_SET);
@@ -280,15 +307,10 @@ void WorldRenderer::render_tile_map(const RenderParams& params) const
 		if (params.camera && !params.camera->in_view(x, y, layer))
 			continue;
 		
-		Material& draw_material = tile_map->get_material(x, y, layer);
+		const Material& draw_material = tile_map->get_material(x, y, layer);
 
 		Renderable draw_renderable;
 
-		if (draw_material.amount() > 0)
-		{
-			draw_renderable = draw_material.renderable();
-		}
-		
 		if (draw_material.amount() == 0 || draw_material.should_stain())
 		{
 			const Tile* draw_tile = tile_map->get_tile(x, y, layer);
@@ -299,7 +321,7 @@ void WorldRenderer::render_tile_map(const RenderParams& params) const
 			{
 				auto tile_below = tile_map->get_tile(x, y, layer - 1);
 
-				if (!tile_below->is_air() && tile_map->in_bounds(x, y, layer - 1))
+				if (tile_map->in_bounds(x, y, layer - 1) && !tile_below->is_air())
 				{
 					draw_renderable = Renderable{ DISTANT_DOT, tile_below->fg(), tile_below->bg() };
 				}
@@ -309,6 +331,10 @@ void WorldRenderer::render_tile_map(const RenderParams& params) const
 			{
 				draw_renderable.fg = draw_material.fg();
 			}
+		}
+		else // Is material
+		{
+			draw_renderable = draw_material.renderable();
 		}
 
 		if (params.use_fov && !tile_map->is_visible(x, y, layer))

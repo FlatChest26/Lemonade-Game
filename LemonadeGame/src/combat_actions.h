@@ -8,9 +8,9 @@
 
 struct AttackParams
 {
-	Entity* weapon;
 	const Attack* attack_info;
 	BodyPartID target_part;
+	Position attack_location;
 };
 
 class AutoAttackAction : public Interaction
@@ -36,7 +36,13 @@ protected:
 public:
 	AttackAction(Entity* actor, Entity* subject, AttackParams attack_params) :
 		Interaction(actor, subject), m_attack_params(attack_params)
-	{}
+	{
+	
+		if (m_actor)
+		{
+			m_actor->next_attack_position = m_attack_params.attack_location;
+		}
+	}
 
 	BodyPart* get_target_part() const;
 

@@ -279,11 +279,11 @@ void Material::update_state()
 	if (!m_mat_type || m_mat_type->states.empty())
 		return;
 
-	if (m_mat_type->states.contains(MaterialStateType::GAS) && m_temperature >= m_mat_type->boiling_point)
+	if (m_mat_type->states.contains(MaterialStateType::GAS) && m_temperature >= boiling_point())
 	{
 		m_state = MaterialStateType::GAS;
 	}
-	else if (m_mat_type->states.contains(MaterialStateType::LIQUID) && m_temperature >= m_mat_type->melting_point)
+	else if (m_mat_type->states.contains(MaterialStateType::LIQUID) && m_temperature >= melting_point())
 	{
 		m_state = MaterialStateType::LIQUID;
 	}

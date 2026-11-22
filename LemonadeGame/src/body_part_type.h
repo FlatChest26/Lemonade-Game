@@ -25,8 +25,6 @@ enum class BodyPartFlag : uint64_t
 {
 	NONE = 0,
 
-	//SENSORY = 1 << 0,
-
 	IMPORTANT = 1 << 0,
 
 	GRASP = 1 << 1,
@@ -111,7 +109,7 @@ struct BodyPartType
 
 	int multiple{ 1 };
 
-	AllureType base_allure;
+	InterestingNames interesting_names;
 
 	StatInt_t max_health{ 10 };
 
@@ -163,6 +161,8 @@ inline std::map<std::string, BodyPartFlag> AllBodyPartFlags
 
 namespace body_part
 {
+
+	/*
 	inline BodyPartType Head
 	{
 		.ID = "BP_HEAD",
@@ -170,7 +170,7 @@ namespace body_part
 		.default_rel_size = 8.0,
 		.category = BodyPartCategory::HEAD,
 		//.flags = BodyPartFlag::THOUGHT | BodyPartFlag::PRETTY | BodyPartFlag::IMPORTANT,
-		.base_allure{ .beauty = 2.0f, .beauty_names{ { "face", "faces" } } },
+		.interesting_names{ .beauty_names{ { "face", "faces" } } },
 		.max_health = 12
 	};
 
@@ -191,8 +191,7 @@ namespace body_part
 		.default_rel_size = 22.0,
 		.category = BodyPartCategory::UPPER_BODY,
 		//.flags = BodyPartFlag::CIRCULATION | BodyPartFlag::SUGGESTIVE | BodyPartFlag::PRETTY | BodyPartFlag::IMPORTANT,
-		.base_allure{
-			.suggestiveness = 4.0f, .beauty = 2.0f,
+		.interesting_names{
 			.suggestive_names{ { "chest", "chests" } },
 			.beauty_names{ { "abs", "abs", true } },
 		},
@@ -206,8 +205,7 @@ namespace body_part
 		.default_rel_size = 16.0,
 		.category = BodyPartCategory::LOWER_BODY,
 		//.flags = BodyPartFlag::DIGESTION | BodyPartFlag::SUGGESTIVE | BodyPartFlag::PRETTY,
-		.base_allure{
-			.suggestiveness = 2.0f, .beauty = 4.0f,
+		.interesting_names{
 			.beauty_names{ { "tummy", "tummies" },{ "belly", "bellies" },{ "mid-section", "mid-sections" } },
 		},
 		.max_health = 30
@@ -220,8 +218,7 @@ namespace body_part
 		.default_rel_size = 6.0,
 		.category = BodyPartCategory::UPPER_ARM,
 		//.flags = BodyPartFlag::LIMB | BodyPartFlag::KINKY,
-		.base_allure{
-			.kinkiness = 4.0f,
+		.interesting_names{
 			.suggestive_names{ { "arm pit", "arm pits" } },
 		},
 	};
@@ -242,8 +239,7 @@ namespace body_part
 		.default_rel_size = 1.5,
 		.category = BodyPartCategory::HAND,
 		//.flags = BodyPartFlag::GRASP | BodyPartFlag::KINKY,
-		.base_allure{
-			.kinkiness = 2.0f,
+		.interesting_names{
 			.kinky_names{ { "fingers", "fingers", true },{ "palm", "palms" },{ "nails", "nails", true } },
 		},
 	};
@@ -255,8 +251,7 @@ namespace body_part
 		.default_rel_size = 10.0,
 		.category = BodyPartCategory::GROIN,
 		//.flags = BodyPartFlag::LEWD,
-		.base_allure{
-			.suggestiveness = 4.0f,
+		.interesting_names{
 			.suggestive_names{ { "crotch", "crotches" } },
 		},
 	};
@@ -268,8 +263,7 @@ namespace body_part
 		.default_rel_size = 16.0,
 		.category = BodyPartCategory::UPPER_LEG,
 		//.flags = BodyPartFlag::STANCE | BodyPartFlag::SUGGESTIVE,
-		.base_allure{
-			.suggestiveness = 5.0f,
+		.interesting_names{
 			.suggestive_names{ { "thigh", "thighs" } },
 		},
 	};
@@ -290,8 +284,7 @@ namespace body_part
 		.default_rel_size = 3.0,
 		.category = BodyPartCategory::FOOT,
 		//.flags = BodyPartFlag::STANCE | BodyPartFlag::KINKY,
-		.base_allure{
-			.kinkiness = 5.0f,
+		.interesting_names{
 			.kinky_names{ { "foot", "feet" },{ "toes", "toes", true },{ "sole", "soles" } },
 		},
 	};
@@ -305,9 +298,7 @@ namespace body_part
 		.default_rel_size = (AVERAGE_HEIGHT / 6_in),
 		.category = BodyPartCategory::PENIS,
 		//.flags = BodyPartFlag::PHALLUS | BodyPartFlag::LEWD,
-		.base_allure{
-			.lewdness = 10.0f,
-			.kinkiness = 8.0f,
+		.interesting_names{
 			.lewd_names{ { "cock", "cocks" },{ "dick", "dicks" },{ "penis", "penises" } },
 			.kinky_names{ { "goon rod", "goon rods" } },
 		},
@@ -320,9 +311,7 @@ namespace body_part
 		.default_rel_size = AVERAGE_HEIGHT / 6_in,
 		.category = BodyPartCategory::VAGINA,
 		//.flags = BodyPartFlag::ORIFICE | BodyPartFlag::FLUID_PRODUCER | BodyPartFlag::LEWD,
-		.base_allure{
-			.lewdness = 10.0f,
-			.kinkiness = 6.0f,
+		.interesting_names{
 			.lewd_names{ { "pussy", "pussies" } },
 		},
 	};
@@ -335,9 +324,7 @@ namespace body_part
 		.category = BodyPartCategory::BREASTS,
 		//.flags = BodyPartFlag::FLUID_PRODUCER | BodyPartFlag::CLEAVAGE | BodyPartFlag::LEWD,
 		.multiple = 2,
-		.base_allure{
-			.lewdness = 8.0f,
-			.kinkiness = 10.0f,
+		.interesting_names{
 			.lewd_names{ { "boobs", "pairs of boobs", true },{ "tits", "pairs of tits", true },{ "tiddies", "pairs of tiddies", true } },
 			.kinky_names{ { "milkers", "pairs of milkers", true },{ "melons", "pairs of melons", true },{ "milk jugs", "pairs of milk jugs", true } },
 		},
@@ -351,9 +338,7 @@ namespace body_part
 		.category = BodyPartCategory::TESTICLES,
 		//.flags = BodyPartFlag::FLUID_PRODUCER | BodyPartFlag::LEWD | BodyPartFlag::SMALL,
 		.multiple = 2,
-		.base_allure{
-			.lewdness = 6.0f,
-			.kinkiness = 6.0f,
+		.interesting_names{
 			.lewd_names{ { "balls", "pairs of balls", true },{ "nuts", "pairs of nuts", true },{ "ballsack", "ballsacks" } },
 		},
 	};
@@ -365,10 +350,7 @@ namespace body_part
 		.default_rel_size = AVERAGE_HEIGHT / 8_in,
 		.category = BodyPartCategory::BUTT,
 		//.flags = BodyPartFlag::CLEAVAGE | BodyPartFlag::SUGGESTIVE | BodyPartFlag::LEWD,
-		.base_allure{
-			.lewdness = 2.0f,
-			.suggestiveness = 12.0f,
-			.kinkiness = 10.0f,
+		.interesting_names{
 			.lewd_names{ { "butt", "butts" },{ "ass", "asses" },{ "booty", "booties" },{ "cheeks", "pairs of cheeks", true },{ "dumpy", "dumpies" } },
 			.suggestive_names{ { "rear", "rears" },{ "behind", "behinds" },{ "butt", "butts" } },
 			.kinky_names{ { "wobblemeat", "wobblemeats" },{ "dumptruck", "dumptrucks" } },
@@ -382,9 +364,7 @@ namespace body_part
 		.default_rel_size = AVERAGE_HEIGHT / 1_in,
 		.category = BodyPartCategory::ANUS,
 		//.flags = BodyPartFlag::ORIFICE | BodyPartFlag::LEWD | BodyPartFlag::SMALL,
-		.base_allure{
-			.lewdness = 18.0f,
-			.kinkiness = 20.0f,
+		.interesting_names{
 			.lewd_names{ { "butthole", "buttholes" },{ "hole", "holes" } },
 			.kinky_names{ { "donut", "donuts" },{ "butthole", "buttholes" } },
 		},
@@ -453,6 +433,8 @@ namespace body_part
 		//.flags = BodyPartFlag::HANDLE,
 		.multiple = 2,
 	};
+
+	*/
 }
 
 #endif // !LEMONADE_GAME_SRC_BODY_PART_TYPE_H

@@ -1001,6 +1001,8 @@ namespace transforms
 		return degrees * (std::numbers::pi / 180.0);
 	}
 
+	extern char get_direction_glyph(Direction dir);
+
 	extern Direction opposite_direction(Direction dir);
 	extern double dir_to_angle_in_degrees(Direction dir);
 	extern double angle_in_degrees_to_dir(double angle);

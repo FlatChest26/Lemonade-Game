@@ -7,6 +7,8 @@
 #include "special_actions.h"
 #include "combat_actions.h"
 
+#include "need_states.h"
+
 #include "game.h"
 
 #include "world_state.h"

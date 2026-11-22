@@ -257,4 +257,29 @@ namespace transforms
 
 		return new_dir;
 	}
+
+	char get_direction_glyph(Direction dir)
+	{
+		switch (dir)
+		{
+		case NORTH:
+			return '^';
+		case SOUTH:
+			return 'v';
+		case EAST:
+			return '>';
+		case WEST:
+			return '<';
+		case NORTHEAST:
+			return char(191); // ┐
+		case NORTHWEST:
+			return char(218); // ┌
+		case SOUTHEAST:
+			return char(217); // ┘
+		case SOUTHWEST:
+			return char(192); // └
+		}
+
+		return 'o';
+	}
 }

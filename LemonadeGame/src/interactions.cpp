@@ -109,11 +109,15 @@ ActionResult GrabAction::perform()
 	return ActionResult{
 		.success = true,
 		.responses = {
-			fmt::format(
-				"{} {} {}.",
-				subject->is_player() ? grammar::The(n1) : grammar::A(n1),
-				(grammar::is_plural(n1) ? "pick up" : "picks up"),
-				actor->is_player() ? grammar::the(n2) : grammar::a(n2)
+			GameMessage(
+				fmt::format(
+					"{} {} {}.",
+					subject->is_player() ? grammar::The(n1) : grammar::A(n1),
+					(grammar::is_plural(n1) ? "pick up" : "picks up"),
+					actor->is_player() ? grammar::the(n2) : grammar::a(n2)
+				),
+				color::get("white"),
+				actor->movable()->pos()
 			)
 		}
 	};
@@ -146,11 +150,15 @@ ActionResult DropAction::perform()
 	return ActionResult{
 		.success = true,
 		.responses = {
-			fmt::format(
-				"{} {} {}.",
-				subject->is_player() ? grammar::The(n1) : grammar::A(n1),
-				(grammar::is_plural(n1) ? "drop" : "drops"),
-				actor->is_player() ? grammar::the(n2) : grammar::a(n2)
+			GameMessage(
+				fmt::format(
+					"{} {} {}.",
+					subject->is_player() ? grammar::The(n1) : grammar::A(n1),
+					(grammar::is_plural(n1) ? "drop" : "drops"),
+					actor->is_player() ? grammar::the(n2) : grammar::a(n2)
+				),
+				color::get("white"),
+				actor->movable()->pos()
 			)
 		}
 	};
@@ -212,13 +220,17 @@ ActionResult ConsumeAction::perform()
 	return ActionResult{
 		.success = true,
 		.responses = {
-			fmt::format(
-				"{} {} {}.",
-				subject->is_player() ? grammar::The(n1) : grammar::A(n1),
-				(grammar::is_plural(n1) ? "consume" : "consumes"),
-				actor->is_player() ? grammar::the(n2) : grammar::a(n2)
+			GameMessage(
+				fmt::format(
+					"{} {} {}.",
+					subject->is_player() ? grammar::The(n1) : grammar::A(n1),
+					(grammar::is_plural(n1) ? "consume" : "consumes"),
+					actor->is_player() ? grammar::the(n2) : grammar::a(n2)
+				),
+				color::get("white"),
+				actor->movable()->pos()
 			),
-			GameMessage(taste, color::get("yellow"))
+			actor->is_player() ? GameMessage(taste, color::get("yellow"), actor->movable()->pos()) : GameMessage{}
 		}
 	};
 }
@@ -352,11 +364,15 @@ ActionResult ReleaseGrappleAction::perform()
 	{
 		.success = true,
 		.responses = {
-			fmt::format(
-				"{} {} go of {}.",
-				subject->is_player() ? grammar::The(n1) : grammar::A(n1),
-				(grammar::is_plural(n1) ? "let" : "lets"),
-				actor->is_player() ? grammar::the(n2) : grammar::a(n2)
+			GameMessage(
+				fmt::format(
+					"{} {} go of {}.",
+					subject->is_player() ? grammar::The(n1) : grammar::A(n1),
+					(grammar::is_plural(n1) ? "let" : "lets"),
+					actor->is_player() ? grammar::the(n2) : grammar::a(n2)
+				),
+				color::get("white"),
+				actor->movable()->pos()
 			)
 		}
 	};
@@ -390,12 +406,17 @@ ActionResult EscapeGrappleAction::perform()
 	{
 		.success = true,
 		.responses = {
-			fmt::format(
-				"{} {} away from {}.",
-				subject->is_player() ? grammar::The(n1) : grammar::A(n1),
-				(grammar::is_plural(n1) ? "break" : "breaks"),
-				actor->is_player() ? grammar::the(n2) : grammar::a(n2)
+			GameMessage(
+				fmt::format(
+					"{} {} away from {}.",
+					subject->is_player() ? grammar::The(n1) : grammar::A(n1),
+					(grammar::is_plural(n1) ? "break" : "breaks"),
+					actor->is_player() ? grammar::the(n2) : grammar::a(n2)
+				),
+				color::get("white"),
+				actor->movable()->pos()
 			)
+			
 		}
 	};
 }
@@ -432,14 +453,17 @@ ActionResult KissAction::perform()
 	auto actor = get_actor();
 	auto subject = get_subject();
 
+
+	StatInt_t arousal_gain = -20;
+
 	if (actor->has_living() && actor->living()->has_stat(needs::AROUSAL))
 	{
-		actor->living()->get_stat(needs::AROUSAL).add_value(12);
+		actor->living()->get_stat(needs::AROUSAL).add_value(arousal_gain);
 	}
 
 	if (subject->has_living() && subject->living()->has_stat(needs::AROUSAL))
 	{
-		subject->living()->get_stat(needs::AROUSAL).add_value(12);
+		subject->living()->get_stat(needs::AROUSAL).add_value(arousal_gain);
 	}
 
 	auto n1 = actor->display_noun();
@@ -449,11 +473,15 @@ ActionResult KissAction::perform()
 	{
 		.success = true,
 		.responses = {
-			fmt::format(
-				"{} {} {}.",
-				subject->is_player() ? grammar::The(n1) : grammar::A(n1),
-				(grammar::is_plural(n1) ? "kiss" : "kisses"),
-				actor->is_player() ? grammar::the(n2) : grammar::a(n2)
+			GameMessage(
+				fmt::format(
+					"{} {} {}.",
+					subject->is_player() ? grammar::The(n1) : grammar::A(n1),
+					(grammar::is_plural(n1) ? "kiss" : "kisses"),
+					actor->is_player() ? grammar::the(n2) : grammar::a(n2)
+				),
+				color::get("white"),
+				actor->movable()->pos()
 			)
 		}
 	};

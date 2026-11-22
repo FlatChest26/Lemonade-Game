@@ -30,13 +30,15 @@ inline std::unordered_map<std::string, AttackRange> AllAttackRanges
 enum class DamageType : uint8_t
 {
 	EDGE,
-	PIERCE
+	PIERCE,
+	BLUNT
 };
 
 inline std::unordered_map<std::string, DamageType> AllDamageTypes
 {
 	{ "edge",		DamageType::EDGE },
 	{ "pierce",		DamageType::PIERCE },
+	{ "blunt",		DamageType::BLUNT },
 };
 
 enum class AttackFrequency : uint8_t
@@ -51,8 +53,11 @@ inline std::unordered_map<std::string, AttackFrequency> AllAttackFrequencies
 	{ "secondary",		AttackFrequency::SECONDARY },
 };
 
+class Entity;
+
 struct Damage
 {
+	Entity* attacker;
 	StatInt_t amount;
 	DamageType type;
 };

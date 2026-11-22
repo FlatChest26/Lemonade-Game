@@ -7,9 +7,9 @@
 #include "game_log.h"
 
 #include "action.h"
+#include "combat_actions.h"
 
 #include "snowy_utilities.h"
-#include "action.h"
 
 
 void Entity::copy_components_from_entity(const Entity& other)
@@ -568,6 +568,16 @@ void Entity::set_flag_to(EntityFlag flag, bool set_to)
 	}
 }
 
+bool Entity::has_renderable_at(Coord offset_x, Coord offset_y, Coord offset_z) const
+{
+	if (has_furniture_def())
+	{
+		return furniture_def()->has_renderable_at(offset_x, offset_y, offset_z);
+	}
+
+	return true;
+}
+
 Renderable Entity::renderable_at(Coord offset_x, Coord offset_y, Coord offset_z) const
 {
 	if (has_furniture_def())
@@ -930,12 +940,15 @@ bool Entity::start_action(Action* action)
 
 bool Entity::start_action(QueuedAction action)
 {
-	if (!can_queue_action(action.get(), true))
+	if (!can_queue_action(action.get(), false))
 	{
 		return false;
 	}
 
 	m_action_queue.push_back(std::move(action));
+
+	if (auto subject = get_current_action()->get_subject())
+		subject->add_action_cooldown(get_current_action()->get_action_length());
 
 	if (get_current_action()->progress(TimeUnit::none()))
 		complete_action();
@@ -958,22 +971,24 @@ bool Entity::has_action(Action* action) const
 	return false;
 }
 
-void Entity::reset_actions(Action* action)
+bool Entity::reset_actions(Action* action)
 {
-	reset_actions(QueuedAction(action));
+	return reset_actions(QueuedAction(action));
 }
 
-void Entity::reset_actions(QueuedAction action)
+bool Entity::reset_actions(QueuedAction action)
 {
 	if (action && !can_queue_action(action.get(), true))
-		return;
+		return false;
 
 	m_action_queue.clear();
 
 	if (action)
 	{
-		start_action(std::move(action));
+		return start_action(std::move(action));
 	}
+
+	return true;
 }
 
 void Entity::continue_action(const TimeUnit& delta)
@@ -1112,6 +1127,9 @@ bool Entity::can_move_on_own() const
 	if (is_being_held())
 		return false;
 
+	if (is_locked_in_place())
+		return false;
+
 	return true;
 }
 
@@ -1176,12 +1194,67 @@ bool Entity::should_flash() const
 	return false;
 }
 
+GrammarNoun Entity::noun_for(const Entity* other) const
+{
+	if (other->is_named() && other->is_name_known())
+		return GrammarNoun::from_name(other->name());
+
+	return GrammarNoun::from_noun(other->noun());
+}
+
+std::string Entity::name_for(const Entity* other) const
+{
+	return grammar::to_string(noun_for(other));
+}
+
 void Entity::game_message(GameMessage msg)
 {
 	if (auto world_state = get_world_state())
 	{
-		world_state->game_message(msg);
+		GameMessage new_msg;
+		
+		new_msg.text = msg.text;
+		new_msg.color = msg.color;
+		
+		if (!msg.has_origin())
+			new_msg.origin = has_movable() ? movable()->pos() : Position(-1, -1, -1);
+		else
+			new_msg.origin = msg.origin;
+
+		world_state->game_message(new_msg);
 	}
+}
+
+void Entity::say(std::string dialogue)
+{
+	if (dialogue.empty())
+		return;
+
+	if (is_inanimate() || has_living() && living()->is_dead())
+		return;
+
+	std::string formatted_dialogue{ dialogue };
+
+	grammar::trim(formatted_dialogue);
+
+	if (!(formatted_dialogue.ends_with('.') || formatted_dialogue.ends_with('?') || formatted_dialogue.ends_with('!')))
+	{
+		formatted_dialogue += '.';
+	}
+
+	if (!std::isupper(formatted_dialogue[0]))
+	{
+		formatted_dialogue[0] = std::toupper(formatted_dialogue[0]);
+	}
+
+	auto n1 = display_noun();
+
+	game_message(fmt::format(
+		"{} {}, \"{}\"",
+		grammar::The(n1),
+		grammar::say_regarding(Verb{ "says", "say" }, n1),
+		formatted_dialogue
+	));
 }
 
 Position Entity::escape_wall(const Position& pos) const
@@ -1208,6 +1281,99 @@ Position Entity::escape_wall(const Position& pos) const
 	return pos;
 }
 
+int Entity::make_attack_roll(const WeaponInfo* weapon_info, const Attack* attack)
+{
+	if (has_living() && living()->has_attribute(attributes::AGILITY))
+	{
+		auto agility = living()->get_stat(attributes::AGILITY);
+		return roll(1_d20, snowy::rng::generator) + (agility.get_value() / 2);
+	}
+
+	return 0;
+}
+
+int Entity::make_dodge_roll(const Attack* attack, const Position& attack_location, const Position& attacker_location)
+{
+	if (has_any_action() || has_action_cooldown())
+		return 0;
+
+	auto world = get_world();
+
+	next_dodge_position = Position(-1, -1, -1);
+
+	for (auto& dodge_pos : transforms::get_surrounding_locations(movable()->pos(), false, false, true))
+	{
+		if (dodge_pos == attack_location || dodge_pos == attacker_location)
+			continue;
+
+		if (world->is_blocked(dodge_pos, this, 0))
+			continue;
+
+		if (!world->in_bounds(dodge_pos))
+			continue;
+
+		next_dodge_position = dodge_pos;
+		break;
+	}
+
+	if (!world->in_bounds(next_dodge_position))
+	{
+		next_dodge_position = Position(-1, -1, -1);
+		return 0;
+	}
+
+	if (has_living() && living()->has_attribute(attributes::AGILITY))
+	{
+		auto agility = living()->get_stat(attributes::AGILITY);
+		return roll(1_d20, snowy::rng::generator) + (agility.get_value() / 2);
+	}
+
+	return 0;
+}
+
+void Entity::successful_dodge()
+{
+	if (get_world()->in_bounds(next_dodge_position))
+	{
+		movable()->pos() = next_dodge_position;
+	}
+
+	next_dodge_position = Position(-1, -1, -1);
+}
+
+void Entity::on_damage_taken(const Damage& damage)
+{
+	if (is_creature() && has_species())
+	{
+		switch (damage.type)
+		{
+		case DamageType::EDGE:
+		case DamageType::PIERCE:
+		case DamageType::BLUNT:
+		{
+			if (has_movable() && damage.amount >= 2)
+			{
+				Position pos = movable()->pos();
+
+				auto splatter_positions = transforms::get_surrounding_locations(pos, false, false, true);
+				std::shuffle(splatter_positions.begin(), splatter_positions.end(), snowy::rng::generator);
+
+				get_tile_map()->add_material(splatter_positions.front(), RawMaster::get<MaterialType>(species()->blood_material_id), 1);
+			}
+			break;
+		}
+		}
+	}
+}
+
+void Entity::on_attacked(Entity* attacker)
+{
+	if (has_brain())
+	{
+		ai_brain()->on_attacked(attacker);
+	}
+}
+
 void Entity::step(const TimeUnit& time_delta)
 {
 	if (has_movable())
@@ -1220,15 +1386,11 @@ void Entity::step(const TimeUnit& time_delta)
 				set_component<FallTimer>(new FallTimer());
 			}
 
-			if (*get_component<FallTimer>() < TimeUnit::from_seconds(1.0))
-			{
-				*get_component<FallTimer>() += time_delta;
-			}
-
-			if (*get_component<FallTimer>() >= TimeUnit::from_seconds(1.0))
+			*get_component<FallTimer>() += time_delta;
+			while (*get_component<FallTimer>() >= TimeUnit::from_seconds(1.0))
 			{
 				movable()->move(0, 0, -1);
-				*get_component<FallTimer>() -= TimeUnit::from_seconds(1.0); // Reset the fall timer
+				*get_component<FallTimer>() -= std::min(TimeUnit::from_seconds(1.0), *get_component<FallTimer>());
 			}
 		}
 
@@ -1252,9 +1414,17 @@ void Entity::step(const TimeUnit& time_delta)
 	}
 
 	// Handle current action
+	if (has_action_cooldown())
+	{
+		m_action_cooldown -= std::min(time_delta, m_action_cooldown);
+	}
+	
 	if (can_do_actions())
 	{
-		continue_action(time_delta);
+		if (!has_action_cooldown())
+		{
+			continue_action(time_delta);
+		}
 	}
 
 	if (has_anatomy())

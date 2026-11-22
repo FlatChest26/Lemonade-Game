@@ -7,27 +7,13 @@
 #include "enum_traits.h"
 #include "snowy_grammar.h"
 
-using AllureStat = StatValue<0, 100>;
 
-struct AllureType
+struct InterestingNames
 {
-	double lewdness;
-	double suggestiveness;
-	double kinkiness;
-	double beauty;
-
 	std::vector<Noun> lewd_names;
 	std::vector<Noun> suggestive_names;
 	std::vector<Noun> beauty_names;
 	std::vector<Noun> kinky_names;
-};
-
-struct Allure
-{
-	AllureStat lewdness;
-	AllureStat suggestiveness;
-	AllureStat kinkiness;
-	AllureStat beauty;
 };
 
 struct Health

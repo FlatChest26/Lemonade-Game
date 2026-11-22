@@ -1,7 +1,7 @@
 [
   {
     "type": "item_definition",
-    "ID": "DILDO",
+    "ID": "dildo",
     "noun": { "singular": "dildo", "plural": "dildoes" },
     "renderable": { "glyph": "!", "fg": "purple", "bg": "black" },
     "description": "That's quite lewd...",
@@ -10,20 +10,33 @@
   },
   {
     "type": "item_definition",
-    "ID": "LEMONADE_GLASS",
+    "ID": "lemonade_glass",
     "noun": { "singular": "glass of lemonade", "plural": "glasses of lemonade" },
     "renderable": { "glyph": "u", "fg": "yellow", "bg": "black" },
     "description": "A glass of a sweet, refreshing drink.",
     "price": { "dollars": 1 },
     "category": "drink",
     "consumable_effects": [
-      { "modified_stat": "thirst", "amount": -30.0, "taste": "sweet" },
+      { "modified_stat": "thirst", "amount": -27.0, "taste": "sweet" },
       { "modified_stat": "mood", "amount": 18.0, "taste": "refreshing" }
     ]
   },
   {
     "type": "item_definition",
-    "ID": "KNIFE",
+    "ID": "rotisserie_chicken",
+    "noun": { "singular": "plate of rotisserie chicken", "plural": "plates of rotisserie chicken" },
+    "renderable": { "glyph": "%", "fg": "rust", "bg": "black" },
+    "description": "A nice, juicy rotisserie chicken on a plate.",
+    "price": { "dollars": 1 },
+    "category": "food",
+    "consumable_effects": [
+      { "modified_stat": "hunger", "amount": -62.0, "taste": "salty" },
+      { "modified_stat": "mood", "amount": 18.0, "taste": "hearty" }
+    ]
+  },
+  {
+    "type": "item_definition",
+    "ID": "knife",
     "noun": { "singular": "knife", "plural": "knives" },
     "renderable": { "glyph": "/", "fg": "silver", "bg": "black" },
     "description": "An EVIL blade.",

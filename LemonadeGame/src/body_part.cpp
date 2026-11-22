@@ -12,6 +12,7 @@ BodyPart::BodyPart(Entity* owner, BodyPartID ID, RawMaster::Ref<BodyPartType> ty
 	{
 		m_health.max = m_type->max_health;
 		m_health.current = m_type->max_health;
+
 		m_noun = m_type->noun;
 	}
 }
@@ -56,23 +57,7 @@ void BodyPart::take_damage(const Damage& damage)
 		m_health.current -= damage.amount;
 	}
 
-	switch (damage.type)
-	{
-	case DamageType::EDGE:
-	case DamageType::PIERCE:
-	{
-		if (get_owner()->has_movable() && snowy::rng::flip_coin())
-		{
-			Position pos = get_owner()->movable()->pos();
-
-			auto splatter_positions = transforms::get_surrounding_locations(pos, false, false, true);
-			std::shuffle(splatter_positions.begin(), splatter_positions.end(), snowy::rng::generator);
-
-			get_owner()->get_tile_map()->add_material(splatter_positions.front(), RawMaster::get<MaterialType>("blood"), 1);
-		}
-		break;
-	}
-	}
+	
 
 	if (auto anatomy = get_anatomy())
 	{

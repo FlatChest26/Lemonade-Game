@@ -5,7 +5,7 @@
 
 #include "snowy_macros.h"
 
-#include <map>
+#include <unordered_map>
 #include <vector>
 
 #include "species.h"
@@ -26,18 +26,18 @@ namespace fs = std::filesystem;
 
 namespace RawMaster
 {
-	using NameSetsDB = snowy::SingletonDatabase<Ref<NameSet>>;
-	using TileTypeDB = snowy::SingletonDatabase<Ref<TileType>>;
-	using BodyPlanDB = snowy::SingletonDatabase<Ref<BodyPlan>>;
-	using BodyPartTypeDB = snowy::SingletonDatabase<Ref<BodyPartType>>;
-	using BodyModDB = snowy::SingletonDatabase<Ref<BodyMod>>;
-	using BodyGlossDB = snowy::SingletonDatabase<Ref<BodyGloss>>;
-	using SpeciesDB = snowy::SingletonDatabase<Ref<Species>>;
-	using ItemDefsDB = snowy::SingletonDatabase<Ref<ItemDefinition>>;
-	using FurnitureDefsDB = snowy::SingletonDatabase<Ref<FurnitureDefinition>>;
-	using MaterialTypesDB = snowy::SingletonDatabase<Ref<MaterialType>>;
-	using PronounsDB = snowy::SingletonDatabase<Ref<Pronouns>>;
-	using GendersDB = snowy::SingletonDatabase<Ref<Gender>>;
+	using NameSetsDB = RawDB<NameSet>;
+	using TileTypeDB = RawDB<TileType>;
+	using BodyPlanDB = RawDB<BodyPlan>;
+	using BodyPartTypeDB = RawDB<BodyPartType>;
+	using BodyModDB = RawDB<BodyMod>;
+	using BodyGlossDB = RawDB<BodyGloss>;
+	using SpeciesDB = RawDB<Species>;
+	using ItemDefsDB = RawDB<ItemDefinition>;
+	using FurnitureDefsDB = RawDB<FurnitureDefinition>;
+	using MaterialTypesDB = RawDB<MaterialType>;
+	using PronounsDB = RawDB<Pronouns>;
+	using GendersDB = RawDB<Gender>;
 
 	inline std::vector<std::string> VALID_TYPES
 	{
@@ -55,6 +55,23 @@ namespace RawMaster
 		"furniture_definition",
 		"species",
 	};
+
+	std::unordered_map<RawID, ModID> mod_ids;
+
+	bool has_mod_id(const RawID& id)
+	{
+		return mod_ids.contains(id);
+	}
+
+	ModID get_mod_id(const RawID& id)
+	{
+		if (has_mod_id(id))
+		{
+			return mod_ids.at(id);
+		}
+
+		return {};
+	}
 
 	static void initialize_databases()
 	{
@@ -111,7 +128,7 @@ namespace RawMaster
 	template<typename T>
 	static void load_raw_type(std::vector<json> json)
 	{
-		using TDB = snowy::SingletonDatabase<Ref<T>>;
+		using TDB = RawDB<T>;
 
 		for (const auto& json_obj : json)
 		{
@@ -121,14 +138,18 @@ namespace RawMaster
 				continue;
 			}
 
+			auto ID = json_obj.at("ID").get<std::string>();
+
 			Ref<T> new_type = make_ref<T>(json_obj);
-			TDB::add(json_obj.at("ID").get<std::string>(), new_type);
+			TDB::add(ID, new_type);
+
+			mod_ids[ID] = json_obj["mod_id"];
 
 			COUT("\tLoaded: " << json_obj.at("ID").get<std::string>());
 		}
 	}
 
-	static void collect_json_from_raw_path(std::filesystem::path raw_path, std::map<std::string, std::vector<json>>& raw_data)
+	static void collect_json_from_raw_path(ModID mod_id, std::filesystem::path raw_path, std::unordered_map<std::string, std::vector<json>>& raw_data)
 	{
 		for (const auto& entry : fs::recursive_directory_iterator(raw_path))
 		{
@@ -177,6 +198,8 @@ namespace RawMaster
 					continue;
 				}
 
+
+				json_obj["mod_id"] = mod_id;
 				raw_data[type].push_back(json_obj);
 			}
 		}
@@ -189,10 +212,10 @@ namespace RawMaster
 		auto core_raws = files::raws_directory / "core";
 		auto mod_raws = files::raws_directory / "mods";
 
-		std::map<std::string, std::vector<json>> raw_data;
+		std::unordered_map<std::string, std::vector<json>> raw_data;
 
 		// Get core json files
-		collect_json_from_raw_path(core_raws, raw_data);
+		collect_json_from_raw_path("core", core_raws, raw_data);
 
 		// Initialize databases
 		initialize_databases();

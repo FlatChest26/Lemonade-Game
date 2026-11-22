@@ -36,13 +36,19 @@ ActionResult AutoAttackAction::perform()
 
 	for (auto& item : get_actor()->inventory()->get_items())
 	{
-		if (item->item_def()->has_weapon_info())
+		if (item->item_def()->is_weapon())
 		{
 			weapons.push_back(std::tuple(1.0, item));
 		}
 	}
+	Entity* chosen_weapon = nullptr;
 
-	if (weapons.empty())
+	if (!weapons.empty())
+	{
+		chosen_weapon = snowy::rng::get_weighted_random(weapons, snowy::rng::generator);
+	}
+
+	if (!chosen_weapon && !get_actor()->has_species())
 	{
 		return ActionResult
 		{
@@ -50,18 +56,29 @@ ActionResult AutoAttackAction::perform()
 		};
 	}
 
-	auto chosen_weapon = snowy::rng::get_weighted_random(weapons, snowy::rng::generator);
-
 	// Choose attack
 
 	snowy::rng::WeightedVector<const Attack*> attacks;
 
-	for (auto& attack : chosen_weapon->item_def()->weapon_info.attacks)
+	if (chosen_weapon)
 	{
-		attacks.push_back(std::tuple(
-			attack.frequency == AttackFrequency::MAIN ? 10.0 : 1.0,
-			&attack
-		));
+		for (auto& attack : chosen_weapon->item_def()->weapon_info.attacks)
+		{
+			attacks.push_back(std::tuple(
+				attack.frequency == AttackFrequency::MAIN ? 10.0 : 1.0,
+				&attack
+			));
+		}
+	}
+	else
+	{
+		for (auto& attack : get_actor()->species()->attacks)
+		{
+			attacks.push_back(std::tuple(
+				attack.frequency == AttackFrequency::MAIN ? 10.0 : 1.0,
+				&attack
+			));
+		}
 	}
 
 	if (attacks.empty())
@@ -108,9 +125,9 @@ ActionResult AutoAttackAction::perform()
 			get_subject(), 
 			AttackParams
 			{
-				.weapon = chosen_weapon,
 				.attack_info = chosen_attack,
-				.target_part = chosen_bp
+				.target_part = chosen_bp,
+				.attack_location = get_subject()->movable()->pos()
 			}
 		)
 	};
@@ -133,12 +150,6 @@ bool AttackAction::check_action() const
 		return false;
 	}
 
-	if (m_attack_params.weapon && !get_actor()->inventory()->has_item(m_attack_params.weapon))
-	{
-		ACTION_CERR("Actor does not have the weapon!");
-		return false;
-	}
-
 	return true;
 }
 
@@ -157,6 +168,7 @@ ActionResult AttackAction::perform()
 	auto actor = get_actor();
 	auto subject = get_subject();
 	auto target_part = get_target_part();
+
 	auto attack_info = m_attack_params.attack_info;
 
 	auto n1 = actor->display_noun();
@@ -164,6 +176,8 @@ ActionResult AttackAction::perform()
 	auto n3 = target_part->display_noun();
 
 	bool is_miss = false;
+
+	subject->on_attacked(actor);
 
 	if (attack_info->range == AttackRange::MELEE)
 	{
@@ -176,15 +190,18 @@ ActionResult AttackAction::perform()
 			auto actor_agility = actor->living()->get_stat(attributes::AGILITY);
 			auto subject_agility = subject->living()->get_stat(attributes::AGILITY);
 
-			auto actor_roll = roll(1_d20, snowy::rng::generator) + (actor_agility.get_value() / 2);
-			auto subject_roll = roll(1_d20, snowy::rng::generator) + (subject_agility.get_value() / 2);
+			auto actor_roll = actor->make_attack_roll(nullptr, attack_info);
+			auto subject_roll = subject->make_dodge_roll(attack_info, m_attack_params.attack_location, actor->movable()->pos());
 
-			is_miss = actor_roll < subject_roll;
+			is_miss = subject_roll >= actor_roll;
 		}
 	}
 
 	if (is_miss)
 	{
+		subject->successful_dodge();
+		actor->next_attack_position = Position(-1, -1, -1);
+
 		return ActionResult
 		{
 			.success = false,
@@ -205,11 +222,15 @@ ActionResult AttackAction::perform()
 
 	Damage damage
 	{
+		.attacker = actor,
 		.amount = roll(attack_info->damage_dice, snowy::rng::generator),
 		.type = attack_info->damage_type
 	};
 
 	target_part->take_damage(damage);
+
+	subject->on_damage_taken(damage);
+	actor->add_action_cooldown(attack_info->recover);
 
 	return ActionResult
 	{
@@ -233,7 +254,8 @@ ActionResult AttackAction::perform()
 					actor->is_player() ? grammar::the(n2) : grammar::a(n2), grammar::the(n3),
 					damage.amount
 				),
-				actor->is_player() ? color::get("purple") : color::get("red")
+				actor->is_player() ? color::get("purple") : color::get("red"),
+				actor->movable()->pos()
 			}
 		}
 	};

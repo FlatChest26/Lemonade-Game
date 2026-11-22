@@ -33,6 +33,12 @@ namespace snowy::rng
 	template<typename T, typename K>
 	static T get_weighted_random(const WeightedVector<T>& vector, K& generator)
 	{
+		if (vector.empty())
+		{
+			CERR("Input vector was empty!");
+			return std::get<1>(vector.at(0));
+		}
+
 		std::vector<double> weights;
 
 		for (const auto& [key, val] : vector)

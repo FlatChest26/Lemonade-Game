@@ -96,7 +96,9 @@ enum class EntityFlag : int64_t
 
 	CAN_BE_GRAPPLED = 1 << 19,									// The entity can be put in a grapple.
 
-	IS_PLAYER = 1 << 20											// The entity is the player.
+	IS_PLAYER = 1 << 20,										// The entity is the player.
+
+	LOCKED_IN_PLACE = 1 << 21
 };
 
 IS_FLAG_ENUM(EntityFlag);
@@ -169,6 +171,7 @@ protected:
 	EntityRawRefTuple m_raw_refs;
 
 	ActionQueue m_action_queue{};
+	TimeUnit m_action_cooldown{ TimeUnit::none() };
 
 public:
 	// -- Virtual Variables -- //
@@ -260,10 +263,16 @@ public:
 public:
 	// Actions //
 
+
+	virtual TimeUnit get_action_cooldown() const { return m_action_cooldown; }
+	virtual void add_action_cooldown(const TimeUnit& cooldown) { m_action_cooldown += cooldown; }
+	virtual void set_action_cooldown(const TimeUnit& cooldown) { m_action_cooldown = cooldown; }
+	virtual bool has_action_cooldown() const { return m_action_cooldown > TimeUnit::none(); }
+
 	virtual bool can_queue_action(Action* action, bool print_errors = false) const;
 
-	virtual void reset_actions(QueuedAction action = nullptr);
-	virtual void reset_actions(Action* action);
+	virtual bool reset_actions(QueuedAction action = nullptr);
+	virtual bool reset_actions(Action* action);
 
 	virtual bool start_action(QueuedAction action);
 	virtual bool start_action(Action* action);
@@ -479,9 +488,14 @@ public:
 public:
 	// Thing //
 
-	// For entities larger than 1x1x1, return the renderable at that coordinate, relative to the entity's position.
+	// For entities larger than 1x1x1, return if the entity actually has anything to render at the given coordinate offset, relative to the entity's position.
+	virtual bool has_renderable_at(Coord offset_x, Coord offset_y, Coord offset_z) const;
+	// For entities larger than 1x1x1, return if the entity actually has anything to render at the given position offset, relative to the entity's position.
+	virtual bool has_renderable_at(const Position& offset) const { return has_renderable_at(offset.x, offset.y, offset.z); }
+
+	// For entities larger than 1x1x1, return the renderable at that coordinate offset, relative to the entity's position.
 	virtual Renderable renderable_at(Coord offset_x, Coord offset_y, Coord offset_z) const;
-	// For entities larger than 1x1x1, return the renderable at that coordinate, relative to the entity's position.
+	// For entities larger than 1x1x1, return the renderable at that position offset, relative to the entity's position.
 	virtual Renderable renderable_at(const Position& offset) const { return renderable_at(offset.x, offset.y, offset.z); }
 
 	virtual Renderable renderable() const override;
@@ -616,6 +630,9 @@ public:
 	// Checks if EntityFlag::IS_PLAYER is set.
 	virtual bool is_player() const { return m_flags & EntityFlag::IS_PLAYER; }
 
+	// Checks if EntityFlag::LOCKED_IN_PLACE is set.
+	virtual bool is_locked_in_place() const { return m_flags & EntityFlag::LOCKED_IN_PLACE; }
+
 public:
 	// - Field of View -- //
 
@@ -643,6 +660,24 @@ public:
 
 	virtual bool should_flash() const;
 	virtual void game_message(GameMessage msg);
+	virtual void say(std::string dialogue);
+
+	virtual GrammarNoun noun_for(const Entity* other) const;
+	virtual std::string name_for(const Entity* other) const;
+
+	Position next_dodge_position;
+	Position next_attack_position;
+
+	int make_attack_roll(const WeaponInfo* weapon_info, const Attack* attack);
+	int make_dodge_roll(const Attack* attack, const Position& attack_location, const Position& attacker_location);
+	void successful_dodge();
+
+	// Callbacks //
+
+	virtual void on_damage_taken(const Damage& damage);
+	virtual void on_attacked(Entity* attacker);
+
+
 
 public:
 	// -- Game Loop -- //

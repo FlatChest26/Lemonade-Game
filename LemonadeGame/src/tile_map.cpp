@@ -469,10 +469,6 @@ bool TileMap::update_material_at(const TimeUnit& time_delta, const Position& pos
 				{
 					set_flow(pos, NO_DIRECTION);
 				}
-				else
-				{
-					set_flow(pos, new_flow_dir);
-				}
 			};
 
 		// Spread to other tiles, if possible.
@@ -481,27 +477,14 @@ bool TileMap::update_material_at(const TimeUnit& time_delta, const Position& pos
 
 		while (material.current_step() >= material.current_state_definition()->flow_time)
 		{
-			if (!has_flow(pos))
-			{
-				std::shuffle(spread_positions.begin(), spread_positions.end(), snowy::rng::generator);
-				for (auto& p : spread_positions)
-				{
-					if (can_spill_to_tile(p))
-					{
-						set_flow(pos, transforms::pos_as_dir(p - pos));
-						break;
-					}
-				}
-			}
-
 			if (has_flow(pos))
 			{
 				Position flow_pos = pos + transforms::dir_as_pos(get_flow(pos));
-
-				Position old_flow_pos = flow_pos;
-
-				if (!can_spill_to_tile(flow_pos)) // Slide along surface
+				
+				if (!can_spill_to_tile(flow_pos) || snowy::rng::random_int_range(0, 4) == 1) // Shift direction
 				{
+					Position old_flow_pos = flow_pos;
+
 					Direction check_dir_A = transforms::pos_as_dir(pos - flow_pos);
 					Direction check_dir_B = transforms::pos_as_dir(pos - flow_pos);
 
@@ -554,6 +537,19 @@ bool TileMap::update_material_at(const TimeUnit& time_delta, const Position& pos
 				else
 				{
 					set_flow(pos, NO_DIRECTION);
+				}
+			}
+			else
+			{
+				std::shuffle(spread_positions.begin(), spread_positions.end(), snowy::rng::generator);
+
+				for (auto& p : spread_positions)
+				{
+					if (can_spill_to_tile(p))
+					{
+						spill_to_tile(p);
+						break;
+					}
 				}
 			}
 

@@ -88,7 +88,7 @@ int SidebarMenu_GameInfo::render(const RenderParams& params, const SidebarParams
 
 	auto print_text = [&](std::string text)
 		{
-			panel_y += output::console_printf_rect_ex(panel_x, panel_y, panel_width - 1, 0, DEFAULT_BKGND_FLAG, TCOD_LEFT, text);
+			panel_y += output::console_printf_rect_ex(panel_x, panel_y, panel_width - 2, 0, DEFAULT_BKGND_FLAG, TCOD_LEFT, text);
 		};
 
 	if (auto world_state = sb_params.sidebar->get_world_state())
@@ -138,7 +138,7 @@ int SidebarMenu_PersonInfo::render(const RenderParams& params, const SidebarPara
 
 	auto print_text = [&](std::string text, color_t new_fg)
 		{
-			draw_y += output::console_printf_rgb_rect_ex(draw_x, draw_y, panel_width - 1, 0, new_fg, bg, DEFAULT_BKGND_FLAG, TCOD_LEFT, text);
+			draw_y += output::console_printf_rgb_rect_ex(draw_x, draw_y, panel_width - 2, 0, new_fg, bg, DEFAULT_BKGND_FLAG, TCOD_LEFT, text);
 		};
 
 	print_text(fmt::format("{}", entity->full_name()), entity->fg());
@@ -168,7 +168,7 @@ int SidebarMenu_Look::render(const RenderParams& params, const SidebarParams& sb
 
 	auto print_text = [&](std::string text, color_t new_fg)
 		{
-			draw_y += output::console_printf_rgb_rect_ex(draw_x, draw_y, panel_width - 1, 0, new_fg, bg, DEFAULT_BKGND_FLAG, TCOD_LEFT, text);
+			draw_y += output::console_printf_rgb_rect_ex(draw_x, draw_y, panel_width - 2, 0, new_fg, bg, DEFAULT_BKGND_FLAG, TCOD_LEFT, text);
 		};
 
 	auto world = sb_params.sidebar->get_world();
@@ -178,7 +178,7 @@ int SidebarMenu_Look::render(const RenderParams& params, const SidebarParams& sb
 	auto& material = tile_map->get_material(look_position);
 	auto entities_at = world->get_entities_at(look_position);
 
-	print_text(fmt::format("Looking at: ({}, {}, {})", look_position.x, look_position.y, look_position.z), fg);
+	//print_text(fmt::format("Looking at: ({}, {}, {})", look_position.x, look_position.y, look_position.z), fg);
 
 	// Write info at look focus
 
@@ -254,7 +254,7 @@ int SidebarMenu_Needs::render(const RenderParams& params, const SidebarParams& s
 
 	auto print_text = [&](std::string text, color_t new_fg)
 		{
-			draw_y += output::console_printf_rgb_rect_ex(draw_x, draw_y, panel_width - 1, 0, new_fg, bg, DEFAULT_BKGND_FLAG, TCOD_LEFT, text);
+			draw_y += output::console_printf_rgb_rect_ex(draw_x, draw_y, panel_width - 2, 0, new_fg, bg, DEFAULT_BKGND_FLAG, TCOD_LEFT, text);
 		};
 
 	for (const auto& need_id : entity->living()->get_needs())
@@ -405,7 +405,7 @@ int SidebarMenu_Examine::render(const RenderParams& params, const SidebarParams&
 
 	auto print_text = [&](std::string text, color_t new_fg = color::get("white"))
 		{
-			draw_y += output::console_printf_rgb_rect_ex(draw_x, draw_y, panel_width - 1, 0, new_fg, bg, DEFAULT_BKGND_FLAG, TCOD_LEFT, text);
+			draw_y += output::console_printf_rgb_rect_ex(draw_x, draw_y, panel_width - 2, 0, new_fg, bg, DEFAULT_BKGND_FLAG, TCOD_LEFT, text);
 		};
 
 	if (examined_tile)
@@ -415,7 +415,7 @@ int SidebarMenu_Examine::render(const RenderParams& params, const SidebarParams&
 
 		if (!examined_entities.empty())
 		{
-			output::draw_horizontal_line(draw_x, draw_y, panel_width - 1, fg, bg);
+			output::draw_horizontal_line(draw_x, draw_y, panel_width - 2, fg, bg);
 			draw_y++;
 		}
 	}
@@ -471,7 +471,7 @@ int SidebarMenu_GenericSelectionMenu::render(const RenderParams& params, const S
 
 	auto print_text = [&](std::string text, color_t new_fg = color::get("white"), color_t new_bg = color::get("black"))
 		{
-			draw_y += output::console_printf_rgb_rect_ex(draw_x, draw_y, panel_width - 1, 0, new_fg, new_bg, TCOD_BKGND_SET, TCOD_LEFT, text);
+			draw_y += output::console_printf_rgb_rect_ex(draw_x, draw_y, panel_width - 2, 0, new_fg, new_bg, TCOD_BKGND_SET, TCOD_LEFT, text);
 		};
 
 	panel_height = (int)(menu_items.size() + 2);

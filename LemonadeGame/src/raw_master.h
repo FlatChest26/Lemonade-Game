@@ -17,13 +17,17 @@ namespace RawMaster
 	using Ref = const T*;
 
 	using RawID = snowy::StringID;
+	using ModID = snowy::StringID;
+
+	template<typename T>
+	using RawDB = snowy::SingletonDatabase<Ref<T>>;
 
 	extern void load_raws();
 
 	template<typename T>
 	inline Ref<T> get(const RawID& id)
 	{
-		using TDB = snowy::SingletonDatabase<Ref<T>>;
+		using TDB = RawDB<T>;
 
 		if (TDB::has(id))
 		{
@@ -42,8 +46,8 @@ namespace RawMaster
 			CERR("No loading new raws allowed!");
 			return get<T>(id);
 		}
-
-		using TDB = snowy::SingletonDatabase<Ref<T>>;
+		
+		using TDB = RawDB<T>;
 
 		if (TDB::has(id))
 		{
@@ -57,21 +61,21 @@ namespace RawMaster
 	template<typename T>
 	inline bool has(const RawID& id)
 	{
-		using TDB = snowy::SingletonDatabase<Ref<T>>;
+		using TDB = RawDB<T>;
 		return TDB::has(id);
 	}
 
 	template<typename T>
 	inline std::vector<RawID> get_ids()
 	{
-		using TDB = snowy::SingletonDatabase<Ref<T>>;
+		using TDB = RawDB<T>;
 		return TDB::get_keys();
 	}
 
 	template<typename T>
 	inline std::vector<Ref<T>> get_raws()
 	{
-		using TDB = snowy::SingletonDatabase<Ref<T>>;
+		using TDB = RawDB<T>;
 		return TDB::get_values();
 	}
 
@@ -79,6 +83,9 @@ namespace RawMaster
 	{
 		return color::ColorsDB::get_keys();
 	}
+
+	extern bool has_mod_id(const RawID& id);
+	extern ModID get_mod_id(const RawID& id);
 
 	template <typename T, typename Arg>
 	concept HasFromJson = requires(Arg && arg)
@@ -91,7 +98,7 @@ namespace RawMaster
 	{
 		if constexpr (HasFromJson<T, json>)
 		{
-			return new T(T::from_json(obj));
+			return Ref<T>(new T(T::from_json(obj)));
 		}
 
 		CERR("Input type has no `from_json` method!" << obj);

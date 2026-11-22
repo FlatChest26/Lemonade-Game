@@ -58,17 +58,24 @@ bool TransformAction::check_action() const
 		return false;
 	}
 
+	if (m_is_invalid)
+	{
+		ACTION_CERR("Thunk!");
+		return false;
+	}
+
 	return true;
 }
 
-ActionResult TransformAction::perform()
+void TransformAction::gather_transform_tiles()
 {
+	if (!m_tiles_to_transform.empty())
+		return;
+
 	auto tile_map = get_tile_map();
 
 	auto transformed_tile = RawMaster::get<TileType>(get_tile_at_dest()->type()->transforms_to);
 	bool will_be_blocked = !(transformed_tile->flags & TileFlag::IS_WALKABLE);
-
-	std::vector<Position> tiles_to_transform;
 
 	std::vector<Position> locations_to_check;
 	locations_to_check.push_back(location());
@@ -100,16 +107,13 @@ ActionResult TransformAction::perform()
 
 				if (is_blocked != entities.end())
 				{
-					return ActionResult
-					{
-						.success = false,
-						.responses = { GameMessage("Thunk!", color::get("light_red"))}
-					};
+					m_is_invalid = true;
+					return;
 				}
 			}
 		}
 
-		tiles_to_transform.push_back(loc);
+		m_tiles_to_transform.push_back(loc);
 
 		if ((m_open && tile->opens_neighbors()) || (!m_open && tile->closes_neighbors()))
 		{
@@ -143,8 +147,19 @@ ActionResult TransformAction::perform()
 			}
 		}
 	}
+}
 
-	for (auto& loc_to_trans : tiles_to_transform)
+ActionResult TransformAction::perform()
+{
+	auto tile_map = get_tile_map();
+	auto transformed_tile = RawMaster::get<TileType>(get_tile_at_dest()->type()->transforms_to);
+
+	if (!tile_map || !transformed_tile)
+	{
+		return ActionResult(false);
+	}
+
+	for (auto& loc_to_trans : m_tiles_to_transform)
 	{
 		tile_map->set_tile(loc_to_trans, transformed_tile);
 	}

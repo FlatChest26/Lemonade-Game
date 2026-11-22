@@ -1,6 +1,43 @@
 [
   {
     "type": "material_type",
+    "ID": "air",
+    "boiling_point": { "kelvin": 78.8 },
+    "melting_point": { "kelvin": 32.0 },
+    "molar_mass": { "grams_per_mole": 28.96 },
+    "states": {
+      "gas": {
+        "noun": { "singular": "air", "plural": "air" },
+        "prefix": "air",
+        "color": "cyan",
+        "value": { "cents": 0 },
+        "flow_time": { "seconds": 0.5 },
+        "specific_heat_capacity": { "joules_per_kilogram_kelvin": 1417.0 },
+        "description": "A mixture of oxygen and other atmospheric gases."
+      },
+      "liquid": {
+        "noun": { "singular": "liquid oxygen", "plural": "liquid oxygen" },
+        "prefix": "liquid oxygen",
+        "color": "cyan",
+        "description": "Oxygen if it was really cold.",
+        "value": { "cents": 50 },
+        "flow_time": { "seconds": 0.5 },
+        "specific_heat_capacity": { "joules_per_kilogram_kelvin": 1730.0 },
+        "density": { "grams_per_milliliter": 1.141 }
+      },
+      "solid": {
+        "noun": { "singular": "frozen oxygen", "plural": "frozen oxygen" },
+        "prefix": "frozen oxygen",
+        "color": "light_cyan",
+        "value": { "dollars": 100 },
+        "description": "Frozen oxygen.",
+        "specific_heat_capacity": { "joules_per_kilogram_kelvin": 2108.0 },
+        "density": { "kilograms_per_cubic_meter": 1420.0 }
+      }
+    }
+  },
+  {
+    "type": "material_type",
     "ID": "water",
     "boiling_point": { "celsius": 100.0 },
     "melting_point": { "celsius": 0.0 },
@@ -25,7 +62,6 @@
         "value": { "cents": 30 },
         "flow_time": { "seconds": 0.5 },
         "specific_heat_capacity": { "joules_per_kilogram_kelvin": 2108.0 },
-        "density": { "kilograms_per_cubic_meter": 0.59 },
         "description": "Water in its gaseous state."
       },
       "solid": {
@@ -77,7 +113,6 @@
         "value": { "cents": 30 },
         "flow_time": { "seconds": 0.5 },
         "specific_heat_capacity": { "joules_per_kilogram_kelvin": 2108.0 },
-        "density": { "kilograms_per_cubic_meter": 0.59 },
         "description": "Lemonade in its gaseous state."
       },
       "solid": {
@@ -106,7 +141,7 @@
         "color": "dark_red",
         "description": "An iron-rich liquid.",
         "value": { "cents": 80 },
-        "flow_time": { "seconds": 1.0 },
+        "flow_time": { "seconds": 0.5 },
         "flags": [ "consumable", "stains" ],
         "specific_heat_capacity": { "joules_per_kilogram_kelvin": 4184.0 },
         "density": { "grams_per_milliliter": 1 },
@@ -119,7 +154,6 @@
         "value": { "cents": 30 },
         "flow_time": { "seconds": 0.8 },
         "specific_heat_capacity": { "joules_per_kilogram_kelvin": 2108.0 },
-        "density": { "kilograms_per_cubic_meter": 0.59 },
         "description": "Blood in its gaseous state."
       },
       "solid": {
